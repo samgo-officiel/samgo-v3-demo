@@ -110,7 +110,147 @@
   <section class="panel"><h2>❤️ Prenez soin de vous et de vos amis.</h2><p>Si tu as consommé de l'alcool, ne conduis pas. Prévois une solution sûre pour rentrer.</p><strong class="gold">SAMGO — Ta voiture, notre chauffeur.</strong></section>
   <footer>© SAMGO — Prototype de test. Ne transmets pas de documents sensibles. Les inscriptions ne constituent pas une embauche ni une autorisation de conduire. La mise en service nécessitera des contrats et assurances adaptés ainsi que les informations légales et de confidentialité obligatoires.</footer>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* SAMGO V3 — Client navigateur léger, sans bibliothèque/CDN externe.
+   Seulement les API d'authentification et de candidature utilisées par cette démo.
+   Aucune clé secrète ni aucun justificatif n'est stocké. */
+(function () {
+  'use strict';
+  const storageName = 'samgo_v3_test_session';
+  function makeClient(baseUrl, publishableKey) {
+    const base = baseUrl.replace(/\/+$/, '');
+    let session = null;
+    const subscribers = [];
+    try { session = JSON.parse(sessionStorage.getItem(storageName) || 'null'); }
+    catch (_) { session = null; }
+    function notify(event) {
+      for (const fn of subscribers) { try { fn(event, session); } catch (_) {} }
+    }
+    function saveSession(value, event) {
+      session = value;
+      try {
+        if (session) sessionStorage.setItem(storageName, JSON.stringify(session));
+        else sessionStorage.removeItem(storageName);
+      } catch (_) { /* Navigation privée : session mémoire uniquement. */ }
+      if (event) notify(event);
+    }
+    async function api(path, method='GET', body=undefined, token=null, extraHeaders={}) {
+      const headers = { apikey: publishableKey, ...extraHeaders };
+      if (token) headers.Authorization = 'Bearer ' + token;
+      if (body !== undefined) headers['Content-Type'] = 'application/json';
+      let response;
+      try {
+        response = await fetch(base + path, {
+          method, headers, body: body === undefined ? undefined : JSON.stringify(body),
+          cache: 'no-store'
+        });
+      } catch (_) { throw new Error('Impossible de joindre Supabase. Vérifie la connexion Internet et réessaie.'); }
+      const raw = await response.text();
+      let payload = null;
+      try { payload = raw ? JSON.parse(raw) : null; } catch (_) { payload = raw; }
+      if (!response.ok) {
+        const msg = payload && (payload.msg || payload.message || payload.error_description || payload.error) ||
+          ('Erreur Supabase (' + response.status + ')');
+        const error = new Error(String(msg));
+        error.status = response.status;
+        error.code = (payload && (payload.code || payload.error_code)) || '';
+        throw error;
+      }
+      return payload;
+    }
+    function setTokens(data, event='SIGNED_IN') {
+      if (!data || !data.access_token) return null;
+      const value = {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_at: Date.now() + (Number(data.expires_in) || 3600) * 1000,
+        user: data.user || null
+      };
+      saveSession(value, event);
+      return value;
+    }
+    async function accessToken() {
+      if (!session || !session.access_token) return null;
+      if (Date.now() < session.expires_at - 60000) return session.access_token;
+      if (!session.refresh_token) { saveSession(null,'SIGNED_OUT'); return null; }
+      try {
+        const refreshed = await api('/auth/v1/token?grant_type=refresh_token', 'POST',
+          {refresh_token: session.refresh_token});
+        const updated = setTokens(refreshed, 'TOKEN_REFRESHED');
+        return updated ? updated.access_token : null;
+      } catch (_) { saveSession(null, 'SIGNED_OUT'); return null; }
+    }
+    const auth = {
+      async signUp({email,password}) {
+        try {
+          const data = await api('/auth/v1/signup', 'POST', {email,password});
+          const active = setTokens(data);
+          return { data:{ user: data.user || (data.id ? data : null), session:active }, error:null };
+        } catch(error) { return {data:{user:null,session:null},error}; }
+      },
+      async signInWithPassword({email,password}) {
+        try {
+          const data = await api('/auth/v1/token?grant_type=password','POST',{email,password});
+          const active = setTokens(data);
+          if (!active) throw new Error('Réponse de connexion sans session.');
+          return {data:{user:data.user || null,session:active},error:null};
+        } catch(error) { return {data:{user:null,session:null},error}; }
+      },
+      async getUser() {
+        const token = await accessToken();
+        if (!token) return {data:{user:null},error:null};
+        try {
+          const user = await api('/auth/v1/user', 'GET', undefined, token);
+          return {data:{user},error:null};
+        } catch(error) {
+          if (error.status === 401 || error.status === 403) saveSession(null, 'SIGNED_OUT');
+          return {data:{user:null},error};
+        }
+      },
+      async signOut() {
+        const token = await accessToken();
+        saveSession(null, 'SIGNED_OUT');
+        if (token) { try {await api('/auth/v1/logout', 'POST', {}, token);} catch(_) {} }
+        return {error:null};
+      },
+      onAuthStateChange(callback) {
+        subscribers.push(callback);
+        return {data:{subscription:{unsubscribe(){
+          const n=subscribers.indexOf(callback);if(n!==-1)subscribers.splice(n,1);
+        }}}};
+      }
+    };
+    function from(table) {
+      if (table !== 'candidatures_chauffeur') throw new Error('Table non autorisée.');
+      return {
+        select(fields) { return {
+          eq(column, value) { return {
+            async maybeSingle() {
+              try {
+                const token = await accessToken();
+                if (!token) throw new Error('Session expirée. Reconnecte-toi.');
+                const params = new URLSearchParams({select:fields, [column]:'eq.' + value,limit:'1'});
+                const data = await api('/rest/v1/candidatures_chauffeur?' + params, 'GET', undefined, token);
+                return {data:Array.isArray(data) ? (data[0] || null) : null,error:null};
+              } catch(error) { return {data:null,error}; }
+            }
+          }; }
+        }; },
+        async insert(value) {
+          try {
+            const token = await accessToken();
+            if (!token) throw new Error('Session expirée. Reconnecte-toi.');
+            await api('/rest/v1/candidatures_chauffeur','POST',value,token,{'Prefer':'return=minimal'});
+            return {error:null};
+          } catch(error) {return {error};}
+        }
+      };
+    }
+    return {auth,from,async ping(){return api('/auth/v1/settings','GET');}};
+  }
+  window.samgoCreateClient = makeClient;
+})();
+</script>
 <script>
 'use strict';
 // Clé publishable : publique et prévue pour être placée côté navigateur. Ne jamais insérer service_role / secret ici.
@@ -118,7 +258,7 @@ const URL='https://tgwdycgwgfisuskxwkvk.supabase.co';
 const PUBLISHABLE_KEY='sb_publishable__7iZjXTqZLuuNQje8HF5wA_B6gKLoI0';
 const $=id=>document.getElementById(id);
 let space='raccompagner',authMode='signup',sessionUser=null,client=null,busy=false;
-try { if(window.supabase) client=window.supabase.createClient(URL,PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}); }
+try { if(window.samgoCreateClient) client=window.samgoCreateClient(URL,PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}); }
 catch(err){ console.error('Connexion Supabase indisponible',err); }
 function setStatus(id,text,type='') { const e=$(id);e.textContent=text;e.className='status'+(type?' '+type:''); }
 function money(n){return n.toLocaleString('fr-FR',{style:'currency',currency:'EUR'});}
@@ -149,7 +289,7 @@ async function refreshUser(){if(!client)return;try{const {data,error}=await clie
 }
 async function refreshCandidate(){const visible=!!sessionUser&&space==='chauffeur';$('candidateForm').classList.toggle('hidden',!visible);if(!visible||!client)return;
  try {const {data,error}=await client.from('candidatures_chauffeur').select('statut, nom_affiche, cree_le').eq('utilisateur_id',sessionUser.id).maybeSingle();
- if(error){setStatus('applyStatus','Impossible de vérifier la candidature. '+errText(error),'error');return;}
+ if(error){setStatus('applyStatus',error.code==='PGRST205'||error.code==='42P01'?'La table des candidatures n’est pas encore installée dans Supabase.':'Impossible de vérifier la candidature. '+errText(error),'error');return;}
  if(data){const statuses={en_attente:'En attente',a_completer:'À compléter',approuve:'Approuvée',refuse:'Refusée'};setStatus('applyStatus','Candidature de test déjà reçue — Statut : '+(statuses[data.statut]||'En cours')+'. Aucune mission réelle ne peut être acceptée.','success');$('applyBtn').disabled=true;$('nomAffiche').value=data.nom_affiche||'';$('nomAffiche').disabled=true;}
  else {setStatus('applyStatus','Aucune candidature enregistrée pour ce compte.');$('applyBtn').disabled=false;$('nomAffiche').disabled=false;}
  }catch{setStatus('applyStatus','Impossible de charger la candidature pour le moment.','error')}
@@ -157,7 +297,11 @@ async function refreshCandidate(){const visible=!!sessionUser&&space==='chauffeu
 async function applyDriver(){if(!client||!sessionUser)return setStatus('applyStatus','Connecte-toi pour envoyer une candidature.','error');const name=$('nomAffiche').value.trim();if(name.length<2||name.length>100)return setStatus('applyStatus','Entre un nom d’affichage de 2 à 100 caractères.','error');if(!$('permisDeclare').checked)return setStatus('applyStatus','Confirme que tu as compris les conditions de validation.','error');$('applyBtn').disabled=true;setStatus('applyStatus','Envoi en cours…');try{const {error}=await client.from('candidatures_chauffeur').insert({utilisateur_id:sessionUser.id,nom_affiche:name});if(error)throw error;setStatus('applyStatus','Candidature de test enregistrée ! Statut : en attente. Tu ne peux pas encore effectuer de courses.','success');await refreshCandidate();}catch(err){setStatus('applyStatus',err?.code==='23505'?'Une candidature existe déjà pour ce compte.':errText(err),'error');$('applyBtn').disabled=false;}}
 async function signOut(){if(!client)return;await client.auth.signOut();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
 calc();setAuthMode('signup');setSpace('raccompagner');
-if(client){refreshUser();client.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT'||event==='USER_UPDATED') setTimeout(refreshUser,0);});}
+if(client){
+  setStatus('authStatus','Vérification de la connexion à Supabase…');
+  client.ping().then(()=>setStatus('authStatus','Connexion Supabase accessible. Tu peux tester la création d’un compte.','success'))
+    .catch(error=>setStatus('authStatus','Supabase ne répond pas : '+errText(error),'error'));
+  refreshUser();client.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT'||event==='USER_UPDATED') setTimeout(refreshUser,0);});}
 else setStatus('authStatus','Connexion Supabase indisponible. Recharge la page avec Internet activé.','error');
 </script>
 </body></html>
