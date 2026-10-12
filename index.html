@@ -1,14 +1,163 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#111111"><title>SAMGO — Ta voiture, notre chauffeur</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#101010;color:#f8f8f8;font-family:system-ui,-apple-system,sans-serif}.app{max-width:540px;margin:auto;padding:25px 18px 55px}.logo{font-size:38px;font-weight:950;letter-spacing:-2px}.logo b{color:#ffcf29}small,.muted{color:#aaa}.sub{margin-top:0;color:#bbb}.alert{background:#302716;color:#ffde8e;border:1px solid #785c24;padding:13px;border-radius:14px;font-size:13px;line-height:1.5}.hero{background:linear-gradient(125deg,#322a16,#202020);border:1px solid #69501c;border-radius:22px;padding:23px;margin:21px 0}h1{font-size:30px;line-height:1.15;margin:0 0 14px}.gold{color:#ffcf29}p{line-height:1.55}.tabs{display:flex;gap:8px;margin-top:22px}.tabs button{flex:1}button{background:#ffcf29;color:#121212;border:0;padding:14px 12px;border-radius:12px;font:700 15px system-ui;cursor:pointer}button.off{background:#333;color:#f8f8f8}.card{background:#1e1e1e;border:1px solid #393939;border-radius:20px;padding:19px;margin:15px 0}h2{font-size:22px;margin:0 0 12px}.hidden{display:none}label{display:block;font-size:13px;color:#ccc;margin:12px 0 6px}select{background:#131313;color:white;border:1px solid #666;border-radius:11px;padding:12px;width:100%;font-size:16px}.summary{display:flex;align-items:center;justify-content:space-between;gap:9px;margin:14px 0}.price{font-weight:900;font-size:34px;color:#ffcf29}.foot{font-size:12px;color:#999;margin-top:20px}
-</style></head><body><main class="app">
-<div class="logo">SAM<b>GO</b> 🚗</div><p class="sub">Ta voiture, notre chauffeur.</p>
-<div class="alert">🚧 <b>Démo publique seulement.</b> L'application est en cours de création. Aucun chauffeur, paiement, compte ou trajet réel n'est disponible ici.</div>
-<section class="hero"><h1>Tu as bu ? <span class="gold">Ne prends pas le volant.</span></h1><p>Un chauffeur SAMGO vient te rejoindre et te raccompagne dans <b>ta propre voiture</b>. Ton véhicule rentre avec toi.</p><small>Un projet imaginé pour les trajets urbains, quand le service sera prêt et assuré.</small></section>
-<div class="tabs"><button id="clientBtn" onclick="toggleTab('client')">👤 Côté client</button><button class="off" id="chauffeurBtn" onclick="toggleTab('chauffeur')">🛴 Côté chauffeur</button></div>
-<div class="card" id="client"><h2>Simule ton trajet</h2><p class="muted">Aperçu du tarif envisagé, sans commande ni collecte de données.</p><label for="ville">Ville</label><select id="ville"><option>Paris</option><option>Bordeaux</option><option>Lyon</option><option>Marseille</option><option>Lille</option><option>Autre ville</option></select><label for="km">Distance de la course</label><select id="km" onchange="calculate()"><option value="5">5 km</option><option selected value="10">10 km</option><option value="15">15 km</option><option value="20">20 km</option></select><div class="summary"><span>Prix client indicatif</span><span class="price" id="prix">10 €</span></div><div class="summary muted"><span>Chauffeur — 90 %</span><span id="chauf">9 €</span></div><div class="summary muted"><span>SAMGO — 10 %</span><span id="com">1 €</span></div><button onclick="alert('SAMGO est encore une démonstration : aucune course réelle ne peut être réservée.')">Découvrir SAMGO</button><p class="foot">Tarification à l'étude. Minimum de course, frais, assurance et disponibilité non encore fixés.</p></div>
-<div class="card hidden" id="chauffeur"><h2>Devenir chauffeur indépendant</h2><p>Rejoins un client à pied ou avec une trottinette pliable, puis conduis sa voiture pour le raccompagner.</p><p>✅ Permis B valide<br>✅ Identité et permis vérifiés<br>✅ Assurance professionnelle adaptée<br>✅ Approbation avant les missions</p><div class="alert">Les inscriptions chauffeurs ne sont pas encore ouvertes. Aucun document d'identité n'est demandé sur cette page.</div></div>
-<div class="card"><h2>❤️ Prenez soin de vous et de vos amis.</h2><p>Après une soirée, si tu as bu, choisis une solution sûre pour rentrer.</p><strong class="gold">SAMGO — Ta voiture, notre chauffeur.</strong></div>
-<div class="foot">© SAMGO • Aperçu de présentation sans connexion Supabase. Pas de service actif. Vérifications légales et assurances nécessaires avant lancement.</div>
-</main><script>function toggleTab(x){document.getElementById('client').classList.toggle('hidden',x!=='client');document.getElementById('chauffeur').classList.toggle('hidden',x!=='chauffeur');document.getElementById('clientBtn').classList.toggle('off',x!=='client');document.getElementById('chauffeurBtn').classList.toggle('off',x!=='chauffeur')}function calculate(){let k=+document.getElementById('km').value, f=n=>n.toLocaleString('fr-FR',{style:'currency',currency:'EUR'});document.getElementById('prix').textContent=f(k);document.getElementById('chauf').textContent=f(k*.9);document.getElementById('com').textContent=f(k*.1)}calculate();</script></body></html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101010" />
+  <meta name="description" content="SAMGO — Ta voiture, notre chauffeur. Prototype d'inscription de test et de candidature chauffeur." />
+  <title>SAMGO V3 — Inscriptions de test</title>
+  <style>
+    :root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#312916 0,#101010 45%);color:#f8f8f8}
+    .app{max-width:630px;margin:auto;padding:24px 16px 65px}
+    header{display:flex;justify-content:space-between;align-items:center}
+    .logo{font-size:39px;font-weight:950;letter-spacing:-2px;line-height:1.1}
+    .logo b,.gold{color:#ffd22b}
+    .tagline{margin:5px 0 19px;color:#ccc;font-size:14px}
+    .panel{padding:20px;border-radius:21px;border:1px solid #3c3c3c;background:#1b1b1b;margin:16px 0}
+    .hero{background:linear-gradient(130deg,#332a18,#1c1c1c);border-color:#69551e}
+    h1{font-size:29px;line-height:1.17;margin:0 0 11px}
+    h2{font-size:22px;margin:0 0 12px}
+    h3{font-size:17px;margin:16px 0 8px}
+    p{line-height:1.52}
+    .subtle{color:#aaa;font-size:13px}
+    .notice{background:#342b15;border:1px solid #7d6526;border-radius:13px;color:#ffe19a;padding:13px;font-size:13px;line-height:1.45}
+    .good{background:#163624;border:1px solid #357a53;color:#a9f5c7}
+    .buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0}
+    button{background:#ffd22b;border:0;border-radius:13px;color:#171717;cursor:pointer;font:800 15px system-ui,-apple-system,sans-serif;padding:13px 10px;min-height:48px}
+    button.alt{background:#333;color:#f8f8f8}
+    button:disabled{cursor:wait;opacity:.6}
+    button:focus-visible,input:focus-visible{outline:3px solid #ffe492;outline-offset:2px}
+    .hidden{display:none!important}
+    label{display:block;font-size:14px;color:#dedede;margin:14px 0 7px}
+    input{display:block;width:100%;padding:13px 12px;background:#101010;border:1px solid #505050;border-radius:11px;color:#fff;font-size:16px}
+    .switch{display:flex;gap:7px;margin:14px 0}
+    .switch button{flex:1;padding:11px 7px;font-size:13px;min-height:44px}
+    .status{margin:12px 0 2px;padding:10px;border-radius:11px;background:#252525;color:#e6e6e6;line-height:1.5;font-size:14px;white-space:pre-wrap}
+    .status.error{color:#ffbab6;border:1px solid #964e48}
+    .status.success{color:#adf6c8;border:1px solid #35704b}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:13px 0}
+    .price{font-size:30px;color:#ffd22b;font-weight:900}
+    .line{border-top:1px solid #393939;padding-top:10px;margin-top:10px}
+    .tiny{font-size:12px;color:#aaa}
+    .agree{display:flex;align-items:flex-start;gap:10px;margin:15px 0}
+    .agree input{width:20px;min-width:20px;margin:2px 0}
+    .agree label{margin:0;font-size:13px;line-height:1.45}
+    a{color:#ffd22b}
+    footer{margin-top:26px;font-size:12px;color:#aaa;line-height:1.6}
+  </style>
+</head>
+<body>
+<main class="app">
+  <header><div class="logo">SAM<b>GO</b> <span style="font-size:13px;letter-spacing:0;color:#aaa">V3</span></div><span aria-hidden="true" style="font-size:31px">🚗</span></header>
+  <div class="tagline">Ta voiture, notre chauffeur.</div>
+  <div class="notice">🚧 <strong>VERSION TEST</strong> — Les comptes et candidatures de test peuvent être enregistrés dans Supabase. Aucune course réelle, aucun paiement et aucune vérification automatique ne sont actifs. N'envoie aucun document d'identité.</div>
+  <section class="panel hero">
+    <h1>Tu as bu ? <span class="gold">Ne prends pas le volant.</span></h1>
+    <p>Le projet SAMGO : un chauffeur indépendant te rejoint et te raccompagne <strong>dans ta propre voiture</strong>.</p>
+    <p class="subtle">Disponible un jour en France, après vérification du cadre légal, des assurances et des chauffeurs.</p>
+  </section>
+  <div class="buttons" aria-label="Choisir son espace">
+    <button type="button" id="goRaccompagner" onclick="setSpace('raccompagner')">🚗 Me faire raccompagner</button>
+    <button type="button" class="alt" id="goChauffeur" onclick="setSpace('chauffeur')">🛴 Devenir chauffeur</button>
+  </div>
+  <section id="spaceRaccompagner" class="panel">
+    <h2>Me faire raccompagner</h2>
+    <p class="subtle">Simulation du prix envisagé. Aucune réservation possible actuellement.</p>
+    <label for="km">Distance de la course</label>
+    <select id="km" onchange="calc()" style="width:100%;border-radius:11px;padding:13px;background:#101010;border:1px solid #555;color:white;font:inherit">
+      <option value="5">5 km</option><option value="10" selected>10 km</option><option value="15">15 km</option><option value="20">20 km</option>
+    </select>
+    <div class="row"><span>Prix client indicatif</span><strong id="fare" class="price">10 €</strong></div>
+    <div class="row subtle"><span>Part chauffeur envisagée : 90 %</span><span id="driverShare">9 €</span></div>
+    <div class="row subtle"><span>Commission SAMGO envisagée : 10 %</span><span id="samgoShare">1 €</span></div>
+    <p class="tiny line">Grille non définitive. Assurance, distance d'approche, trajets de retour, impôts et frais non compris.</p>
+  </section>
+  <section id="spaceChauffeur" class="panel hidden">
+    <h2>Devenir chauffeur SAMGO</h2>
+    <p>Tu veux conduire la voiture des clients en tant qu'indépendant ? Crée d'abord ton compte de test, puis dépose ta candidature.</p>
+    <div class="notice">🔒 Pour l'instant, <strong>pas de photo, pas de permis, pas de carte d'identité ni de selfie</strong> à transmettre sur ce site. On créera ensuite un espace privé adapté et des vérifications sécurisées.</div>
+    <div id="candidateForm" class="hidden">
+      <h3>Ma candidature de test</h3>
+      <label for="nomAffiche">Prénom et nom d'affichage</label>
+      <input id="nomAffiche" autocomplete="name" maxlength="100" placeholder="Ex. Karim D." />
+      <div class="agree"><input id="permisDeclare" type="checkbox" /><label for="permisDeclare">Je comprends qu'un permis B valide, un statut professionnel conforme et des assurances adaptées seront exigés avant toute mission.</label></div>
+      <button type="button" id="applyBtn" onclick="applyDriver()">Envoyer ma candidature de test</button>
+      <p id="applyStatus" class="status" role="status" aria-live="polite">Le dossier sera en attente de validation. Aucune course ne sera attribuée.</p>
+    </div>
+  </section>
+  <section class="panel" id="authPanel">
+    <h2 id="accountTitle">Créer mon compte</h2>
+    <div id="loggedOut">
+      <div class="switch"><button type="button" id="signupModeBtn" onclick="setAuthMode('signup')">M'inscrire</button><button type="button" class="alt" id="signinModeBtn" onclick="setAuthMode('signin')">Déjà inscrit</button></div>
+      <form id="authForm" onsubmit="handleAuth(event)">
+        <label for="email">Adresse e-mail</label>
+        <input id="email" type="email" placeholder="nom@exemple.fr" autocomplete="email" maxlength="254" required />
+        <label for="password">Mot de passe</label>
+        <input id="password" type="password" placeholder="8 caractères minimum" autocomplete="new-password" minlength="8" required />
+        <div class="agree" id="testAcknowledgement"><input type="checkbox" id="ack" required /><label for="ack">Je comprends que SAMGO est en phase de test et qu'aucune course ni prestation réelle n'est disponible.</label></div>
+        <button type="submit" id="authBtn">Créer mon compte</button>
+      </form>
+    </div>
+    <div id="loggedIn" class="hidden">
+      <p class="subtle">Connecté : <strong id="userEmail"></strong></p>
+      <p id="profileStatus" class="subtle">Compte de test actif.</p>
+      <button type="button" class="alt" onclick="signOut()">Me déconnecter</button>
+    </div>
+    <p id="authStatus" class="status" role="status" aria-live="polite">Tu peux créer un compte de test ou te connecter.</p>
+  </section>
+  <section class="panel"><h2>❤️ Prenez soin de vous et de vos amis.</h2><p>Si tu as consommé de l'alcool, ne conduis pas. Prévois une solution sûre pour rentrer.</p><strong class="gold">SAMGO — Ta voiture, notre chauffeur.</strong></section>
+  <footer>© SAMGO — Prototype de test. Ne transmets pas de documents sensibles. Les inscriptions ne constituent pas une embauche ni une autorisation de conduire. La mise en service nécessitera des contrats et assurances adaptés ainsi que les informations légales et de confidentialité obligatoires.</footer>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+'use strict';
+// Clé publishable : publique et prévue pour être placée côté navigateur. Ne jamais insérer service_role / secret ici.
+const URL='https://tgwdycgwgfisuskxwkvk.supabase.co';
+const PUBLISHABLE_KEY='sb_publishable__7iZjXTqZLuuNQje8HF5wA_B6gKLoI0';
+const $=id=>document.getElementById(id);
+let space='raccompagner',authMode='signup',sessionUser=null,client=null,busy=false;
+try { if(window.supabase) client=window.supabase.createClient(URL,PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}); }
+catch(err){ console.error('Connexion Supabase indisponible',err); }
+function setStatus(id,text,type='') { const e=$(id);e.textContent=text;e.className='status'+(type?' '+type:''); }
+function money(n){return n.toLocaleString('fr-FR',{style:'currency',currency:'EUR'});}
+function calc(){const v=Number($('km').value);$('fare').textContent=money(v);$('driverShare').textContent=money(v*.9);$('samgoShare').textContent=money(v*.1)}
+function setSpace(mode){space=mode;const d=mode==='chauffeur';$('spaceChauffeur').classList.toggle('hidden',!d);$('spaceRaccompagner').classList.toggle('hidden',d);$('goChauffeur').classList.toggle('alt',!d);$('goRaccompagner').classList.toggle('alt',d);$('accountTitle').textContent=sessionUser?'Mon compte':(d?'Créer mon compte chauffeur':'Créer mon compte');refreshCandidate();}
+function setAuthMode(mode){authMode=mode;const signingUp=mode==='signup';$('signupModeBtn').classList.toggle('alt',!signingUp);$('signinModeBtn').classList.toggle('alt',signingUp);$('testAcknowledgement').classList.toggle('hidden',!signingUp);$('ack').required=signingUp;$('password').autocomplete=signingUp?'new-password':'current-password';$('authBtn').textContent=signingUp?'Créer mon compte':'Me connecter';}
+function errText(error){if(!error)return 'Une erreur est survenue.';const s=(error.message||'').toLowerCase();if(s.includes('invalid login credentials'))return 'E-mail ou mot de passe incorrect.';if(s.includes('email not confirmed'))return 'Confirme ton adresse avec le lien reçu par e-mail.';if(s.includes('user already registered'))return 'Cet e-mail est déjà utilisé. Choisis « Déjà inscrit ».';if(s.includes('rate limit'))return 'Trop de tentatives. Réessaie plus tard.';return error.message||'La connexion a échoué.';}
+async function handleAuth(e){e.preventDefault();if(!client)return setStatus('authStatus','La bibliothèque Supabase n’a pas chargé. Vérifie la connexion internet et recharge la page.','error');if(busy)return;const email=$('email').value.trim(),password=$('password').value;busy=true;$('authBtn').disabled=true;setStatus('authStatus','Connexion en cours…');try{
+ let result;
+ if(authMode==='signup'){
+   result=await client.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
+   if(result.error)throw result.error;
+   setStatus('authStatus',result.data.session?'Compte de test créé et connecté.':'Inscription demandée. Vérifie ta boîte e-mail et clique sur le lien de confirmation. Ensuite, reviens te connecter.','success');
+ }else{
+   result=await client.auth.signInWithPassword({email,password});
+   if(result.error)throw result.error;
+   setStatus('authStatus','Connexion réussie.','success');
+ }
+ await refreshUser();
+}catch(err){setStatus('authStatus',errText(err),'error')}finally{busy=false;$('authBtn').disabled=false;}
+}
+async function refreshUser(){if(!client)return;try{const {data,error}=await client.auth.getUser();sessionUser=error?null:data.user;}catch{sessionUser=null}
+ const logged=!!sessionUser;$('loggedOut').classList.toggle('hidden',logged);$('loggedIn').classList.toggle('hidden',!logged);
+ $('userEmail').textContent=logged?(sessionUser.email||'Compte confirmé'):'';
+ if(logged){$('accountTitle').textContent='Mon compte';$('profileStatus').textContent='Tu peux déposer une candidature de test si tu souhaites devenir chauffeur.';}
+ else $('accountTitle').textContent=space==='chauffeur'?'Créer mon compte chauffeur':'Créer mon compte';
+ await refreshCandidate();
+}
+async function refreshCandidate(){const visible=!!sessionUser&&space==='chauffeur';$('candidateForm').classList.toggle('hidden',!visible);if(!visible||!client)return;
+ try {const {data,error}=await client.from('candidatures_chauffeur').select('statut, nom_affiche, cree_le').eq('utilisateur_id',sessionUser.id).maybeSingle();
+ if(error){setStatus('applyStatus','Impossible de vérifier la candidature. '+errText(error),'error');return;}
+ if(data){const statuses={en_attente:'En attente',a_completer:'À compléter',approuve:'Approuvée',refuse:'Refusée'};setStatus('applyStatus','Candidature de test déjà reçue — Statut : '+(statuses[data.statut]||'En cours')+'. Aucune mission réelle ne peut être acceptée.','success');$('applyBtn').disabled=true;$('nomAffiche').value=data.nom_affiche||'';$('nomAffiche').disabled=true;}
+ else {setStatus('applyStatus','Aucune candidature enregistrée pour ce compte.');$('applyBtn').disabled=false;$('nomAffiche').disabled=false;}
+ }catch{setStatus('applyStatus','Impossible de charger la candidature pour le moment.','error')}
+}
+async function applyDriver(){if(!client||!sessionUser)return setStatus('applyStatus','Connecte-toi pour envoyer une candidature.','error');const name=$('nomAffiche').value.trim();if(name.length<2||name.length>100)return setStatus('applyStatus','Entre un nom d’affichage de 2 à 100 caractères.','error');if(!$('permisDeclare').checked)return setStatus('applyStatus','Confirme que tu as compris les conditions de validation.','error');$('applyBtn').disabled=true;setStatus('applyStatus','Envoi en cours…');try{const {error}=await client.from('candidatures_chauffeur').insert({utilisateur_id:sessionUser.id,nom_affiche:name});if(error)throw error;setStatus('applyStatus','Candidature de test enregistrée ! Statut : en attente. Tu ne peux pas encore effectuer de courses.','success');await refreshCandidate();}catch(err){setStatus('applyStatus',err?.code==='23505'?'Une candidature existe déjà pour ce compte.':errText(err),'error');$('applyBtn').disabled=false;}}
+async function signOut(){if(!client)return;await client.auth.signOut();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
+calc();setAuthMode('signup');setSpace('raccompagner');
+if(client){refreshUser();client.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT'||event==='USER_UPDATED') setTimeout(refreshUser,0);});}
+else setStatus('authStatus','Connexion Supabase indisponible. Recharge la page avec Internet activé.','error');
+</script>
+</body></html>
