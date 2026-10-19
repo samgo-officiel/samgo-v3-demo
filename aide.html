@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101010"><meta name="description" content="Assistance et signalements SAMGO — version de test.">
+<title>SAMGO — Assistance</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#312916,#101010 52%);color:#f7f7f7}
+main{max-width:730px;margin:0 auto;padding:23px 16px 80px}header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-size:31px;letter-spacing:-1.5px;font-weight:950}.brand b,.gold{color:#ffd34a}a{color:#ffd34a}
+h1{font-size:29px;margin:16px 0 8px}h2{font-size:21px;margin:0 0 12px}p{line-height:1.5}
+.panel{background:#1b1b1b;border:1px solid #484238;border-radius:18px;padding:18px;margin:17px 0}
+.notice{padding:13px;border-radius:12px;background:#332a17;border:1px solid #765e2c;color:#ffe6a5;font-size:14px;line-height:1.5}
+.notice.alert{background:#341e20;border-color:#975d59;color:#ffd4d1}.notice.ok{background:#1c3928;border-color:#3a8257;color:#b3f5cf}
+.subtle{font-size:13px;color:#c6c6c6}.quick{display:flex;flex-wrap:wrap;gap:9px;margin:13px 0}
+button{border:0;border-radius:12px;background:#ffd34a;color:#181818;font:700 15px system-ui;padding:12px 14px;min-height:44px;cursor:pointer}
+button.alt{background:#353535;color:#fff;border:1px solid #666}button:disabled{opacity:.6;cursor:wait}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #ffdf75;outline-offset:2px}
+#chat{min-height:180px;max-height:370px;overflow-y:auto;border:1px solid #444;border-radius:15px;padding:12px;background:#131313}
+.msg{padding:12px 14px;line-height:1.5;border-radius:13px;margin:9px 0;max-width:92%;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.bot{background:#292929;border:1px solid #434343;margin-right:auto}.msg.user{background:#55451d;border:1px solid #9f813c;margin-left:auto}
+.input-row{display:flex;gap:8px;margin:10px 0}input,textarea,select{background:#111;color:#fff;border:1px solid #666;border-radius:12px;font:inherit;padding:12px;width:100%;min-width:0}
+textarea{min-height:120px;resize:vertical}label{display:block;margin:13px 0 6px;font-weight:600;font-size:14px}.hidden{display:none!important}
+.login{display:grid;gap:9px}#ticketFeedback{margin-top:14px;white-space:pre-wrap}footer{margin-top:30px;color:#b9b9b9;font-size:13px;line-height:1.6}
+@media(max-width:460px){h1{font-size:25px}.input-row button{padding:9px}.panel{padding:15px}}
+</style>
+</head>
+<body><main>
+<header><div class="brand">SAM<b>GO</b> <span style="font-weight:500;font-size:13px;letter-spacing:0">AIDE</span></div><a href="./index.html">← Accueil</a></header>
+<h1>Une question ? <span class="gold">On est là.</span></h1>
+<p>Notre assistant automatique répond aux questions courantes et peut enregistrer un signalement pour l'équipe SAMGO.</p>
+<div class="notice">🚧 <strong>VERSION DE TEST.</strong> SAMGO ne propose pas encore de courses réelles. Cet assistant donne des réponses prédéfinies : il n'est pas encore connecté à un modèle d'IA. Les alertes par e-mail ne sont pas activées. Les signalements enregistrés ne sont pas surveillés en permanence.</div>
+<section class="panel" aria-label="Questions à l'assistant">
+<h2>🤖 Assistant SAMGO</h2>
+<div class="quick" aria-label="Questions fréquentes">
+<button class="alt" type="button" data-question="Combien coûte une course ?">💶 Prix</button>
+<button class="alt" type="button" data-question="Comment commander un chauffeur ?">🚗 Réserver</button>
+<button class="alt" type="button" data-question="Comment devenir chauffeur ?">🛴 Chauffeur</button>
+<button class="alt" type="button" data-question="Comment fonctionne l'assurance ?">🛡️ Assurance</button>
+<button class="alt" type="button" data-question="J'ai oublié mon mot de passe">🔑 Mon compte</button>
+</div>
+<div id="chat" role="log" aria-live="polite" aria-label="Conversation"><div class="msg bot">Bonjour 👋 Je suis l'assistant automatique SAMGO. Pose-moi une question ou utilise les boutons ci-dessus. En cas de problème important, utilise « Signaler un problème » ci-dessous.</div></div>
+<form id="askForm" class="input-row"><input id="question" name="question" aria-label="Ta question" placeholder="Écris ta question ici..." maxlength="350" required><button type="submit">Envoyer</button></form>
+</section>
+<section class="panel" id="ticketSection">
+<h2>🚨 Signaler un problème</h2>
+<div class="notice alert"><strong>Danger immédiat, accident ou agression ?</strong> Appelle les secours au <strong>112</strong> (ou 17 pour la police, 15 pour le SAMU en France). N'attends pas une réponse de ce site.</div>
+<p class="subtle">En version test, ton signalement est stocké dans un espace sécurisé consultable par l'administrateur. Aucun e-mail automatique ne part pour le moment. Ne transmets pas ici de carte d'identité, pièce médicale ou données bancaires.</p>
+<div id="loginBox" class="hidden">
+<p>Pour enregistrer ton signalement, connecte-toi à ton compte de test SAMGO.</p>
+<form id="loginForm" class="login"><label for="supportEmail">Adresse e-mail</label><input id="supportEmail" type="email" autocomplete="username" maxlength="254" required><label for="supportPassword">Mot de passe</label><input id="supportPassword" type="password" autocomplete="current-password" required><button type="submit" id="loginButton">Me connecter</button></form>
+</div>
+<div id="loggedBox" class="hidden"><p class="subtle">Connecté : <strong id="loggedEmail"></strong> · <button class="alt" style="min-height:35px;padding:6px 11px" type="button" id="logoutButton">Déconnexion</button></p></div>
+<form id="ticketForm" class="hidden">
+<label for="categorie">Type de problème</label><select id="categorie" required>
+<option value="" selected disabled>Choisir un problème</option>
+<option value="question_compte">Compte ou connexion</option>
+<option value="chauffeur_absent">Chauffeur absent (simulation)</option>
+<option value="paiement">Question de paiement (simulation)</option>
+<option value="comportement">Comportement d'un chauffeur (test)</option>
+<option value="accident">Accident</option>
+<option value="agression">Agression</option>
+<option value="danger">Danger ou menace</option>
+<option value="autre">Autre problème</option>
+</select>
+<label for="sujet">Sujet</label><input id="sujet" maxlength="120" minlength="4" placeholder="Exemple : problème de connexion" required>
+<label for="message">Décris le problème</label><textarea id="message" minlength="10" maxlength="1500" placeholder="Décris brièvement le problème sans envoyer de document sensible." required></textarea>
+<button id="ticketButton" type="submit">Enregistrer le signalement</button>
+</form>
+<div id="ticketFeedback" class="notice" role="status" aria-live="polite">Vérification de ton compte…</div>
+</section>
+<footer>SAMGO — Projet en phase de test. Les réponses de l'assistant sont informatives et ne remplacent pas les secours, l'assurance, ni un conseil juridique.</footer>
+</main>
+<script>
+(function(){
+'use strict';
+const BASE='https://tgwdycgwgfisuskxwkvk.supabase.co';
+const KEY='sb_publishable__7iZjXTqZLuuNQje8HF5wA_B6gKLoI0';
+const STORAGE='samgo_v3_test_session';
+const $=id=>document.getElementById(id);
+let session=null,user=null,loading=false;
+try{session=JSON.parse(sessionStorage.getItem(STORAGE)||'null')}catch(_){session=null}
+function save(s){session=s;try{s?sessionStorage.setItem(STORAGE,JSON.stringify(s)):sessionStorage.removeItem(STORAGE)}catch(_){}}
+async function request(path,method='GET',payload=undefined,authToken=null){
+ const headers={apikey:KEY};if(authToken)headers.Authorization='Bearer '+authToken;
+ if(payload!==undefined)headers['Content-Type']='application/json';
+ if(method==='POST'&&path.startsWith('/rest/'))headers.Prefer='return=representation';
+ let response;try{response=await fetch(BASE+path,{method,headers,body:payload===undefined?undefined:JSON.stringify(payload),cache:'no-store'})}
+ catch(_){throw new Error('Connexion Internet indisponible. Réessaie plus tard.')}
+ const raw=await response.text();let data=null;try{data=raw?JSON.parse(raw):null}catch(_){}
+ if(!response.ok){const err=new Error(String(data&&(data.message||data.msg||data.error_description||data.error)||('Erreur serveur '+response.status)));err.status=response.status;throw err}
+ return data;
+}
+async function token(){
+ if(!session?.access_token)return null;
+ if(Date.now()<Number(session.expires_at||0)-60000)return session.access_token;
+ if(!session.refresh_token){save(null);return null}
+ try{const d=await request('/auth/v1/token?grant_type=refresh_token','POST',{refresh_token:session.refresh_token});save({access_token:d.access_token,refresh_token:d.refresh_token,expires_at:Date.now()+(Number(d.expires_in)||3600)*1000,user:d.user||null});return d.access_token}
+ catch(_){save(null);return null}
+}
+function answer(text){
+ const s=text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+ if(/(?:112|urgence|accident|agression|bless|police|secours|menace|danger|harcel)/.test(s))return '⚠️ Si quelqu’un est en danger, appelle les secours au 112 (France/UE), ou le 17 (police) / 15 (SAMU). Le site SAMGO n’est pas un service d’urgence et les signalements ne sont pas surveillés 24h/24. Tu peux aussi enregistrer le problème dans le formulaire ci-dessous.';
+ if(/(?:prix|tarif|coute|combien|payer|paiement|cout)/.test(s))return '💶 Le tarif envisagé pour les tests est de 1 € par kilomètre (exemple : 10 km = 10 €). Ce prix est indicatif et doit être revu pour couvrir l’approche du chauffeur, son retour et les assurances. Aucun paiement réel n’est disponible.';
+ if(/(?:reser|command|course|trajet|disponib|partir|raccompagn)/.test(s))return '🚗 SAMGO est encore en phase de test. Il n’est pas possible de commander un chauffeur pour une course réelle. L’objectif est qu’un chauffeur indépendant vienne conduire ta propre voiture pour te raccompagner.';
+ if(/(?:chauffeur|devenir|candidat|independant|inscri|permis|recrut)/.test(s))return '🛴 Pour devenir chauffeur, tu peux déposer une candidature de test depuis le site SAMGO. Une vérification du permis, de l’identité, du statut professionnel et d’une assurance adaptée sera obligatoire avant une activité réelle. Une candidature de test n’autorise aucune course.';
+ if(/(?:assur|accrochage|degat|responsab|dommag)/.test(s))return '🛡️ L’assurance des trajets n’est pas encore mise en place ni validée juridiquement. SAMGO ne doit pas proposer de courses réelles avant d’avoir vérifié les contrats, la couverture du conducteur et les responsabilités.';
+ if(/(?:mot de passe|connexion|connect|compte|email|e-mail|mail|identifiant)/.test(s))return '🔑 Si tu as déjà un compte, utilise « Me connecter » sur SAMGO, pas « Créer mon compte ». Si tu as oublié ton mot de passe, la réinitialisation par e-mail peut être temporairement limitée par Supabase. N’envoie jamais ton mot de passe au support.';
+ if(/(?:avis|note|etoile|signal|plainte|probleme|reclam)/.test(s))return '📝 Tu peux enregistrer un signalement de test via le formulaire ci-dessous après connexion. Les problèmes graves sont marqués prioritaires et visibles dans l’administration, mais aucun e-mail automatique n’est envoyé pour le moment.';
+ if(/(?:bonjour|salut|hello|coucou|merci)/.test(s))return 'Bonjour 👋 ! Je peux répondre sur les prix, les comptes, les chauffeurs, l’assurance et les réservations. Choisis une question ou écris-la ici.';
+ return 'Je n’ai pas encore de réponse fiable à cette question. Essaie de parler du prix, des chauffeurs, de l’assurance, d’une réservation ou d’un compte. Pour un problème spécifique, utilise le formulaire de signalement ci-dessous.';
+}
+function addMessage(type,text){const node=document.createElement('div');node.className='msg '+type;node.textContent=text;$('chat').appendChild(node);$('chat').scrollTop=$('chat').scrollHeight}
+function ask(question){const q=question.trim().slice(0,350);if(!q)return;addMessage('user',q);addMessage('bot',answer(q))}
+$('askForm').addEventListener('submit',e=>{e.preventDefault();ask($('question').value);$('question').value=''});
+document.querySelectorAll('[data-question]').forEach(b=>b.addEventListener('click',()=>ask(b.dataset.question)));
+function feedback(message,kind=''){$('ticketFeedback').textContent=message;$('ticketFeedback').className='notice'+(kind?' '+kind:'')}
+function view(){const signed=!!user;$('loginBox').classList.toggle('hidden',signed);$('loggedBox').classList.toggle('hidden',!signed);$('ticketForm').classList.toggle('hidden',!signed);$('loggedEmail').textContent=signed?(user.email||'Compte SAMGO'):''}
+async function init(){try{const t=await token();user=t?await request('/auth/v1/user','GET',undefined,t):null;view();feedback(user?'Tu peux enregistrer un signalement. Il sera consultable par l’administrateur.':'Connecte-toi pour enregistrer un signalement. Tu peux poser tes questions ci-dessus sans connexion.')}catch(err){if(err.status===401||err.status===403)save(null);user=null;view();feedback('Connexion à vérifier : '+err.message,'alert')}}
+$('loginForm').addEventListener('submit',async e=>{e.preventDefault();if(loading)return;loading=true;$('loginButton').disabled=true;try{const d=await request('/auth/v1/token?grant_type=password','POST',{email:$('supportEmail').value.trim(),password:$('supportPassword').value});if(!d.access_token)throw new Error('Aucune session reçue.');save({access_token:d.access_token,refresh_token:d.refresh_token,expires_at:Date.now()+(Number(d.expires_in)||3600)*1000,user:d.user||null});$('supportPassword').value='';await init()}catch(err){feedback(/invalid login/i.test(err.message)?'Adresse e-mail ou mot de passe incorrect.':err.message,'alert')}finally{loading=false;$('loginButton').disabled=false}});
+$('logoutButton').addEventListener('click',async()=>{const t=await token();save(null);user=null;view();feedback('Tu es déconnecté.');if(t)try{await request('/auth/v1/logout','POST',{},t)}catch(_){}});
+$('ticketForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(loading)return;
+ if(!user)return feedback('Connecte-toi pour signaler un problème.','alert');
+ const categorie=$('categorie').value,sujet=$('sujet').value.trim(),message=$('message').value.trim();
+ const allowed=['question_compte','chauffeur_absent','paiement','comportement','accident','agression','danger','autre'];
+ if(!allowed.includes(categorie)||sujet.length<4||sujet.length>120||message.length<10||message.length>1500)return feedback('Vérifie le type de problème, le sujet et ton message.','alert');
+ loading=true;$('ticketButton').disabled=true;feedback('Enregistrement du signalement…');
+ try{const t=await token();if(!t)throw new Error('Session expirée. Reconnecte-toi.');const rows=await request('/rest/v1/support_tickets','POST',{utilisateur_id:user.id,categorie,sujet,message},t);
+  if(!Array.isArray(rows)||rows.length!==1||!rows[0].id)throw new Error('Le serveur n’a pas confirmé le signalement.');
+  const urgent=['accident','agression','danger'].includes(categorie);
+  feedback('✅ Signalement enregistré (référence '+rows[0].id.slice(0,8)+'). '+(urgent?'Priorité critique dans l’espace administrateur. Aucun e-mail automatique n’est encore envoyé. Si tu es en danger, appelle le 112.':'Il est maintenant consultable par l’administrateur.'),'ok');
+  $('ticketForm').reset();
+ }catch(err){feedback('Impossible d’enregistrer le signalement : '+err.message,'alert')}
+ finally{loading=false;$('ticketButton').disabled=false}
+});
+init();
+})();
+</script>
+</body></html>
