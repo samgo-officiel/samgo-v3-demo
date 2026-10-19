@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101010">
+  <meta name="robots" content="noindex,nofollow">
+  <title>SAMGO — Administration des candidatures</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:dark}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#332c1c,#101010 48%);color:#f7f7f7}
+    main{max-width:840px;margin:auto;padding:22px 16px 70px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:14px}
+    .brand{font-size:31px;font-weight:950;letter-spacing:-1.7px}.brand b,h1 span{color:#ffd22b}
+    a{color:#ffd22b}h1{font-size:28px;margin:15px 0 4px}h2{font-size:21px;margin:0 0 12px}h3{font-size:17px;margin:0}
+    p{line-height:1.55}
+    .panel{padding:20px;margin:17px 0;border:1px solid #48443d;border-radius:19px;background:#1c1c1c}
+    .notice{padding:12px 14px;background:#302916;border:1px solid #735d2b;border-radius:12px;color:#ffe2a1;font-size:13px;line-height:1.55}
+    .notice.good{background:#173524;color:#b0f4cb;border-color:#337253}
+    .notice.error{background:#321d1e;color:#ffbbb7;border-color:#8a4846}
+    .hidden{display:none!important}
+    label{display:block;margin:14px 0 6px;color:#ddd;font-size:14px}
+    input,select{width:100%;min-width:0;background:#101010;border:1px solid #666;border-radius:11px;color:white;font:inherit;padding:12px}
+    button{border:0;border-radius:11px;min-height:44px;padding:10px 14px;background:#ffd22b;color:#171717;font:750 14px system-ui,sans-serif;cursor:pointer}
+    button.alt{background:#363636;color:white;border:1px solid #626262}
+    button.danger{color:#ffe0dc;border:1px solid #91514d;background:#3e2424}
+    button:disabled{opacity:.5;cursor:wait}
+    button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #f9d76b;outline-offset:3px}
+    .row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.space{justify-content:space-between}
+    .small{font-size:13px;color:#bbb}.candidate{padding:17px 0;border-bottom:1px solid #424242}.candidate:last-child{border-bottom:0}
+    .candidate p{margin:7px 0}.status{display:inline-block;padding:5px 9px;border-radius:30px;border:1px solid #666;font-size:12px}
+    .status.approuve{color:#b6f2c4;border-color:#43875c}.status.refuse{color:#ffb5b5;border-color:#955555}
+    .status.en_attente{color:#ffe4a0;border-color:#806b31}.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+    .controls button{min-height:43px;font-size:13px}.empty{padding:20px 0;color:#bbb}#feedback{white-space:pre-wrap;margin-top:16px}
+    @media(max-width:550px){h1{font-size:24px}.panel{padding:16px}.controls button{flex:1 1 auto}}
+  </style>
+</head>
+<body>
+<main>
+  <header><div class="brand">SAM<b>GO</b> <span style="font-size:12px;font-weight:500;letter-spacing:0">ADMIN</span></div><a href="./index.html">← Retour au site</a></header>
+  <h1>Gestion des <span>chauffeurs et du support</span></h1>
+  <p class="small">Espace réservé aux administrateurs autorisés de SAMGO. <a href="./aide.html">Tester l’assistant client →</a></p>
+  <div class="notice">🚧 <strong>VERSION DE TEST</strong> — Les validations effectuées ici sont uniquement techniques. Avant toute course réelle, il faudra vérifier le permis, l'identité, le statut professionnel, les assurances et le cadre légal via un dispositif adapté. N'envoie et ne collecte aucun document d'identité sur cette page.</div>
+  <section id="loginPanel" class="panel">
+    <h2>Connexion administrateur</h2>
+    <p class="small">Utilise un compte qui possède déjà le rôle « admin » dans SAMGO. Un compte client ordinaire ne donne pas accès aux candidatures.</p>
+    <form id="loginForm">
+      <label for="email">Adresse e-mail</label>
+      <input id="email" type="email" autocomplete="username" maxlength="254" required>
+      <label for="password">Mot de passe</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <p><button type="submit" id="loginBtn">Me connecter</button></p>
+    </form>
+  </section>
+  <section id="loggedPanel" class="panel hidden">
+    <div class="row space"><div><h2 style="margin-bottom:4px">Mon accès</h2><div id="identity" class="small"></div></div><button id="logoutBtn" type="button" class="alt">Déconnexion</button></div>
+    <p id="permissionInfo" class="small"></p>
+  </section>
+  <section id="adminPanel" class="panel hidden">
+    <div class="row space"><div><h2>Candidatures reçues</h2><p id="counter" class="small">Chargement…</p></div><button id="reloadBtn" class="alt" type="button">↻ Actualiser</button></div>
+    <label for="filter">Filtrer par statut</label>
+    <select id="filter"><option value="all">Toutes les candidatures</option><option value="en_attente">En attente</option><option value="a_completer">À compléter</option><option value="approuve">Approuvées (test)</option><option value="refuse">Refusées</option></select>
+    <div id="candidates" aria-live="polite"></div>
+  </section>
+  <section id="ticketsPanel" class="panel hidden">
+    <div class="row space"><div><h2>🚨 Signalements du service client</h2><p id="ticketsCounter" class="small">Chargement…</p></div><button type="button" class="alt" id="reloadTicketsBtn">↻ Actualiser</button></div>
+    <div class="notice">Les problèmes critiques apparaissent en premier. Les e-mails d’alerte ne sont PAS activés : consulte cette liste manuellement. En cas de danger immédiat, la personne doit contacter le 112.</div>
+    <label for="ticketsFilter">Filtrer les demandes</label>
+    <select id="ticketsFilter"><option value="all">Toutes les demandes</option><option value="critique">🚨 Critiques</option><option value="important">⚠️ Importantes</option><option value="nouveau">Nouvelles</option><option value="en_cours">En cours</option><option value="resolu">Résolues</option></select>
+    <div id="tickets" aria-live="polite"></div>
+  </section>
+  <div id="feedback" class="notice" role="status" aria-live="polite">Préparation de l'espace administrateur…</div>
+  <p class="small">SAMGO — Prototype non commercial. Les autorisations de lecture et de modification sont également contrôlées côté serveur par Supabase.</p>
+</main>
+<script>
+(function(){
+'use strict';
+const BASE='https://tgwdycgwgfisuskxwkvk.supabase.co';
+// Publishable key publique. Ne jamais remplacer par la clé service_role.
+const KEY='sb_publishable__7iZjXTqZLuuNQje8HF5wA_B6gKLoI0';
+const STORAGE='samgo_v3_test_session';
+const $=id=>document.getElementById(id);
+let session=null, user=null, isAdmin=false, applications=[], tickets=[], busy=false;
+try {session=JSON.parse(sessionStorage.getItem(STORAGE)||'null')} catch (_) {session=null}
+function notice(message,kind=''){$('feedback').textContent=message;$('feedback').className='notice'+(kind?' '+kind:'')}
+function saveSession(s){session=s;try{if(s)sessionStorage.setItem(STORAGE,JSON.stringify(s));else sessionStorage.removeItem(STORAGE)}catch(_){}}
+async function request(path,method='GET',body=undefined,tokenValue=null){
+  const headers={apikey:KEY};if(tokenValue)headers.Authorization='Bearer '+tokenValue;
+  if(body!==undefined)headers['Content-Type']='application/json';
+  if(method==='PATCH')headers['Prefer']='return=representation';
+  let response;try{response=await fetch(BASE+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),cache:'no-store'})}
+  catch(_){throw new Error('Impossible de joindre le serveur. Vérifie ta connexion Internet.')}
+  const raw=await response.text();let data=null;try{data=raw?JSON.parse(raw):null}catch(_){data=null}
+  if(!response.ok){const message=data&&(data.msg||data.message||data.error_description||data.error)||('Erreur serveur '+response.status);const error=new Error(String(message));error.status=response.status;throw error}
+  return data;
+}
+async function getToken(){
+  if(!session||!session.access_token)return null;
+  if(Date.now()<Number(session.expires_at||0)-60000)return session.access_token;
+  if(!session.refresh_token){saveSession(null);return null}
+  try{
+    const d=await request('/auth/v1/token?grant_type=refresh_token','POST',{refresh_token:session.refresh_token});
+    saveSession({access_token:d.access_token,refresh_token:d.refresh_token,expires_at:Date.now()+(Number(d.expires_in)||3600)*1000,user:d.user||null});
+    return d.access_token;
+  }catch(_){saveSession(null);return null}
+}
+function busyUI(value){busy=value;$('loginBtn').disabled=value;$('reloadBtn').disabled=value;$('reloadTicketsBtn').disabled=value;
+  document.querySelectorAll('.controls button').forEach(b=>b.disabled=value)}
+function renderAccess(){
+  $('loginPanel').classList.toggle('hidden',!!user);
+  $('loggedPanel').classList.toggle('hidden',!user);
+  $('adminPanel').classList.toggle('hidden',!isAdmin);$('ticketsPanel').classList.toggle('hidden',!isAdmin);
+  $('identity').textContent=user?(user.email||'Compte connecté'):'';
+  $('permissionInfo').textContent=user?(isAdmin?'Accès administrateur confirmé.':'Ce compte n’a pas le rôle administrateur. Utilise un compte autorisé.') : '';
+}
+async function initialize(){
+ busyUI(true);
+ try{
+   const t=await getToken();if(!t){user=null;isAdmin=false;renderAccess();notice('Connecte-toi pour consulter les candidatures.');return}
+   user=await request('/auth/v1/user','GET',undefined,t);
+   const p=new URLSearchParams({select:'role',id:'eq.'+user.id,limit:'1'});
+   const rows=await request('/rest/v1/profils?'+p,'GET',undefined,t);
+   isAdmin=Array.isArray(rows)&&rows.length===1&&rows[0].role==='admin';
+   renderAccess();
+   if(!isAdmin){notice('Accès refusé : seules les personnes ayant le rôle administrateur peuvent consulter les candidatures.','error');return}
+   await Promise.all([loadApplications(),loadTickets()]);
+ }catch(error){if(error.status===401||error.status===403){saveSession(null);user=null;isAdmin=false}renderAccess();notice('Impossible de vérifier cet accès : '+error.message,'error')}
+ finally{busyUI(false)}
+}
+async function signIn(event){
+ event.preventDefault();if(busy)return;busyUI(true);
+ try{
+   const d=await request('/auth/v1/token?grant_type=password','POST',{email:$('email').value.trim(),password:$('password').value});
+   if(!d.access_token)throw new Error('Le serveur n’a pas renvoyé de session.');
+   saveSession({access_token:d.access_token,refresh_token:d.refresh_token,expires_at:Date.now()+(Number(d.expires_in)||3600)*1000,user:d.user||null});
+   $('password').value='';
+ }catch(error){notice((error.message||'').toLowerCase().includes('invalid login')?'E-mail ou mot de passe incorrect.':error.message,'error');busyUI(false);return}
+ busyUI(false);await initialize();
+}
+function field(node,name,value){const p=document.createElement('p');const b=document.createElement('strong');b.textContent=name+' : ';p.appendChild(b);p.appendChild(document.createTextNode(value||'Non renseigné'));node.appendChild(p)}
+const statusLabel=s=>({en_attente:'En attente',a_completer:'À compléter',approuve:'Approuvée (test)',refuse:'Refusée'}[s]||s);
+function button(text,css,action){const e=document.createElement('button');e.type='button';e.textContent=text;if(css)e.className=css;e.addEventListener('click',action);return e}
+function renderApplications(){
+ const parent=$('candidates');parent.replaceChildren();const status=$('filter').value;
+ const filtered=applications.filter(x=>status==='all'||x.statut===status);
+ $('counter').textContent=applications.length+' candidature(s), dont '+applications.filter(x=>x.statut==='en_attente').length+' en attente.';
+ if(!filtered.length){const p=document.createElement('p');p.className='empty';p.textContent='Aucune candidature pour ce filtre.';parent.appendChild(p);return}
+ filtered.forEach(item=>{
+   const box=document.createElement('article');box.className='candidate';
+   const top=document.createElement('div');top.className='row space';
+   const heading=document.createElement('h3');heading.textContent=item.nom_affiche||'Candidat';top.appendChild(heading);
+   const chip=document.createElement('span');chip.className='status '+item.statut;chip.textContent=statusLabel(item.statut);top.appendChild(chip);box.appendChild(top);
+   field(box,'Déposée le',item.cree_le?new Date(item.cree_le).toLocaleDateString('fr-FR'):'Date inconnue');
+   if(item.entreprise_siret)field(box,'SIRET déclaré',item.entreprise_siret);
+   if(item.commentaire)field(box,'Commentaire',item.commentaire);
+   const actions=document.createElement('div');actions.className='controls';
+   [['a_completer','À compléter','alt'],['approuve','Approuver (test)',''],['refuse','Refuser','danger'],['en_attente','Remettre en attente','alt']].forEach(([next,label,css])=>{
+     if(next!==item.statut)actions.appendChild(button(label,css,()=>changeStatus(item,next)));
+   });
+   box.appendChild(actions);parent.appendChild(box);
+ });
+}
+async function loadApplications(){
+ if(!isAdmin)return;
+ try{
+   const t=await getToken();if(!t)throw new Error('Session expirée. Reconnecte-toi.');
+   const rows=await request('/rest/v1/candidatures_chauffeur?select=id,nom_affiche,entreprise_siret,commentaire,statut,cree_le&order=cree_le.desc&limit=100','GET',undefined,t);
+   if(!Array.isArray(rows))throw new Error('Réponse inattendue.');applications=rows;renderApplications();notice('Candidatures chargées. Les décisions sont réservées à la version de test.','good');
+ }catch(error){notice('Impossible de charger les candidatures : '+error.message,'error')}
+}
+async function changeStatus(item,next){
+ if(!isAdmin||busy)return;
+ const prompt=next==='approuve'?
+  'Approuver « '+item.nom_affiche+' » pour les TESTS seulement ? Le profil recevra le rôle chauffeur. Cela ne vérifie pas son permis ni son assurance et ne permet aucune course réelle.':
+  'Passer « '+item.nom_affiche+' » au statut « '+statusLabel(next)+' » ?';
+ if(!confirm(prompt))return;
+ busyUI(true);
+ try{
+   const t=await getToken();if(!t)throw new Error('Session expirée. Reconnecte-toi.');
+   // RLS Supabase autorise la modification seulement aux profils admin.
+   const updated=await request('/rest/v1/candidatures_chauffeur?id=eq.'+encodeURIComponent(item.id),'PATCH',{statut:next},t);
+   if(!Array.isArray(updated)||updated.length!==1||updated[0].id!==item.id||updated[0].statut!==next)throw new Error('La modification n’a pas été confirmée par le serveur.');
+   await loadApplications();notice('Décision enregistrée : '+statusLabel(next)+'. Version test uniquement.','good');
+ }catch(error){notice('La modification a échoué : '+error.message,'error')}
+ finally{busyUI(false)}
+}
+async function logout(){
+ const t=await getToken();saveSession(null);user=null;isAdmin=false;applications=[];tickets=[];renderAccess();notice('Déconnecté.','good');
+ if(t){try{await request('/auth/v1/logout','POST',{},t)}catch(_){}}
+}
+
+// Assistance SAMGO : lecture et traitement réservés aux profils ayant le rôle admin.
+const severityName=v=>({critique:'🚨 Critique',important:'⚠️ Important',normale:'Normal'})[v]||v;
+const stateName=v=>({nouveau:'Nouveau',en_cours:'En cours',resolu:'Résolu'})[v]||v;
+const categoryName=v=>({question_compte:'Compte',chauffeur_absent:'Chauffeur absent',paiement:'Paiement',comportement:'Comportement',accident:'Accident',agression:'Agression',danger:'Danger / menace',autre:'Autre'})[v]||v;
+function renderTickets(){
+ const target=$('tickets');target.replaceChildren();
+ const newCount=tickets.filter(t=>t.statut==='nouveau').length;
+ const urgentCount=tickets.filter(t=>t.gravite==='critique'&&t.statut!=='resolu').length;
+ $('ticketsCounter').textContent=tickets.length+' ticket(s), '+newCount+' nouveau(x), '+urgentCount+' critique(s) non résolu(s).';
+ const f=$('ticketsFilter').value;
+ const list=tickets.filter(t=>f==='all'||t.gravite===f||t.statut===f);
+ if(!list.length){const p=document.createElement('p');p.className='empty';p.textContent='Aucune demande pour ce filtre.';target.appendChild(p);return}
+ list.forEach(item=>{
+   const box=document.createElement('article');box.className='candidate';
+   const top=document.createElement('div');top.className='row space';
+   const heading=document.createElement('h3');heading.textContent=item.sujet||'Sans titre';top.appendChild(heading);
+   const chip=document.createElement('span');chip.className='status '+(item.gravite==='critique'?'refuse':item.gravite==='important'?'en_attente':'approuve');chip.textContent=severityName(item.gravite);top.appendChild(chip);box.appendChild(top);
+   field(box,'Type',categoryName(item.categorie));
+   field(box,'Date',item.cree_le?new Date(item.cree_le).toLocaleString('fr-FR'):'Date inconnue');
+   field(box,'Suivi',stateName(item.statut));
+   const desc=document.createElement('p');desc.textContent=item.message||'';desc.style.whiteSpace='pre-wrap';desc.style.overflowWrap='anywhere';box.appendChild(desc);
+   const controls=document.createElement('div');controls.className='controls';
+   [['en_cours','Prendre en charge'],['resolu','Marquer résolu'],['nouveau','Réouvrir']].forEach(([v,label])=>{
+     if(item.statut!==v)controls.appendChild(button(label,'alt',()=>updateTicket(item,v)));
+   });
+   box.appendChild(controls);target.appendChild(box);
+ });
+}
+async function loadTickets(){
+ if(!isAdmin)return;
+ try{
+   const t=await getToken();if(!t)throw new Error('Session expirée. Reconnecte-toi.');
+   const result=await request('/rest/v1/support_tickets?select=id,categorie,sujet,message,gravite,statut,cree_le&order=cree_le.desc&limit=100','GET',undefined,t);
+   if(!Array.isArray(result))throw new Error('Réponse inattendue.');
+   const order={critique:0,important:1,normale:2};
+   tickets=result.sort((a,b)=>(a.statut==='resolu')-(b.statut==='resolu')||(order[a.gravite]??3)-(order[b.gravite]??3)||new Date(b.cree_le)-new Date(a.cree_le));
+   renderTickets();
+ }catch(e){$('ticketsCounter').textContent='Chargement impossible : '+e.message;notice('Support indisponible : '+e.message,'error')}
+}
+async function updateTicket(item,next){
+ if(!isAdmin||busy)return;
+ if(!confirm('Passer la demande « '+item.sujet+' » à « '+stateName(next)+' » ?'))return;
+ busyUI(true);
+ try{
+   const t=await getToken();if(!t)throw new Error('Session expirée. Reconnecte-toi.');
+   const updated=await request('/rest/v1/support_tickets?id=eq.'+encodeURIComponent(item.id),'PATCH',{statut:next},t);
+   if(!Array.isArray(updated)||updated.length!==1||updated[0].id!==item.id||updated[0].statut!==next)throw new Error('Mise à jour non confirmée.');
+   await loadTickets();notice('Statut du signalement enregistré. Aucun e-mail n’est envoyé.','good');
+ }catch(e){notice('Impossible de mettre à jour le signalement : '+e.message,'error')}
+ finally{busyUI(false)}
+}
+$('loginForm').addEventListener('submit',signIn);
+$('reloadBtn').addEventListener('click',loadApplications);
+$('logoutBtn').addEventListener('click',logout);
+$('filter').addEventListener('change',renderApplications);$('reloadTicketsBtn').addEventListener('click',loadTickets);$('ticketsFilter').addEventListener('change',renderTickets);
+initialize();
+})();
+</script>
+</body>
+</html>
