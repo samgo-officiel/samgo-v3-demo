@@ -1,0 +1,193 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101010"><title>SAMGO — Tarifs et disponibilités connectés (test)</title><style>:root{font-family:system-ui,-apple-system,sans-serif;color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#302714,#101010 45%);color:#f8f8f8}.app{max-width:650px;margin:auto;padding:23px 16px 65px}.logo{font-size:39px;font-weight:950;letter-spacing:-2px}.logo b,.gold{color:#ffd22b}.sub{color:#bbb;font-size:13px}.panel{background:#1b1b1b;border:1px solid #444;border-radius:20px;padding:19px;margin:16px 0}.notice{background:#332914;border:1px solid #776020;border-radius:12px;padding:12px;color:#ffe29a;font-size:13px;line-height:1.5}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}button{cursor:pointer;background:#ffd22b;border:0;border-radius:12px;padding:14px 10px;color:#111;font-size:15px;font-weight:800;min-height:48px}button.alt{background:#333;color:#fff}button:disabled{opacity:.45;cursor:not-allowed}label{display:block;margin:15px 0 6px;font-size:14px}input,select{display:block;width:100%;padding:13px;background:#111;color:#fff;border:1px solid #555;border-radius:11px;font:inherit}h1{font-size:27px}h2{font-size:21px}h3{margin:0 0 8px}.hidden{display:none}.offer{border:1px solid #555;border-radius:16px;padding:16px;margin:13px 0;background:#202020}.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.price{font-size:27px;font-weight:900;color:#ffd22b}.green{color:#a4efb9}.muted{color:#aaa;font-size:13px}.offer button{width:100%;margin-top:12px}.distance-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:20px;font-size:17px}.distance-head strong:last-child{font-size:23px;color:#ffd22b}input[type=range]{accent-color:#ffd22b;padding:0;margin:24px 0;height:12px;border:0}.offer{background:#191919}.offer h3{font-size:22px}.offer .price{font-size:30px}.pill{border-radius:999px;padding:4px 9px;font-size:12px;background:#25442f;color:#b6f8c7;display:inline-block}.off{background:#393939;color:#bbb}.check{display:flex;align-items:center;gap:12px}.check input{width:22px;height:22px}.check label{margin:0}footer{font-size:12px;color:#aaa;line-height:1.6;margin-top:25px}
+.auth-card{border:1px solid #585858;border-radius:15px;background:#151515;padding:14px;margin:16px 0}
+.status{white-space:pre-wrap;line-height:1.45;font-size:13px;color:#ddd;margin:12px 0}
+.status.error{color:#ffb4ac}.status.ok{color:#b5ffc6}
+.mode-buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}
+.mode-buttons button{font-size:14px}
+.field-note{font-size:12px;color:#bbb;line-height:1.5}
+a{color:#ffd22b}
+.offer .empty{line-height:1.5}
+.footer-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px}
+button.secondary{background:#454545;color:white}
+input:focus-visible,button:focus-visible{outline:3px solid #ffe38b;outline-offset:2px}
+.offer .muted{line-height:1.4}
+</style></head><body><main class="app"><header><div class="logo">SAM<b>GO</b> <span class="sub">V5 TEST</span></div><div class="sub">Ta voiture, notre chauffeur.</div></header><div class="notice">🚧 <b>VERSION TEST</b> — Les offres des chauffeurs approuvés sont lues dans Supabase. La carte, les distances d'approche, la vérification du véhicule, les paiements et les réservations réelles ne fonctionnent pas encore. Ne transmets aucun document d'identité ici.</div><div class="tabs"><button id="clientTab" onclick="showTab('client')">🚗 Je suis client</button><button class="alt" id="driverTab" onclick="showTab('driver')">🛴 Je suis chauffeur</button></div><section id="client" class="panel">
+<h1>Choisis ton chauffeur</h1>
+<p class="sub">Le chauffeur fixe librement son tarif au km et sa distance maximale. Commission SAMGO au lancement : <b class="gold">0 %</b>.</p>
+<label for="from">Adresse exacte de départ (non utilisée dans ce test)</label>
+<input id="from" placeholder="Ex. Place de la Bourse, Bordeaux" autocomplete="off">
+<label for="to">Adresse de destination (non utilisée dans ce test)</label>
+<input id="to" placeholder="Ex. Gare Saint-Jean, Bordeaux" autocomplete="off">
+<div class="distance-head"><strong>Distance de la course</strong><strong><span id="kmValue">17</span> km</strong></div>
+<input aria-label="Distance de la course" id="km" type="range" min="1" max="30" step="1" value="17" oninput="renderOffers()">
+<p class="muted">Modifie la distance pour voir les prix changer. La distance est saisie manuellement : aucun calcul d'itinéraire n'est encore actif.</p>
+<div class="mode-buttons"><button id="realMode" onclick="showMode('real')">Offres réelles (test)</button><button class="alt" id="demoMode" onclick="showMode('demo')">Voir la simulation</button></div>
+<p id="offersStatus" class="status" role="status" aria-live="polite">Chargement des offres approuvées…</p>
+<h2 id="offersTitle">Chauffeurs approuvés disponibles</h2>
+<div id="offers"></div>
+<div class="notice">Le bouton « Choisir ce chauffeur » est désactivé pour toute course réelle. Aucune réservation n'est enregistrée et aucune adresse de trajet n'est envoyée à Supabase.</div>
+</section><section id="driver" class="panel hidden">
+<h1>Mon espace chauffeur</h1>
+<p class="sub">Connecte-toi avec ton compte SAMGO existant. Seuls les chauffeurs dont la candidature a été <strong>approuvée</strong> peuvent publier un tarif dans Supabase.</p>
+<div id="loginBox" class="auth-card">
+<form id="loginForm" onsubmit="loginDriver(event)">
+<label for="email">Adresse e-mail de mon compte SAMGO</label>
+<input id="email" type="email" maxlength="254" required autocomplete="username" placeholder="prenom@exemple.fr">
+<label for="password">Mot de passe</label>
+<input id="password" type="password" required autocomplete="current-password" placeholder="Ton mot de passe SAMGO">
+<button id="loginBtn" type="submit" style="width:100%;margin-top:15px">Me connecter</button>
+</form>
+<p class="field-note">Pas encore de compte ? <a href="./index.html">Créer mon compte de test et demander à devenir chauffeur</a>. Ne partage jamais ton mot de passe.</p>
+</div>
+<div id="signedIn" class="auth-card hidden"><p class="sub">Connecté : <strong id="connectedEmail"></strong></p><button class="secondary" type="button" onclick="logoutDriver()">Me déconnecter</button></div>
+<p id="authStatus" class="status" role="status" aria-live="polite">Connecte-toi pour retrouver ton offre.</p>
+<div id="driverEditor" class="hidden">
+<label for="name">Mon nom public affiché aux clients</label><input id="name" maxlength="40" placeholder="Ex. Karim">
+<label for="rate">Mon tarif au kilomètre (€)</label><input id="rate" type="number" min="0.5" max="100" step="0.1" inputmode="decimal" value="2">
+<label for="maxKm">Ma distance maximale par course (km)</label><input id="maxKm" type="number" min="1" max="200" step="1" inputmode="numeric" value="20">
+<div class="check" style="margin:20px 0"><input type="checkbox" id="available"><label for="available">Je suis disponible pour apparaître côté client</label></div>
+<button id="saveBtn" style="width:100%" onclick="saveOffer()">💛 Enregistrer mon offre dans SAMGO</button>
+<p id="saved" class="status" role="status" aria-live="polite"></p>
+<div class="notice">Ce sont de vrais réglages de profil de test. « Disponible » ne signifie pas que tu es autorisé à effectuer des courses : le service n'est pas encore lancé. Ne te déplace pas pour une demande.</div>
+</div>
+</section><footer>© SAMGO — Prototype connecté de test, sans réservation. Avant tout lancement réel : validation des chauffeurs, assurance adaptée à la conduite de véhicules de clients, contrats, conformité juridique et protection des données.</footer></main><script>
+'use strict';
+// Clé publishable : publique, sans accès administrateur. Ne jamais ajouter de clé secret/service_role ici.
+const SB_URL='https://tgwdycgwgfisuskxwkvk.supabase.co';
+const SB_KEY='sb_publishable__7iZjXTqZLuuNQje8HF5wA_B6gKLoI0';
+const SESSION_KEY='samgo_v5_chauffeur_session';
+const examples=[
+  {name:'Karim (fictif)',rate:2,maxKm:20,approach:'1,2 km',available:true},
+  {name:'Mehdi (fictif)',rate:1.8,maxKm:15,approach:'2,5 km',available:true},
+  {name:'Sofiane (fictif)',rate:2.5,maxKm:10,approach:'4 km',available:true}
+];
+const $=id=>document.getElementById(id);
+const money=n=>n.toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
+let mode='real', session=null, signedUser=null, approved=false, realOffers=[], loading=false;
+try{session=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null')}catch{session=null}
+function status(id,message,kind=''){const e=$(id);e.textContent=message;e.className='status'+(kind?' '+kind:'')}
+function errMessage(e){const s=(e&&e.message||'').toLowerCase();if(s.includes('invalid login credentials'))return 'E-mail ou mot de passe incorrect.';if(s.includes('email not confirmed'))return 'Confirme ton adresse e-mail avant de te connecter.';if(s.includes('jwt expired'))return 'Session expirée. Reconnecte-toi.';return (e&&e.message)||'Une erreur est survenue.'}
+function saveSession(data){
+  if(!data||!data.access_token)throw new Error('Session de connexion invalide.');
+  session={access_token:data.access_token,refresh_token:data.refresh_token,expires_at:Date.now()+(Number(data.expires_in)||3600)*1000};
+  try{sessionStorage.setItem(SESSION_KEY,JSON.stringify(session))}catch{}
+}
+function clearSession(){session=null;signedUser=null;approved=false;try{sessionStorage.removeItem(SESSION_KEY)}catch{}}
+async function api(path,{method='GET',body,token=null,prefer=null}={}){
+  const headers={apikey:SB_KEY,Accept:'application/json'};
+  if(token)headers.Authorization='Bearer '+token;
+  if(body!==undefined)headers['Content-Type']='application/json';
+  if(prefer)headers.Prefer=prefer;
+  let response;
+  try{response=await fetch(SB_URL+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body),cache:'no-store'})}
+  catch{throw new Error('Connexion à Supabase impossible. Vérifie Internet puis réessaie.')}
+  const raw=await response.text();let data=null;
+  try{data=raw?JSON.parse(raw):null}catch{data=null}
+  if(!response.ok){
+    const message=data&&(data.msg||data.message||data.error_description||data.error)||('Erreur du serveur ('+response.status+').');
+    const err=new Error(String(message));err.status=response.status;throw err;
+  }
+  return data;
+}
+async function token(){
+  if(!session||!session.access_token)return null;
+  if(Date.now()<(session.expires_at||0)-60000)return session.access_token;
+  try{const renewed=await api('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:{refresh_token:session.refresh_token}});saveSession(renewed);return session.access_token}
+  catch{clearSession();return null}
+}
+function showTab(tab){
+  $('client').classList.toggle('hidden',tab!=='client');$('driver').classList.toggle('hidden',tab!=='driver');
+  $('clientTab').classList.toggle('alt',tab!=='client');$('driverTab').classList.toggle('alt',tab!=='driver');
+  if(tab==='client'&&mode==='real')refreshOffers();else if(tab==='client')renderOffers();
+}
+function showMode(newMode){
+  mode=newMode;$('realMode').classList.toggle('alt',mode!=='real');$('demoMode').classList.toggle('alt',mode!=='demo');
+  $('offersTitle').textContent=mode==='real'?'Chauffeurs approuvés disponibles':'Chauffeurs fictifs (simulation)';
+  if(mode==='real')refreshOffers();else {status('offersStatus','Mode simulation : aucune offre fictive n’est enregistrée dans Supabase.');renderOffers()}
+}
+async function refreshOffers(){
+  if(mode!=='real')return;
+  const thisMode=mode;status('offersStatus','Recherche des chauffeurs approuvés disponibles…');
+  try{
+    // Requête sans session : RLS n'affiche que les offres disponibles et approuvées.
+    const result=await api('/rest/v1/offres_chauffeurs?select=nom_public,tarif_km,distance_max_km,disponible&disponible=eq.true&order=tarif_km.asc');
+    realOffers=Array.isArray(result)?result:[];
+    if(mode!==thisMode)return;
+    status('offersStatus',realOffers.length?realOffers.length+' offre(s) disponible(s), pour simulation de prix seulement.':'Aucun chauffeur approuvé et disponible pour le moment. Tu peux consulter les chauffeurs fictifs via « Voir la simulation ».');
+    renderOffers();
+  }catch(e){if(mode===thisMode){realOffers=[];status('offersStatus','Impossible de récupérer les offres : '+errMessage(e),'error');renderOffers()}}
+}
+function renderOffers(){
+  const km=Number($('km').value),root=$('offers');$('kmValue').textContent=km;root.replaceChildren();
+  if(!Number.isFinite(km)||km<1||km>30){root.textContent='Distance invalide.';return}
+  const drivers=mode==='real'?realOffers.map(d=>({name:d.nom_public||'Chauffeur SAMGO',rate:Number(d.tarif_km),maxKm:Number(d.distance_max_km),available:d.disponible,approach:'non calculée'})):examples;
+  if(!drivers.length){const note=document.createElement('p');note.className='muted';note.textContent='Aucune offre à afficher dans ce mode.';root.append(note);return}
+  for(const d of drivers){
+    const valid=d.available&&km<=d.maxKm;
+    const card=document.createElement('article');card.className='offer';
+    const h=document.createElement('h3');h.textContent='🚗 '+d.name;
+    const badge=document.createElement('span');badge.className='pill'+(valid?'':' off');badge.textContent=!d.available?'Indisponible':valid?'Disponible':'Hors limite';
+    const near=document.createElement('p');near.className='sub';near.textContent=mode==='real'?'📍 Distance du chauffeur : non calculée':'📍 Chauffeur fictif à '+d.approach+' du client';
+    const line=document.createElement('div');line.className='row';
+    const info=document.createElement('div');info.className='muted';info.textContent='Tarif : '+money(d.rate)+'/km · Max : '+d.maxKm+' km';
+    const total=document.createElement('strong');total.className='price';total.textContent=money(km*d.rate);line.append(info,total);
+    const btn=document.createElement('button');btn.textContent=valid?'Choisir ce chauffeur':'Hors limite';btn.disabled=!valid;
+    btn.onclick=()=>alert('SAMGO est encore en test. Aucune réservation réelle possible.');
+    const note=document.createElement('p');note.className='muted';note.textContent='Prix indicatif · Commission SAMGO : 0 € · Aucune réservation';
+    card.append(h,badge,near,line,btn,note);root.append(card);
+  }
+}
+function refreshLoginUi(){
+  $('loginBox').classList.toggle('hidden',!!signedUser);
+  $('signedIn').classList.toggle('hidden',!signedUser);
+  $('driverEditor').classList.toggle('hidden',!approved);
+  $('connectedEmail').textContent=signedUser?(signedUser.email||'Compte SAMGO'):'';
+}
+async function loginDriver(event){
+  event.preventDefault();if(loading)return;loading=true;$('loginBtn').disabled=true;
+  status('authStatus','Connexion au compte SAMGO…');
+  try{
+    const result=await api('/auth/v1/token?grant_type=password',{method:'POST',body:{email:$('email').value.trim(),password:$('password').value}});
+    saveSession(result);$('password').value='';await loadDriver();
+  }catch(e){status('authStatus',errMessage(e),'error')}
+  finally{loading=false;$('loginBtn').disabled=false}
+}
+async function loadDriver(){
+  const t=await token();if(!t){clearSession();refreshLoginUi();status('authStatus','Connecte-toi avec ton compte SAMGO.');return}
+  try{
+    const user=await api('/auth/v1/user',{token:t});signedUser=user;
+    const qs=new URLSearchParams({select:'nom_affiche,statut',utilisateur_id:'eq.'+signedUser.id,limit:'1'});
+    const results=await api('/rest/v1/candidatures_chauffeur?'+qs,{token:t});
+    const candidate=Array.isArray(results)?results[0]:null;
+    approved=!!candidate&&candidate.statut==='approuve';refreshLoginUi();
+    if(!candidate){status('authStatus','Compte connecté, mais aucune candidature chauffeur trouvée. Tu peux déposer une candidature sur la page principale SAMGO.');return}
+    if(!approved){const labels={en_attente:'en attente',a_completer:'à compléter',refuse:'refusée'};status('authStatus','Candidature chauffeur '+(labels[candidate.statut]||candidate.statut)+'. Tu pourras enregistrer ton tarif après approbation.');return}
+    status('authStatus','✅ Chauffeur approuvé. Tu peux enregistrer et modifier ton tarif dans Supabase.','ok');
+    const ownQ=new URLSearchParams({select:'nom_public,tarif_km,distance_max_km,disponible',chauffeur_id:'eq.'+signedUser.id,limit:'1'});
+    const own=await api('/rest/v1/offres_chauffeurs?'+ownQ,{token:t});
+    if(Array.isArray(own)&&own.length){const d=own[0];$('name').value=d.nom_public;$('rate').value=d.tarif_km;$('maxKm').value=d.distance_max_km;$('available').checked=d.disponible;status('saved','Ton offre enregistrée a été chargée depuis Supabase.','ok')}
+    else{if(candidate.nom_affiche)$('name').value=candidate.nom_affiche.substring(0,40);$('available').checked=false;status('saved','Aucune offre enregistrée pour ce compte. Saisis ton prix et enregistre-le.')}
+  }catch(e){approved=false;refreshLoginUi();status('authStatus','Impossible de vérifier le compte ou la candidature : '+errMessage(e),'error')}
+}
+async function saveOffer(){
+  if(!approved||!signedUser)return status('saved','Compte chauffeur approuvé requis.','error');
+  const name=$('name').value.trim(),rate=Number($('rate').value),maxKm=Number($('maxKm').value);
+  if(name.length<2||name.length>40||!Number.isFinite(rate)||rate<0.5||rate>100||!Number.isFinite(maxKm)||maxKm<1||maxKm>200){
+    return status('saved','Vérifie le nom (2 à 40 caractères), le tarif (0,50 à 100 €) et la distance maximale (1 à 200 km).','error');
+  }
+  const btn=$('saveBtn');btn.disabled=true;status('saved','Enregistrement dans Supabase…');
+  try{
+    const t=await token();if(!t)throw new Error('Session expirée. Reconnecte-toi.');
+    await api('/rest/v1/offres_chauffeurs?on_conflict=chauffeur_id',{method:'POST',token:t,prefer:'resolution=merge-duplicates,return=minimal',body:{chauffeur_id:signedUser.id,nom_public:name,tarif_km:rate,distance_max_km:maxKm,disponible:$('available').checked}});
+    status('saved','✅ Offre enregistrée dans ton compte SAMGO ! '+($('available').checked?'Visible dans la liste test des chauffeurs approuvés.':'Tu es indiqué indisponible.'),'ok');
+    // Actualiser les offres si l'utilisateur retourne côté client.
+    await refreshOffers();
+  }catch(e){status('saved','Enregistrement refusé : '+errMessage(e),'error')}
+  finally{btn.disabled=false}
+}
+async function logoutDriver(){
+  const t=await token();clearSession();refreshLoginUi();$('password').value='';status('authStatus','Déconnecté.','ok');status('saved','');
+  if(t){try{await api('/auth/v1/logout',{method:'POST',token:t,body:{}})}catch{}}
+}
+refreshLoginUi();renderOffers();refreshOffers();if(session)loadDriver();
+</script></body></html>
