@@ -48,6 +48,27 @@
     footer{margin-top:26px;font-size:12px;color:#aaa;line-height:1.6}
   </style>
 
+<style id="sg-focused-views">
+body.sg-inner-page main.app>header,body.sg-inner-page main.app>.tagline,
+body.sg-inner-page main.app>.notice,body.sg-inner-page main.app>.hero,
+body.sg-inner-page main.app>.buttons,body.sg-inner-page main.app>#samgoLegacyClosing,
+body.sg-inner-page main.app>footer{display:none!important}
+body.sg-route-driver #spaceRaccompagner,
+body.sg-route-book #spaceChauffeur,
+body.sg-route-account #spaceChauffeur,
+body.sg-route-account #spaceRaccompagner,
+body.sg-route-account #sg-trips-note,
+body.sg-route-trips #spaceChauffeur,
+body.sg-route-trips #spaceRaccompagner,
+body.sg-route-trips #authPanel,
+body.sg-route-driver.sg-authenticated #authPanel,
+body.sg-route-book.sg-authenticated #authPanel{display:none!important}
+body.sg-inner-page main.app{padding-top:14px}
+body.sg-inner-page .sg-back button{border:1px solid #665337;background:#24231e!important;color:#f2cb7a!important}
+body.sg-route-account #authPanel{border:1px solid #47463f;background:#11191d}
+#accountDriverLink.sg-driver-link{display:block;width:100%;margin:12px 0;background:#e7bd6c;color:#121719;text-align:center;font-size:13px}
+#accountDriverLink.hidden{display:none!important}
+</style>
 <style id="sg-iphone-navigation-fix">
 /* Evite que les pages et les onglets soient cachés sous l'en-tête Safari. */
 html{scroll-padding-top:95px}
@@ -299,12 +320,13 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
     </div>
     <div id="loggedIn" class="hidden">
       <p class="subtle">Connecté : <strong id="userEmail"></strong></p>
-      <p id="profileStatus" class="subtle">Compte de test actif.</p>
+      <p id="profileStatus" class="subtle" role="status" aria-live="polite">Vérification de votre candidature…</p>
+      <button id="accountDriverLink" type="button" class="sg-driver-link hidden" onclick="sgGo('driver')">◈ Ouvrir mon tableau de bord chauffeur</button>
       <button type="button" class="alt" onclick="signOut()">Me déconnecter</button>
     </div>
     <p id="authStatus" class="status" role="status" aria-live="polite">Tu peux créer un compte de test ou te connecter.</p>
   </section>
-  <section class="panel"><h2>❤️ Prenez soin de vous et de vos amis.</h2><p>Si tu as consommé de l'alcool, ne conduis pas. Prévois une solution sûre pour rentrer.</p><strong class="gold">SAMGO — Ta voiture, notre chauffeur.</strong></section>
+  <section class="panel" id="samgoLegacyClosing"><h2>❤️ Prenez soin de vous et de vos amis.</h2><p>Si tu as consommé de l'alcool, ne conduis pas. Prévois une solution sûre pour rentrer.</p><strong class="gold">SAMGO — Ta voiture, notre chauffeur.</strong></section>
   <footer>© SAMGO — Prototype de test. Ne transmets pas de documents sensibles. Les inscriptions ne constituent pas une embauche ni une autorisation de conduire. La mise en service nécessitera des contrats et assurances adaptés ainsi que les informations légales et de confidentialité obligatoires.</footer>
 </main>
 <script>
@@ -480,7 +502,8 @@ async function handleAuth(e){e.preventDefault();if(!client)return setStatus('aut
 async function refreshUser(){if(!client)return;try{const {data,error}=await client.auth.getUser();sessionUser=error?null:data.user;}catch{sessionUser=null}
  const logged=!!sessionUser;$('loggedOut').classList.toggle('hidden',logged);$('loggedIn').classList.toggle('hidden',!logged);
  $('userEmail').textContent=logged?(sessionUser.email||'Compte confirmé'):'';
- if(logged){$('accountTitle').textContent='Mon compte';$('profileStatus').textContent='Tu peux déposer une candidature de test si tu souhaites devenir chauffeur.';}
+ document.body.classList.toggle('sg-authenticated',logged);
+ if(logged){$('accountTitle').textContent='Mon compte';$('profileStatus').textContent='Vérification de votre candidature chauffeur…';$('accountDriverLink').classList.add('hidden');}
  else $('accountTitle').textContent=space==='chauffeur'?'Créer mon compte chauffeur':'Créer mon compte';
  await refreshCandidate();
 }
@@ -522,7 +545,7 @@ function showDriverRecord(record){
  $('candidateForm').classList.toggle('hidden',has||!connected);
  $('driverTitle').textContent=has?'Mon tableau de bord chauffeur':'Devenir chauffeur SAMGO';
  $('driverDesc').textContent=has?'Suivez votre candidature et votre futur espace de missions.':'Connectez-vous ou créez un compte pour déposer votre candidature de test.';
- if(!has)return;
+ if(!has){driverSimAllowed=false;driverSimActive=false;updateDriverSimulation();return;}
  const labels={
   en_attente:['Dossier en attente','Votre candidature a été reçue et attend un examen.','En attente','◷ Validation du dossier en attente.'],
   a_completer:['Dossier à compléter','Le dossier nécessite un complément. Ne transmettez aucun document sensible ici.','À compléter','! Des informations complémentaires sont nécessaires.'],
@@ -536,20 +559,48 @@ function showDriverRecord(record){
  $('driverName').textContent=record.nom_affiche||'—';$('driverMail').textContent=sessionUser.email||'—';
  const dt=new Date(record.cree_le);$('driverDate').textContent=record.cree_le&&Number.isFinite(dt.valueOf())?new Intl.DateTimeFormat('fr-FR',{dateStyle:'long'}).format(dt):'—';
 }
+let driverCandidateRequest=0;
+function setAccountCandidate(record,error){
+ const status=$('profileStatus'),button=$('accountDriverLink');
+ if(!sessionUser){button.classList.add('hidden');status.textContent='Connectez-vous pour voir votre profil.';return;}
+ if(error){status.textContent='Impossible de consulter le statut chauffeur pour le moment. Réessayez en actualisant.';button.classList.add('hidden');return;}
+ if(!record){
+  status.textContent='Compte SAMGO actif. Aucune candidature chauffeur enregistrée pour ce compte.';
+  button.classList.add('hidden');return;
+ }
+ const descriptions={
+  en_attente:'En attente de validation',
+  a_completer:'Dossier à compléter',
+  approuve:'Approuvée (version test)',
+  refuse:'Non retenue'
+ };
+ status.textContent='Votre candidature chauffeur : '+(descriptions[record.statut]||'Statut à vérifier')+'. Aucune mission réelle n’est disponible.';
+ button.classList.remove('hidden');
+}
 async function refreshCandidate(){
- if(!sessionUser||space!=='chauffeur'){showDriverRecord(null);return;}
- showDriverRecord(null);
+ const request=++driverCandidateRequest;
+ if(!sessionUser||!client){showDriverRecord(null);setAccountCandidate(null,false);return;}
+ const userId=sessionUser.id;
+ $('profileStatus').textContent='Vérification de votre candidature chauffeur…';
  try{
-  const {data,error}=await client.from('candidatures_chauffeur').select('statut, nom_affiche, cree_le').eq('utilisateur_id',sessionUser.id).maybeSingle();
+  const {data,error}=await client.from('candidatures_chauffeur').select('statut, nom_affiche, cree_le').eq('utilisateur_id',userId).maybeSingle();
+  if(request!==driverCandidateRequest||!sessionUser||sessionUser.id!==userId)return;
   if(error){
+   showDriverRecord(null);setAccountCandidate(null,true);
    $('candidateForm').classList.add('hidden');
-   $('driverDesc').textContent='Impossible de vérifier votre candidature. Rechargez la page pour réessayer.';
+   $('driverDesc').textContent='Impossible de vérifier votre candidature. Réessayez en actualisant.';
    return;
   }
+  setAccountCandidate(data,false);
   showDriverRecord(data);
   if(data){$('applyBtn').disabled=true;$('nomAffiche').value=data.nom_affiche||'';}
   else{$('applyBtn').disabled=false;$('nomAffiche').disabled=false;setStatus('applyStatus','Vous pouvez envoyer une candidature de test.');}
- }catch(e){$('candidateForm').classList.add('hidden');$('driverDesc').textContent='Une erreur empêche le chargement de votre dossier. Rechargez la page.';}
+ }catch(e){
+  if(request!==driverCandidateRequest||!sessionUser||sessionUser.id!==userId)return;
+  showDriverRecord(null);setAccountCandidate(null,true);
+  $('candidateForm').classList.add('hidden');
+  $('driverDesc').textContent='Une erreur empêche le chargement du dossier. Rechargez la page.';
+ }
 }
 async function applyDriver(){if(!client||!sessionUser)return setStatus('applyStatus','Connecte-toi pour envoyer une candidature.','error');const name=$('nomAffiche').value.trim();if(name.length<2||name.length>100)return setStatus('applyStatus','Entre un nom d’affichage de 2 à 100 caractères.','error');if(!$('permisDeclare').checked)return setStatus('applyStatus','Confirme que tu as compris les conditions de validation.','error');$('applyBtn').disabled=true;setStatus('applyStatus','Envoi en cours…');try{const {error}=await client.from('candidatures_chauffeur').insert({utilisateur_id:sessionUser.id,nom_affiche:name});if(error)throw error;setStatus('applyStatus','Candidature de test enregistrée ! Statut : en attente. Tu ne peux pas encore effectuer de courses.','success');await refreshCandidate();}catch(err){setStatus('applyStatus',err?.code==='23505'?'Une candidature existe déjà pour ce compte.':errText(err),'error');$('applyBtn').disabled=false;}}
 async function signOut(){if(!client)return;await client.auth.signOut();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
@@ -600,7 +651,9 @@ function sgGo(view){
  if(menuButton)menuButton.setAttribute('aria-expanded','false');
  const home=view==='home';
  document.body.classList.toggle('sg-home-active',home);
+ document.body.classList.toggle('sg-inner-page',!home);
  document.body.classList.toggle('sg-trips-mode',view==='trips');
+ ['home','book','driver','trips','account'].forEach(function(route){document.body.classList.toggle('sg-route-'+route,route===view);});
  sgMarkCurrentNav(view);
  if(home){window.scrollTo({top:0,behavior:'smooth'});return;}
  if(view==='driver')setSpace('chauffeur');
