@@ -48,6 +48,25 @@
     footer{margin-top:26px;font-size:12px;color:#aaa;line-height:1.6}
   </style>
 
+<style id="sg-client-demo-style">
+.sg-demo-panel{background:#111b21!important;border:1px solid #3b4a52!important}
+.sg-demo-eyebrow{display:block;color:#efc775;letter-spacing:.12em;font-size:11px;font-weight:800;margin-bottom:10px}
+.sg-demo-warning{padding:12px;margin:10px 0;background:#302616;color:#f7d69e;border:1px solid #796238;border-radius:11px;font-size:12px;line-height:1.5}
+.sg-demo-panel label{color:#d8e0e4;font-weight:650}
+.sg-demo-panel input,.sg-demo-panel select{background:#0b1218!important;border:1px solid #56636c!important;color:#fff;width:100%;border-radius:12px;min-height:46px;font-size:16px}
+.sg-demo-panel .price{color:#eac16d}
+.sg-demo-submit{width:100%;background:#edc675;color:#17191b;font-weight:860}
+.sg-demo-summary{border:1px solid #635233;background:linear-gradient(135deg,#2a251b,#162631);border-radius:14px;padding:15px;margin-top:15px}
+.sg-demo-summary>strong{display:block;color:#f5d087;font-size:15px;margin-bottom:9px}
+.sg-demo-summary>button,.sg-demo-placeholder>button{font-size:13px;min-height:42px;margin-top:12px}
+.sg-demo-row{display:flex;justify-content:space-between;align-items:start;gap:9px;padding:8px 0;border-bottom:1px solid #364650;font-size:12px}
+.sg-demo-row b{text-align:right;max-width:65%;overflow-wrap:anywhere;color:#fff}
+.sg-demo-row span{color:#b6c2c9}
+.sg-demo-small{font-size:12px;line-height:1.5;color:#c4ccd1;margin:10px 0}
+.sg-demo-placeholder{padding:18px;background:#192832;border:1px solid #374752;border-radius:12px;margin-top:15px}
+.sg-demo-placeholder strong{font-size:15px}.sg-demo-placeholder p{font-size:13px;color:#bbc8ce}
+#driverLocalDemo p{font-size:12px;line-height:1.5}
+</style>
 <style id="sg-focused-views">
 body.sg-inner-page main.app>header,body.sg-inner-page main.app>.tagline,
 body.sg-inner-page main.app>.notice,body.sg-inner-page main.app>.hero,
@@ -233,7 +252,24 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
  </div>
  <p class="sg-bottom-info">SAMGO est un prototype. Service non disponible. Avant son lancement, le cadre juridique, les assurances et les chauffeurs devront être validés.</p>
 </section>
-<main class="app"><div class="sg-back"><button type="button" onclick="sgGo('home')">← Retour à l'accueil</button></div><section id="sg-trips-note" class="panel sg-trip-note"><h2>Mes courses</h2><p>Le suivi des courses n'est pas encore disponible dans cette version de test. Aucune réservation réelle ne peut être effectuée actuellement.</p></section>
+<main class="app"><div class="sg-back"><button type="button" onclick="sgGo('home')">← Retour à l'accueil</button></div><section id="sg-trips-note" class="panel sg-trip-note sg-demo-panel">
+ <span class="sg-demo-eyebrow">ESPACE CLIENT · DÉMONSTRATION</span>
+ <h2>Mes courses</h2>
+ <p class="subtle">Suivez votre simulation sur cet appareil. Aucune demande n'est envoyée à SAMGO ou à un vrai chauffeur.</p>
+ <div id="demoTripsEmpty" class="sg-demo-placeholder">
+  <strong>Aucune simulation en cours</strong><p>Allez sur Réserver pour essayer un trajet fictif.</p>
+  <button type="button" onclick="sgGo('book')">Essayer la réservation</button>
+ </div>
+ <div id="demoTripsCard" class="sg-demo-summary hidden">
+  <strong id="demoTripsStatus">En attente (démo)</strong>
+  <div class="sg-demo-row"><span>Départ fictif</span><b id="demoTripsFrom"></b></div>
+  <div class="sg-demo-row"><span>Arrivée fictive</span><b id="demoTripsTo"></b></div>
+  <div class="sg-demo-row"><span>Distance choisie</span><b id="demoTripsKm"></b></div>
+  <div class="sg-demo-row"><span>Prix estimé</span><b id="demoTripsPrice"></b></div>
+  <p class="sg-demo-small">Simulation locale uniquement. Aucun paiement, aucune réservation et aucune transmission au serveur. Elle disparaît au rechargement.</p>
+  <button type="button" class="alt" onclick="resetLocalDemo()">Effacer la simulation</button>
+ </div>
+</section>
   <header><div class="logo">SAM<b>GO</b> <span style="font-size:13px;letter-spacing:0;color:#aaa">V3</span></div><span aria-hidden="true" style="font-size:31px">🚗</span></header>
   <div class="tagline">Ta voiture, notre chauffeur.</div>
   <div class="notice">🚧 <strong>VERSION TEST</strong> — Les comptes et candidatures de test peuvent être enregistrés dans Supabase. Aucune course réelle, aucun paiement et aucune vérification automatique ne sont actifs. N'envoie aucun document d'identité.</div>
@@ -246,18 +282,35 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
     <button type="button" id="goRaccompagner" onclick="setSpace('raccompagner')">🚗 Me faire raccompagner</button>
     <button type="button" class="alt" id="goChauffeur" onclick="setSpace('chauffeur')">🛴 Devenir chauffeur</button>
   </div>
-  <section id="spaceRaccompagner" class="panel">
-    <h2>Me faire raccompagner</h2>
-    <p class="subtle">Simulation du prix envisagé. Aucune réservation possible actuellement.</p>
-    <label for="km">Distance de la course</label>
+  <section id="spaceRaccompagner" class="panel sg-demo-panel">
+  <span class="sg-demo-eyebrow">SAMGO · PARCOURS CLIENT</span>
+  <h2>Réserver un chauffeur</h2>
+  <p class="subtle">Testez la réservation SAMGO. <strong>Simulation uniquement :</strong> aucune course ni aucun paiement réels.</p>
+  <div class="sg-demo-warning">⚠️ Utilisez seulement des noms de lieux fictifs. Ne renseignez pas votre véritable adresse.</div>
+  <form id="demoBookingForm" onsubmit="createLocalDemo(event)">
+    <label for="demoDepart">Lieu de départ fictif</label>
+    <input id="demoDepart" type="text" maxlength="90" minlength="2" autocomplete="off" placeholder="Ex. Centre-ville fictif" required />
+    <label for="demoArrivee">Destination fictive</label>
+    <input id="demoArrivee" type="text" maxlength="90" minlength="2" autocomplete="off" placeholder="Ex. Quartier du parc" required />
+    <label for="km">Distance estimée, choisie manuellement</label>
     <select id="km" onchange="calc()" style="width:100%;border-radius:11px;padding:13px;background:#101010;border:1px solid #555;color:white;font:inherit">
       <option value="5">5 km</option><option value="10" selected>10 km</option><option value="15">15 km</option><option value="20">20 km</option>
     </select>
     <div class="row"><span>Prix client indicatif</span><strong id="fare" class="price">10 €</strong></div>
     <div class="row subtle"><span>Part chauffeur envisagée : 90 %</span><span id="driverShare">9 €</span></div>
     <div class="row subtle"><span>Commission SAMGO envisagée : 10 %</span><span id="samgoShare">1 €</span></div>
-    <p class="tiny line">Grille non définitive. Assurance, distance d'approche, trajets de retour, impôts et frais non compris.</p>
-  </section>
+    <p class="tiny line">Distance choisie à la main : aucun itinéraire calculé. Tarif non définitif, assurance et frais non compris.</p>
+    <button type="submit" class="sg-demo-submit">Créer une simulation de course</button>
+    <p id="demoBookingMessage" class="sg-demo-small" role="status" aria-live="polite">Cette simulation reste temporairement dans cet onglet.</p>
+  </form>
+  <div id="demoBookingSummary" class="sg-demo-summary hidden">
+    <strong>✓ Simulation créée — aucune course réservée</strong>
+    <div class="sg-demo-row"><span>Départ</span><b id="demoBookingFrom"></b></div>
+    <div class="sg-demo-row"><span>Arrivée</span><b id="demoBookingTo"></b></div>
+    <div class="sg-demo-row"><span>Prix indicatif</span><b id="demoBookingFare"></b></div>
+    <button type="button" onclick="sgGo('trips')">Voir le suivi de test</button>
+  </div>
+</section>
   <section id="spaceChauffeur" class="panel hidden sg-driver">
  <div class="sg-driver-heading"><span>ESPACE CHAUFFEUR · SAMGO</span><h2 id="driverTitle">Devenir chauffeur SAMGO</h2><p id="driverDesc">Créez un compte ou connectez-vous pour suivre votre candidature.</p></div>
  <div id="driverDashboard" class="hidden">
@@ -285,7 +338,15 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
    <button type="button" class="sg-driver-refresh" onclick="refreshCandidate()">Actualiser mon statut</button>
   </div>
   <div class="sg-driver-pane hidden" data-dpane="missions"><h3>Mes missions</h3><div class="sg-driver-empty"><b>🚘 Aucune mission réelle disponible</b><p>La réception et l'acceptation des courses ne sont pas encore activées. Cette page n'attribue aucune vraie course.</p></div>
-  <div class="sg-demo-mission"><strong>APERÇU FICTIF — EXEMPLE DE COURSE</strong><p>Trajet illustratif : 12 km</p><div class="sg-demo-row"><span>Prix envisagé côté client</span><b>12 €</b></div><div class="sg-demo-row"><span>Part chauffeur théorique (90 %)</span><b>10,80 €</b></div><p>Exemple calculé sur une hypothèse de 1 €/km. Ce n'est pas une demande de client, ni un montant gagné.</p></div>
+  <div id="driverLocalDemo" class="sg-demo-summary hidden">
+  <strong>Nouvelle mission locale — SIMULATION</strong>
+  <p id="driverLocalDemoInfo"></p>
+  <p class="sg-demo-small">Ce trajet est seulement simulé sur cet appareil. Aucun client réel n'a envoyé de demande.</p>
+  <button type="button" onclick="acceptLocalDemo()">Accepter (démo)</button>
+  <button type="button" class="alt" onclick="rejectLocalDemo()">Refuser (démo)</button>
+</div>
+<p id="driverLocalDemoHelp" class="sg-demo-small">Créez une course fictive dans Réserver, puis passez En ligne (démo) sur l'accueil chauffeur.</p>
+<div class="sg-demo-mission"><strong>APERÇU FICTIF — EXEMPLE DE COURSE</strong><p>Trajet illustratif : 12 km</p><div class="sg-demo-row"><span>Prix envisagé côté client</span><b>12 €</b></div><div class="sg-demo-row"><span>Part chauffeur théorique (90 %)</span><b>10,80 €</b></div><p>Exemple calculé sur une hypothèse de 1 €/km. Ce n'est pas une demande de client, ni un montant gagné.</p></div>
 </div>
   <div class="sg-driver-pane hidden" data-dpane="gains"><h3>Mes gains</h3><div class="sg-driver-empty"><b>0 € de gains enregistrés</b><p>Aucun paiement ni virement actif. Une commission de 10 % est envisagée, sous réserve de validation du modèle économique.</p></div></div>
   <div class="sg-driver-pane hidden" data-dpane="profil"><h3>Mon profil chauffeur</h3>
@@ -480,6 +541,57 @@ let space='raccompagner',authMode='signup',sessionUser=null,client=null,busy=fal
 try { if(window.samgoCreateClient) client=window.samgoCreateClient(URL,PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}); }
 catch(err){ console.error('Connexion Supabase indisponible',err); }
 function setStatus(id,text,type='') { const e=$(id);e.textContent=text;e.className='status'+(type?' '+type:''); }
+
+let localDemoRequest=null;
+function renderLocalDemo(){
+ const req=localDemoRequest,has=!!req;
+ $('demoBookingSummary').classList.toggle('hidden',!has);
+ $('demoTripsEmpty').classList.toggle('hidden',has);
+ $('demoTripsCard').classList.toggle('hidden',!has);
+ if(has){
+  $('demoBookingFrom').textContent=req.from;
+  $('demoBookingTo').textContent=req.to;
+  $('demoBookingFare').textContent=money(req.km);
+  $('demoTripsFrom').textContent=req.from;
+  $('demoTripsTo').textContent=req.to;
+  $('demoTripsKm').textContent=req.km+' km';
+  $('demoTripsPrice').textContent=money(req.km);
+  const labels={waiting:'En attente (simulation locale)',accepted:'Acceptée (simulation locale)',rejected:'Refusée (simulation locale)'};
+  $('demoTripsStatus').textContent=labels[req.status]||'Simulation';
+ }
+ const showToDriver=has&&req.status==='waiting'&&driverSimActive&&driverSimAllowed&&!!sessionUser;
+ $('driverLocalDemo').classList.toggle('hidden',!showToDriver);
+ if(showToDriver)$('driverLocalDemoInfo').textContent=req.from+' → '+req.to+' · '+req.km+' km · Part chauffeur théorique : '+money(req.km*.9)+'.';
+ $('driverLocalDemoHelp').textContent=!has?'Aucune demande locale. Créez d’abord un trajet fictif dans Réserver.':!driverSimAllowed?'Démo inaccessible tant que la candidature chauffeur n’est pas approuvée.':!driverSimActive?'Passez en ligne (démo) pour voir la demande locale.':req.status==='waiting'?'Demande fictive à examiner dans le bloc ci-dessus.':'Réponse fictive enregistrée : '+(req.status==='accepted'?'acceptée.':'refusée.');
+}
+function createLocalDemo(e){
+ e.preventDefault();
+ const from=$('demoDepart').value.trim().replace(/\s+/g,' ');
+ const to=$('demoArrivee').value.trim().replace(/\s+/g,' ');
+ const km=Number($('km').value);
+ if(from.length<2||to.length<2||from.toLocaleLowerCase('fr')===to.toLocaleLowerCase('fr')){
+  $('demoBookingMessage').textContent='Choisissez deux lieux fictifs différents (2 caractères minimum).';return;
+ }
+ if(!Number.isFinite(km)||km<=0){
+  $('demoBookingMessage').textContent='Sélectionnez une distance valide.';return;
+ }
+ localDemoRequest={from,to,km,status:'waiting'};
+ $('demoBookingMessage').textContent='Simulation prête. Aucun chauffeur n’a été contacté.';
+ renderLocalDemo();
+}
+function resetLocalDemo(){
+ localDemoRequest=null;
+ $('demoBookingMessage').textContent='Simulation effacée. Aucune donnée transmise.';
+ renderLocalDemo();
+}
+function acceptLocalDemo(){
+ if(!localDemoRequest||localDemoRequest.status!=='waiting'||!driverSimActive||!driverSimAllowed||!sessionUser)return;
+ localDemoRequest.status='accepted';renderLocalDemo();
+}
+function rejectLocalDemo(){
+ if(!localDemoRequest||localDemoRequest.status!=='waiting'||!driverSimActive||!driverSimAllowed||!sessionUser)return;
+ localDemoRequest.status='rejected';renderLocalDemo();
+}
 function money(n){return n.toLocaleString('fr-FR',{style:'currency',currency:'EUR'});}
 function calc(){const v=Number($('km').value);$('fare').textContent=money(v);$('driverShare').textContent=money(v*.9);$('samgoShare').textContent=money(v*.1)}
 function setSpace(mode){space=mode;const d=mode==='chauffeur';$('spaceChauffeur').classList.toggle('hidden',!d);$('spaceRaccompagner').classList.toggle('hidden',d);$('goChauffeur').classList.toggle('alt',!d);$('goRaccompagner').classList.toggle('alt',d);$('accountTitle').textContent=sessionUser?'Mon compte':(d?'Créer mon compte chauffeur':'Créer mon compte');refreshCandidate();}
@@ -529,6 +641,7 @@ function toggleDriverSimulation(){
  if(!driverSimAllowed)return;
  driverSimActive=!driverSimActive;
  updateDriverSimulation();
+ renderLocalDemo();
 }
 function driverTab(tab){
  if(!['overview','missions','gains','profil'].includes(tab))return;
@@ -545,7 +658,7 @@ function showDriverRecord(record){
  $('candidateForm').classList.toggle('hidden',has||!connected);
  $('driverTitle').textContent=has?'Mon tableau de bord chauffeur':'Devenir chauffeur SAMGO';
  $('driverDesc').textContent=has?'Suivez votre candidature et votre futur espace de missions.':'Connectez-vous ou créez un compte pour déposer votre candidature de test.';
- if(!has){driverSimAllowed=false;driverSimActive=false;updateDriverSimulation();return;}
+ if(!has){driverSimAllowed=false;driverSimActive=false;updateDriverSimulation();renderLocalDemo();return;}
  const labels={
   en_attente:['Dossier en attente','Votre candidature a été reçue et attend un examen.','En attente','◷ Validation du dossier en attente.'],
   a_completer:['Dossier à compléter','Le dossier nécessite un complément. Ne transmettez aucun document sensible ici.','À compléter','! Des informations complémentaires sont nécessaires.'],
@@ -555,7 +668,7 @@ function showDriverRecord(record){
  const value=labels[record.statut]||['Statut non reconnu','Vérifiez votre statut avec le support.','À vérifier','! Statut à vérifier.'];
  $('driverState').textContent=value[0];$('driverStateHelp').textContent=value[1];$('driverPill').textContent=value[2];$('driverStatus').textContent=value[2];$('driverNext').textContent=value[3];
  $('driverHello').textContent='Bonjour '+(record.nom_affiche||'')+' ! Voici votre espace personnel de test.';
- driverSimAllowed=record.statut==='approuve'; if(!driverSimAllowed)driverSimActive=false; updateDriverSimulation();
+ driverSimAllowed=record.statut==='approuve'; if(!driverSimAllowed)driverSimActive=false; updateDriverSimulation();renderLocalDemo();
  $('driverName').textContent=record.nom_affiche||'—';$('driverMail').textContent=sessionUser.email||'—';
  const dt=new Date(record.cree_le);$('driverDate').textContent=record.cree_le&&Number.isFinite(dt.valueOf())?new Intl.DateTimeFormat('fr-FR',{dateStyle:'long'}).format(dt):'—';
 }
@@ -603,8 +716,8 @@ async function refreshCandidate(){
  }
 }
 async function applyDriver(){if(!client||!sessionUser)return setStatus('applyStatus','Connecte-toi pour envoyer une candidature.','error');const name=$('nomAffiche').value.trim();if(name.length<2||name.length>100)return setStatus('applyStatus','Entre un nom d’affichage de 2 à 100 caractères.','error');if(!$('permisDeclare').checked)return setStatus('applyStatus','Confirme que tu as compris les conditions de validation.','error');$('applyBtn').disabled=true;setStatus('applyStatus','Envoi en cours…');try{const {error}=await client.from('candidatures_chauffeur').insert({utilisateur_id:sessionUser.id,nom_affiche:name});if(error)throw error;setStatus('applyStatus','Candidature de test enregistrée ! Statut : en attente. Tu ne peux pas encore effectuer de courses.','success');await refreshCandidate();}catch(err){setStatus('applyStatus',err?.code==='23505'?'Une candidature existe déjà pour ce compte.':errText(err),'error');$('applyBtn').disabled=false;}}
-async function signOut(){if(!client)return;await client.auth.signOut();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
-calc();setAuthMode('signup');setSpace('raccompagner');
+async function signOut(){if(!client)return;await client.auth.signOut();localDemoRequest=null;renderLocalDemo();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
+calc();renderLocalDemo();setAuthMode('signup');setSpace('raccompagner');
 if(client){
   setStatus('authStatus','Vérification de la connexion à Supabase…');
   client.ping().then(()=>setStatus('authStatus','Connexion Supabase accessible. Tu peux tester la création d’un compte.','success'))
