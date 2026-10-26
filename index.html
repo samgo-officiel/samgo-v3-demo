@@ -267,7 +267,7 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   <div class="sg-demo-row"><span>Arrivée fictive</span><b id="demoTripsTo"></b></div>
   <div class="sg-demo-row"><span>Distance choisie</span><b id="demoTripsKm"></b></div>
   <div class="sg-demo-row"><span>Prix estimé</span><b id="demoTripsPrice"></b></div>
-  <p class="sg-demo-small">Simulation locale uniquement. Aucun paiement, aucune réservation et aucune transmission au serveur. Elle disparaît au rechargement.</p>
+  <p class="sg-demo-small">Simulation locale uniquement. Aucun paiement, aucune réservation et aucune transmission au serveur. Elle reste dans cet onglet pendant deux heures maximum, si le navigateur autorise le stockage, et s'efface à la fermeture de l'onglet.</p>
   <button type="button" class="alt" onclick="resetLocalDemo()">Effacer la simulation</button>
  </div>
 </section>
@@ -302,7 +302,7 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
     <div class="row subtle"><span>Commission SAMGO envisagée : 10 %</span><span id="samgoShare">1 €</span></div>
     <p class="tiny line">Distance choisie à la main : aucun itinéraire calculé. Tarif non définitif, assurance et frais non compris.</p>
     <button type="submit" class="sg-demo-submit">Créer une simulation de course</button>
-    <p id="demoBookingMessage" class="sg-demo-small" role="status" aria-live="polite">Cette simulation reste temporairement dans cet onglet.</p>
+    <p id="demoBookingMessage" class="sg-demo-small" role="status" aria-live="polite">Test local uniquement : la simulation peut être retrouvée après actualisation dans ce même onglet pendant deux heures maximum.</p>
   </form>
   <div id="demoBookingSummary" class="sg-demo-summary hidden">
     <strong>✓ Simulation créée — aucune course réservée</strong>
@@ -545,6 +545,25 @@ catch(err){ console.error('Connexion Supabase indisponible',err); }
 function setStatus(id,text,type='') { const e=$(id);e.textContent=text;e.className='status'+(type?' '+type:''); }
 
 let localDemoRequest=null;
+const samgoDemoKey='samgo_demo_course_v1';
+const samgoDemoLifetimeMs=2*60*60*1000;
+function saveLocalDemo(){
+ try{
+  if(!localDemoRequest){sessionStorage.removeItem(samgoDemoKey);return;}
+  sessionStorage.setItem(samgoDemoKey,JSON.stringify({data:localDemoRequest,at:Date.now()}));
+ }catch(_){/* Stockage bloqué : simulation disponible seulement en mémoire. */}
+}
+function restoreLocalDemo(){
+ try{
+  const raw=sessionStorage.getItem(samgoDemoKey);
+  if(!raw)return;
+  const parsed=JSON.parse(raw);
+  const d=parsed&&parsed.data;
+  const valid=parsed&&Number.isFinite(parsed.at)&&Date.now()>=parsed.at&&Date.now()-parsed.at<samgoDemoLifetimeMs&&d&&typeof d.from==='string'&&d.from.length>=2&&d.from.length<=90&&typeof d.to==='string'&&d.to.length>=2&&d.to.length<=90&&d.from!==d.to&&[5,10,15,20].includes(Number(d.km))&&['waiting','accepted','rejected'].includes(d.status);
+  if(valid){localDemoRequest={from:d.from,to:d.to,km:Number(d.km),status:d.status};}
+  else sessionStorage.removeItem(samgoDemoKey);
+ }catch(_){try{sessionStorage.removeItem(samgoDemoKey);}catch(__){}}
+}
 function renderLocalDemo(){
  const req=localDemoRequest,has=!!req;
  $('demoBookingSummary').classList.toggle('hidden',!has);
@@ -578,21 +597,23 @@ function createLocalDemo(e){
   $('demoBookingMessage').textContent='Sélectionnez une distance valide.';return;
  }
  localDemoRequest={from,to,km,status:'waiting'};
+ saveLocalDemo();
  $('demoBookingMessage').textContent='Simulation prête. Aucun chauffeur n’a été contacté.';
  renderLocalDemo();
 }
 function resetLocalDemo(){
  localDemoRequest=null;
+ saveLocalDemo();
  $('demoBookingMessage').textContent='Simulation effacée. Aucune donnée transmise.';
  renderLocalDemo();
 }
 function acceptLocalDemo(){
  if(!localDemoRequest||localDemoRequest.status!=='waiting'||!driverSimActive||!driverSimAllowed||!sessionUser)return;
- localDemoRequest.status='accepted';renderLocalDemo();
+ localDemoRequest.status='accepted';saveLocalDemo();renderLocalDemo();
 }
 function rejectLocalDemo(){
  if(!localDemoRequest||localDemoRequest.status!=='waiting'||!driverSimActive||!driverSimAllowed||!sessionUser)return;
- localDemoRequest.status='rejected';renderLocalDemo();
+ localDemoRequest.status='rejected';saveLocalDemo();renderLocalDemo();
 }
 function money(n){return n.toLocaleString('fr-FR',{style:'currency',currency:'EUR'});}
 function calc(){const v=Number($('km').value);$('fare').textContent=money(v);$('driverShare').textContent=money(v*.9);$('samgoShare').textContent=money(v*.1)}
@@ -737,8 +758,8 @@ async function refreshCandidate(){
  }
 }
 async function applyDriver(){if(!client||!sessionUser)return setStatus('applyStatus','Connecte-toi pour envoyer une candidature.','error');const name=$('nomAffiche').value.trim();if(name.length<2||name.length>100)return setStatus('applyStatus','Entre un nom d’affichage de 2 à 100 caractères.','error');if(!$('permisDeclare').checked)return setStatus('applyStatus','Confirme que tu as compris les conditions de validation.','error');$('applyBtn').disabled=true;setStatus('applyStatus','Envoi en cours…');try{const {error}=await client.from('candidatures_chauffeur').insert({utilisateur_id:sessionUser.id,nom_affiche:name});if(error)throw error;setStatus('applyStatus','Candidature de test enregistrée ! Statut : en attente. Tu ne peux pas encore effectuer de courses.','success');await refreshCandidate();}catch(err){setStatus('applyStatus',err?.code==='23505'?'Une candidature existe déjà pour ce compte.':errText(err),'error');$('applyBtn').disabled=false;}}
-async function signOut(){if(!client)return;await client.auth.signOut();localDemoRequest=null;renderLocalDemo();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
-calc();renderLocalDemo();setAuthMode('signup');setSpace('raccompagner');
+async function signOut(){if(!client)return;await client.auth.signOut();localDemoRequest=null;saveLocalDemo();renderLocalDemo();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
+calc();restoreLocalDemo();renderLocalDemo();setAuthMode('signup');setSpace('raccompagner');
 if(client){
   setStatus('authStatus','Vérification de la connexion à Supabase…');
   client.ping().then(()=>setStatus('authStatus','Connexion Supabase accessible. Tu peux tester la création d’un compte.','success'))
