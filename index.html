@@ -48,6 +48,35 @@
     footer{margin-top:26px;font-size:12px;color:#aaa;line-height:1.6}
   </style>
 
+<style id="sg-driver-style">
+.sg-driver{background:#0e161c!important;border:1px solid #46515a!important;color:#f7f7f7}
+.sg-driver-heading span{color:#eac374;font-size:11px;letter-spacing:.14em;font-weight:850}
+.sg-driver-heading h2{font-size:27px;letter-spacing:-.04em;margin:9px 0}
+.sg-driver-heading p{font-size:13px;color:#b4bec7;line-height:1.5}
+.sg-driver-state{margin:19px 0 12px;border-radius:17px;padding:16px;background:linear-gradient(120deg,#352815,#17222a);border:1px solid #8c6831;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.sg-driver-state small{display:block;color:#efcc8f;font-size:10px;letter-spacing:.09em;margin-bottom:8px;font-weight:780}
+.sg-driver-state strong{font-size:19px;line-height:1.2}
+.sg-driver-state p{color:#c9ced0;font-size:12px;line-height:1.4;margin:7px 0 0}
+.sg-driver-state>span{border-radius:40px;background:#4a3618;border:1px solid #99763d;color:#ffda8f;font-size:10px;white-space:nowrap;font-weight:850;padding:7px 9px}
+.sg-driver-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.sg-driver-stats>div{background:#17232a;border:1px solid #35434c;border-radius:12px;padding:14px 8px;display:flex;flex-direction:column;gap:8px}
+.sg-driver-stats b{color:#f2c976;font-size:22px}
+.sg-driver-stats span{font-size:11px;line-height:1.3;color:#c1cbd0}
+.sg-driver-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:18px 0 12px}
+.sg-driver-tabs button{padding:8px 3px;min-height:43px;background:#24313b;border:1px solid #354651;color:#c4ccd2;border-radius:10px;font-size:11px}
+.sg-driver-tabs button[aria-pressed="true"]{background:#e9bf6e;color:#1c1a15;border-color:#e9bf6e}
+.sg-driver-pane{background:#142028;border:1px solid #364650;border-radius:14px;padding:15px}
+.sg-driver-pane h3{margin:0 0 12px;font-size:18px}
+.sg-driver-pane p{font-size:13px;color:#c4cdd5;line-height:1.5}
+.sg-driver-lock,.sg-driver-warning{background:#2b251a;border:1px solid #756039;border-radius:12px;color:#f2d7a0;padding:14px;font-size:13px;line-height:1.5}
+.sg-driver-lock p{color:#d9ceb7;margin:8px 0 0}
+.sg-driver-empty{text-align:center;background:#1e2b34;border-radius:12px;padding:23px 15px}
+.sg-driver-empty b{font-size:16px}
+.sg-driver-refresh{background:#eac377;color:#111915;font-size:13px;min-height:44px;margin-top:12px}
+.sg-driver-profile{margin:0}.sg-driver-profile dt{font-size:11px;color:#aab7c1;margin-top:13px}
+.sg-driver-profile dd{margin:3px 0 0;font-size:14px;padding-bottom:9px;border-bottom:1px solid #364854;overflow-wrap:anywhere}
+@media(max-width:380px){.sg-driver{padding:14px!important}.sg-driver-tabs button{font-size:10px}.sg-driver-stats b{font-size:18px}.sg-driver-state strong{font-size:16px}}
+</style>
 <style id="sg-2026-style">
 :root{color-scheme:dark}
 body.sg-home-active{background:#050a0e;color:#fff}
@@ -180,19 +209,45 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
     <div class="row subtle"><span>Commission SAMGO envisagée : 10 %</span><span id="samgoShare">1 €</span></div>
     <p class="tiny line">Grille non définitive. Assurance, distance d'approche, trajets de retour, impôts et frais non compris.</p>
   </section>
-  <section id="spaceChauffeur" class="panel hidden">
-    <h2>Devenir chauffeur SAMGO</h2>
-    <p>Tu veux conduire la voiture des clients en tant qu'indépendant ? Crée d'abord ton compte de test, puis dépose ta candidature.</p>
-    <div class="notice">🔒 Pour l'instant, <strong>pas de photo, pas de permis, pas de carte d'identité ni de selfie</strong> à transmettre sur ce site. On créera ensuite un espace privé adapté et des vérifications sécurisées.</div>
-    <div id="candidateForm" class="hidden">
-      <h3>Ma candidature de test</h3>
-      <label for="nomAffiche">Prénom et nom d'affichage</label>
-      <input id="nomAffiche" autocomplete="name" maxlength="100" placeholder="Ex. Karim D." />
-      <div class="agree"><input id="permisDeclare" type="checkbox" /><label for="permisDeclare">Je comprends qu'un permis B valide, un statut professionnel conforme et des assurances adaptées seront exigés avant toute mission.</label></div>
-      <button type="button" id="applyBtn" onclick="applyDriver()">Envoyer ma candidature de test</button>
-      <p id="applyStatus" class="status" role="status" aria-live="polite">Le dossier sera en attente de validation. Aucune course ne sera attribuée.</p>
-    </div>
-  </section>
+  <section id="spaceChauffeur" class="panel hidden sg-driver">
+ <div class="sg-driver-heading"><span>ESPACE CHAUFFEUR · SAMGO</span><h2 id="driverTitle">Devenir chauffeur SAMGO</h2><p id="driverDesc">Créez un compte ou connectez-vous pour suivre votre candidature.</p></div>
+ <div id="driverDashboard" class="hidden">
+  <div class="sg-driver-state">
+   <div><small>STATUT DE MA CANDIDATURE</small><strong id="driverState">En cours de vérification</strong><p id="driverStateHelp">Chargement…</p></div>
+   <span id="driverPill">En cours</span>
+  </div>
+  <div class="sg-driver-stats"><div><b>0</b><span>Missions attribuées</span></div><div><b>0 €</b><span>Gains enregistrés</span></div><div><b>—</b><span>Note chauffeur</span></div></div>
+  <div class="sg-driver-tabs" role="group" aria-label="Mon espace chauffeur">
+   <button type="button" data-dtab="overview" aria-pressed="true" onclick="driverTab('overview')">Accueil</button>
+   <button type="button" data-dtab="missions" aria-pressed="false" onclick="driverTab('missions')">Missions</button>
+   <button type="button" data-dtab="gains" aria-pressed="false" onclick="driverTab('gains')">Gains</button>
+   <button type="button" data-dtab="profil" aria-pressed="false" onclick="driverTab('profil')">Profil</button>
+  </div>
+  <div class="sg-driver-pane" data-dpane="overview">
+   <h3>Bienvenue sur SAMGO</h3><p id="driverHello"></p>
+   <div class="sg-driver-lock">🔒 <strong>Courses désactivées</strong><p>Le service est encore en test. Même avec une candidature approuvée, aucune mission ou rémunération réelle n'est disponible.</p></div>
+   <p>✓ Votre compte a été créé.</p><p id="driverNext">◷ Validation de candidature à venir.</p><p>○ Missions activables seulement après vérifications, assurances et mise en service.</p>
+   <button type="button" class="sg-driver-refresh" onclick="refreshCandidate()">Actualiser mon statut</button>
+  </div>
+  <div class="sg-driver-pane hidden" data-dpane="missions"><h3>Mes missions</h3><div class="sg-driver-empty"><b>🚘 Aucune mission disponible</b><p>La réception et l'acceptation des courses ne sont pas encore activées. Cette page n'attribue aucune vraie course.</p></div></div>
+  <div class="sg-driver-pane hidden" data-dpane="gains"><h3>Mes gains</h3><div class="sg-driver-empty"><b>0 € de gains enregistrés</b><p>Aucun paiement ni virement actif. Une commission de 10 % est envisagée, sous réserve de validation du modèle économique.</p></div></div>
+  <div class="sg-driver-pane hidden" data-dpane="profil"><h3>Mon profil chauffeur</h3>
+   <dl class="sg-driver-profile"><dt>Nom affiché</dt><dd id="driverName">—</dd><dt>E-mail</dt><dd id="driverMail">—</dd><dt>Inscrit le</dt><dd id="driverDate">—</dd><dt>Candidature</dt><dd id="driverStatus">—</dd></dl>
+   <div class="sg-driver-lock">🔒 N'envoyez aucune pièce d'identité, photo de permis ou selfie sur cette page. Les vérifications nécessiteront un dispositif sécurisé.</div>
+   <button type="button" class="sg-driver-refresh" onclick="sgGo('account')">Gérer mon compte</button>
+  </div>
+ </div>
+ <div id="driverApplyArea">
+  <div class="sg-driver-warning">🔒 Compte de test uniquement. N'envoyez aucun permis, pièce d'identité ou selfie sur ce site. Les conditions légales et assurances devront être validées avant toute mission.</div>
+  <div id="candidateForm" class="hidden">
+   <h3>Ma candidature de test</h3>
+   <label for="nomAffiche">Prénom et nom d'affichage</label><input id="nomAffiche" autocomplete="name" maxlength="100" placeholder="Ex. Karim D." />
+   <div class="agree"><input id="permisDeclare" type="checkbox" /><label for="permisDeclare">Je comprends qu'un permis B valide, un statut professionnel conforme et des assurances adaptées seront exigés avant toute mission.</label></div>
+   <button type="button" id="applyBtn" onclick="applyDriver()">Envoyer ma candidature de test</button>
+   <p id="applyStatus" class="status" role="status" aria-live="polite">Aucune course réelle ne sera attribuée.</p>
+  </div>
+ </div>
+</section>
   <section class="panel" id="authPanel">
     <h2 id="accountTitle">Créer mon compte</h2>
     <div id="loggedOut">
@@ -393,12 +448,45 @@ async function refreshUser(){if(!client)return;try{const {data,error}=await clie
  else $('accountTitle').textContent=space==='chauffeur'?'Créer mon compte chauffeur':'Créer mon compte';
  await refreshCandidate();
 }
-async function refreshCandidate(){const visible=!!sessionUser&&space==='chauffeur';$('candidateForm').classList.toggle('hidden',!visible);if(!visible||!client)return;
- try {const {data,error}=await client.from('candidatures_chauffeur').select('statut, nom_affiche, cree_le').eq('utilisateur_id',sessionUser.id).maybeSingle();
- if(error){setStatus('applyStatus',error.code==='PGRST205'||error.code==='42P01'?'La table des candidatures n’est pas encore installée dans Supabase.':'Impossible de vérifier la candidature. '+errText(error),'error');return;}
- if(data){const statuses={en_attente:'En attente',a_completer:'À compléter',approuve:'Approuvée',refuse:'Refusée'};setStatus('applyStatus','Candidature de test déjà reçue — Statut : '+(statuses[data.statut]||'En cours')+'. Aucune mission réelle ne peut être acceptée.','success');$('applyBtn').disabled=true;$('nomAffiche').value=data.nom_affiche||'';$('nomAffiche').disabled=true;}
- else {setStatus('applyStatus','Aucune candidature enregistrée pour ce compte.');$('applyBtn').disabled=false;$('nomAffiche').disabled=false;}
- }catch{setStatus('applyStatus','Impossible de charger la candidature pour le moment.','error')}
+function driverTab(tab){
+ if(!['overview','missions','gains','profil'].includes(tab))return;
+ document.querySelectorAll('[data-dpane]').forEach(el=>el.classList.toggle('hidden',el.dataset.dpane!==tab));
+ document.querySelectorAll('[data-dtab]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.dtab===tab)));
+}
+function showDriverRecord(record){
+ const has=!!record,connected=!!sessionUser;
+ $('driverDashboard').classList.toggle('hidden',!has);
+ $('driverApplyArea').classList.toggle('hidden',has);
+ $('candidateForm').classList.toggle('hidden',has||!connected);
+ $('driverTitle').textContent=has?'Mon tableau de bord chauffeur':'Devenir chauffeur SAMGO';
+ $('driverDesc').textContent=has?'Suivez votre candidature et votre futur espace de missions.':'Connectez-vous ou créez un compte pour déposer votre candidature de test.';
+ if(!has)return;
+ const labels={
+  en_attente:['Dossier en attente','Votre candidature a été reçue et attend un examen.','En attente','◷ Validation du dossier en attente.'],
+  a_completer:['Dossier à compléter','Le dossier nécessite un complément. Ne transmettez aucun document sensible ici.','À compléter','! Des informations complémentaires sont nécessaires.'],
+  approuve:['Candidature approuvée','Candidature approuvée, mais aucune mission réelle n’est disponible.','Approuvé','✓ Candidature approuvée, service non lancé.'],
+  refuse:['Candidature refusée','Votre candidature n’a pas été acceptée. Aucune mission autorisée.','Refusé','! Candidature non retenue.']
+ };
+ const value=labels[record.statut]||['Statut non reconnu','Vérifiez votre statut avec le support.','À vérifier','! Statut à vérifier.'];
+ $('driverState').textContent=value[0];$('driverStateHelp').textContent=value[1];$('driverPill').textContent=value[2];$('driverStatus').textContent=value[2];$('driverNext').textContent=value[3];
+ $('driverHello').textContent='Bonjour '+(record.nom_affiche||'')+' ! Voici votre espace personnel de test.';
+ $('driverName').textContent=record.nom_affiche||'—';$('driverMail').textContent=sessionUser.email||'—';
+ const dt=new Date(record.cree_le);$('driverDate').textContent=record.cree_le&&Number.isFinite(dt.valueOf())?new Intl.DateTimeFormat('fr-FR',{dateStyle:'long'}).format(dt):'—';
+}
+async function refreshCandidate(){
+ if(!sessionUser||space!=='chauffeur'){showDriverRecord(null);return;}
+ showDriverRecord(null);
+ try{
+  const {data,error}=await client.from('candidatures_chauffeur').select('statut, nom_affiche, cree_le').eq('utilisateur_id',sessionUser.id).maybeSingle();
+  if(error){
+   $('candidateForm').classList.add('hidden');
+   $('driverDesc').textContent='Impossible de vérifier votre candidature. Rechargez la page pour réessayer.';
+   return;
+  }
+  showDriverRecord(data);
+  if(data){$('applyBtn').disabled=true;$('nomAffiche').value=data.nom_affiche||'';}
+  else{$('applyBtn').disabled=false;$('nomAffiche').disabled=false;setStatus('applyStatus','Vous pouvez envoyer une candidature de test.');}
+ }catch(e){$('candidateForm').classList.add('hidden');$('driverDesc').textContent='Une erreur empêche le chargement de votre dossier. Rechargez la page.';}
 }
 async function applyDriver(){if(!client||!sessionUser)return setStatus('applyStatus','Connecte-toi pour envoyer une candidature.','error');const name=$('nomAffiche').value.trim();if(name.length<2||name.length>100)return setStatus('applyStatus','Entre un nom d’affichage de 2 à 100 caractères.','error');if(!$('permisDeclare').checked)return setStatus('applyStatus','Confirme que tu as compris les conditions de validation.','error');$('applyBtn').disabled=true;setStatus('applyStatus','Envoi en cours…');try{const {error}=await client.from('candidatures_chauffeur').insert({utilisateur_id:sessionUser.id,nom_affiche:name});if(error)throw error;setStatus('applyStatus','Candidature de test enregistrée ! Statut : en attente. Tu ne peux pas encore effectuer de courses.','success');await refreshCandidate();}catch(err){setStatus('applyStatus',err?.code==='23505'?'Une candidature existe déjà pour ce compte.':errText(err),'error');$('applyBtn').disabled=false;}}
 async function signOut(){if(!client)return;await client.auth.signOut();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
