@@ -47,9 +47,116 @@
     a{color:#ffd22b}
     footer{margin-top:26px;font-size:12px;color:#aaa;line-height:1.6}
   </style>
+
+<style id="sg-2026-style">
+/* SAMGO — accueil premium mobile, sans dépendance externe. */
+body.sg-home-active{background:#080a09;color:#f8f8f4}
+body.sg-home-active main.app{display:none}
+body:not(.sg-home-active) #sg-landing{display:none}
+#sg-landing{max-width:760px;margin:0 auto;padding:0 16px 118px;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#sg-landing *{box-sizing:border-box}
+.sg-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:27px 1px 24px}
+.sg-brand{color:#fff;font-size:36px;letter-spacing:-2.4px;line-height:1;font-weight:950}
+.sg-brand b{color:#e6bc6a}
+.sg-proto{color:#e0c596;border:1px solid #544930;border-radius:999px;background:#211d18;font-size:10px;font-weight:850;letter-spacing:.04em;padding:9px 11px;white-space:nowrap}
+.sg-proto:before{content:"";display:inline-block;height:6px;width:6px;background:#ddb463;border-radius:50%;margin-right:7px;vertical-align:middle}
+.sg-hero{position:relative;border-radius:28px;border:1px solid #594829;background:radial-gradient(ellipse at 80% 50%,#4a3c29 0,#27221a 35%,#171a19 76%);box-shadow:0 17px 55px #000a;overflow:hidden;padding:27px 22px 21px}
+.sg-eyebrow{color:#e1bf79;font-size:11px;font-weight:850;letter-spacing:.17em;display:flex;align-items:center;gap:8px}
+.sg-eyebrow:before{content:"";display:block;width:22px;height:1px;background:#e1bf79}
+.sg-hero h1{font-size:clamp(40px,8.6vw,65px);line-height:1.03;letter-spacing:-.055em;margin:18px 0;color:#fff;font-weight:880}
+.sg-hero h1 em{font-style:normal;color:#eec777}
+.sg-lead{color:#d0cfcb;font-size:15px;line-height:1.57;max-width:460px;margin:0}
+.sg-scene{margin:8px -30px -8px;position:relative;height:235px}
+.sg-scene svg{display:block;width:100%;height:100%;filter:drop-shadow(0 15px 17px #000b)}
+.sg-pill{display:inline-flex;gap:8px;align-items:center;border:1px solid #625034;background:#11130ed9;border-radius:12px;color:#f1d8a8;font-size:11px;font-weight:740;padding:10px 12px;margin-top:4px}
+.sg-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:17px 0 0}
+#sg-landing .sg-btn{background:#e8bd6b;border:1px solid #ecc985;border-radius:15px;color:#1c1b18;min-height:58px;padding:12px 8px;font-size:14px;font-weight:860;line-height:1.1;cursor:pointer;box-shadow:0 5px 20px #d5ad5229}
+#sg-landing .sg-btn.secondary{background:#222523;border-color:#444740;color:#fff;box-shadow:none}
+#sg-landing .sg-btn:focus-visible,.sg-nav button:focus-visible,.sg-back button:focus-visible{outline:3px solid #f9dc95;outline-offset:3px}
+.sg-notice{font-size:12px;line-height:1.55;color:#adafac;text-align:center;margin:13px 9px 0}
+.sg-section-title{margin:34px 1px 15px;display:flex;justify-content:space-between;align-items:baseline;gap:9px}
+.sg-section-title h2{font-size:22px;letter-spacing:-.04em;font-weight:860;margin:0}
+.sg-section-title span{color:#9fa4a1;font-size:10px;letter-spacing:.07em;text-transform:uppercase;white-space:nowrap}
+.sg-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.sg-step{background:#1b1e1c;border:1px solid #383d36;border-radius:16px;padding:16px 12px;min-height:153px}
+.sg-step-num{color:#e9bd6a;font-size:22px;font-weight:930;letter-spacing:-.06em}
+.sg-step strong{display:block;margin:13px 0 7px;font-size:13px;line-height:1.22}
+.sg-step p{font-size:11px;color:#aeb1ad;line-height:1.5;margin:0}
+.sg-map{height:205px;border-radius:22px;overflow:hidden;position:relative;border:1px solid #414a43;background:#1c2425}
+.sg-map svg{width:100%;height:100%;display:block}
+.sg-map-caption{position:absolute;left:12px;top:12px;border-radius:10px;background:#101615e8;border:1px solid #5a6155;padding:9px 11px;color:#fff;font-size:11px;font-weight:760}
+.sg-map-caption:before{content:"";display:inline-block;height:7px;width:7px;background:#eac16d;border-radius:50%;margin-right:7px}
+.sg-map-credit{position:absolute;right:11px;bottom:10px;color:#c4c5c0;background:#111a19d9;border-radius:7px;padding:6px 8px;font-size:10px}
+.sg-safety{text-align:center;padding:17px 8px 0;color:#a4aaa5;font-size:12px;line-height:1.5}
+.sg-nav{position:fixed;z-index:40;left:0;bottom:0;right:0;display:flex;justify-content:center;border-top:1px solid #3b3c35;background:#111411f5;padding:10px 3px max(11px,env(safe-area-inset-bottom));backdrop-filter:blur(16px)}
+.sg-nav button{border:0;background:transparent;box-shadow:none;color:#a2a9a2;font:760 10px system-ui,-apple-system,sans-serif;min-height:49px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;padding:3px 0;flex:1;max-width:135px;cursor:pointer}
+.sg-nav button span{font-size:20px;line-height:1}
+.sg-nav button.sg-current{color:#edc26d}
+.sg-back{margin:0 0 14px}.sg-back button{font-size:13px!important;background:#332b1f!important;color:#f3cf86!important;padding:12px!important}
+.sg-trip-note{display:none}body.sg-trips-mode .sg-trip-note{display:block}
+body:not(.sg-home-active) main.app{padding-bottom:110px}
+@media(max-width:390px){.sg-hero{padding-left:18px;padding-right:18px}.sg-top{padding-top:20px}.sg-step{padding:13px 9px}.sg-steps{gap:6px}#sg-landing .sg-btn{font-size:12px;padding:9px 5px}}
+@media(prefers-reduced-motion:reduce){#sg-landing *,main.app *{scroll-behavior:auto!important}}
+</style>
 </head>
-<body>
-<main class="app">
+<body class="sg-home-active">
+
+<section id="sg-landing" aria-label="Bienvenue sur SAMGO">
+ <div class="sg-top"><div class="sg-brand">SAM<b>GO</b></div><span class="sg-proto">VERSION TEST</span></div>
+ <div class="sg-hero">
+  <div class="sg-eyebrow">LE CONCEPT SAMGO</div>
+  <h1>Rentre chez toi.<br><em>Ta voiture aussi.</em></h1>
+  <p class="sg-lead">Un chauffeur de remplacement vient te rejoindre et conduit ta propre voiture pour te raccompagner.</p>
+  <div class="sg-scene">
+   <svg viewBox="0 0 700 265" role="img" aria-label="Illustration d'une voiture élégante de nuit" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="sg-metal" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#7a8080"/><stop offset=".3" stop-color="#363b3b"/><stop offset=".7" stop-color="#171b1e"/><stop offset="1" stop-color="#080a0d"/></linearGradient>
+      <linearGradient id="sg-glass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#63717a"/><stop offset="1" stop-color="#101b21"/></linearGradient>
+      <linearGradient id="sg-light" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#f8da9f" stop-opacity=".65"/><stop offset="1" stop-color="#f8da9f" stop-opacity="0"/></linearGradient>
+    </defs>
+    <g stroke="#ad8d50" stroke-width="1" opacity=".17"><path d="M0 224H700M0 247H700M58 65V235M166 37V235M536 60V235M631 68V235M0 113H700"/></g>
+    <ellipse cx="352" cy="224" rx="295" ry="29" fill="#000" opacity=".8"/>
+    <path d="M66 159Q82 129 152 120L206 107Q251 54 313 53L450 52Q505 56 547 108L626 126Q654 135 663 160L658 192Q649 207 629 211H82Q55 206 57 183Z" fill="url(#sg-metal)" stroke="#ab9b7e" stroke-width="2"/>
+    <path d="M232 110L293 68Q309 60 357 60H448Q478 61 516 112Z" fill="url(#sg-glass)" stroke="#acaa9c" stroke-width="2.2"/>
+    <path d="M369 61L367 112M516 112L549 124" fill="none" stroke="#dfc48e" stroke-width="2" opacity=".7"/>
+    <path d="M95 155Q346 139 622 151" fill="none" stroke="#99886c" stroke-width="2" opacity=".45"/>
+    <path d="M65 178L124 171L128 184L65 188Z" fill="#e7bc6c"/><path d="M610 165L662 160L663 178L619 185Z" fill="#ffebbb"/>
+    <path d="M649 174L700 163" stroke="url(#sg-light)" stroke-width="18" opacity=".6"/>
+    <path d="M76 197Q350 208 644 192" fill="none" stroke="#666a69" stroke-width="3"/>
+    <g>
+      <circle cx="199" cy="202" r="41" fill="#080a0b" stroke="#4d5252" stroke-width="7"/><circle cx="199" cy="202" r="25" fill="#4e5253" stroke="#b3b5b3" stroke-width="4"/><circle cx="199" cy="202" r="8" fill="#d2b67b"/>
+      <circle cx="531" cy="202" r="41" fill="#080a0b" stroke="#4d5252" stroke-width="7"/><circle cx="531" cy="202" r="25" fill="#4e5253" stroke="#b3b5b3" stroke-width="4"/><circle cx="531" cy="202" r="8" fill="#d2b67b"/>
+    </g>
+   </svg>
+  </div>
+  <div class="sg-pill">✦ Ta voiture. Notre chauffeur. Ton retour.</div>
+ </div>
+ <div class="sg-actions">
+  <button type="button" class="sg-btn" onclick="sgGo('book')">↗ &nbsp; Réserver un chauffeur</button>
+  <button type="button" class="sg-btn secondary" onclick="sgGo('driver')">♧ &nbsp; Devenir chauffeur</button>
+ </div>
+ <p class="sg-notice">Prototype de test : les réservations et paiements réels ne sont pas encore disponibles.</p>
+ <div class="sg-section-title"><h2>Comment ça marche ?</h2><span>En 3 étapes</span></div>
+ <div class="sg-steps">
+  <div class="sg-step"><div class="sg-step-num">01</div><strong>Tu demandes</strong><p>Indique ton départ et ton arrivée.</p></div>
+  <div class="sg-step"><div class="sg-step-num">02</div><strong>On te rejoint</strong><p>Un chauffeur validé viendra à toi.</p></div>
+  <div class="sg-step"><div class="sg-step-num">03</div><strong>Tu rentres</strong><p>Il conduit ta propre voiture.</p></div>
+ </div>
+ <div class="sg-section-title"><h2>Un trajet sans stress.</h2><span>Aperçu du concept</span></div>
+ <div class="sg-map">
+  <svg viewBox="0 0 650 225" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Itinéraire dessiné sur une carte illustrative">
+   <rect width="650" height="225" fill="#1c2627"/>
+   <g stroke="#344144" stroke-width="21" fill="none"><path d="M0 57L670 91M-20 181L660 145M132 -20L150 255M300 -20L286 255M508 -30L510 250"/></g>
+   <g stroke="#5b6969" stroke-width="2" fill="none"><path d="M0 57L670 91M-20 181L660 145M132 -20L150 255M300 -20L286 255M508 -30L510 250"/></g>
+   <g fill="#26322e" stroke="#395044" stroke-width="2"><rect x="180" y="5" width="73" height="49" rx="6"/><rect x="339" y="105" width="121" height="76" rx="6"/><rect x="544" y="20" width="63" height="51" rx="6"/><rect x="20" y="82" width="81" height="71" rx="6"/></g>
+   <path d="M125 161L283 155Q302 154 303 132L300 71Q299 45 338 49L504 61" fill="none" stroke="#e5bb68" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+   <circle cx="125" cy="161" r="14" fill="#e5bb68" stroke="#1c2627" stroke-width="5"/><circle cx="504" cy="61" r="14" fill="#e5bb68" stroke="#1c2627" stroke-width="5"/><circle cx="504" cy="61" r="5" fill="#1c2627"/>
+  </svg>
+  <div class="sg-map-caption">Votre trajet, votre voiture</div><div class="sg-map-credit">Carte illustrative · pas de géolocalisation active</div>
+ </div>
+ <p class="sg-safety">Avant le lancement du service : vérification des chauffeurs, assurances et cadre légal adaptés.</p>
+</section>
+<main class="app"><div class="sg-back"><button type="button" onclick="sgGo('home')">← Retour à l'accueil</button></div><section id="sg-trips-note" class="panel sg-trip-note"><h2>Mes courses</h2><p>Le suivi des courses n'est pas encore disponible dans cette version de test. Aucune réservation réelle ne peut être effectuée actuellement.</p></section>
   <header><div class="logo">SAM<b>GO</b> <span style="font-size:13px;letter-spacing:0;color:#aaa">V3</span></div><span aria-hidden="true" style="font-size:31px">🚗</span></header>
   <div class="tagline">Ta voiture, notre chauffeur.</div>
   <div class="notice">🚧 <strong>VERSION TEST</strong> — Les comptes et candidatures de test peuvent être enregistrés dans Supabase. Aucune course réelle, aucun paiement et aucune vérification automatique ne sont actifs. N'envoie aucun document d'identité.</div>
@@ -303,5 +410,27 @@ if(client){
     .catch(error=>setStatus('authStatus','Supabase ne répond pas : '+errText(error),'error'));
   refreshUser();client.auth.onAuthStateChange((event)=>{if(event==='SIGNED_IN'||event==='SIGNED_OUT'||event==='USER_UPDATED') setTimeout(refreshUser,0);});}
 else setStatus('authStatus','Connexion Supabase indisponible. Recharge la page avec Internet activé.','error');
+</script>
+
+<nav class="sg-nav" aria-label="Menu SAMGO">
+ <button type="button" data-sg-view="home" class="sg-current" onclick="sgGo('home')"><span>⌂</span>Accueil</button>
+ <button type="button" data-sg-view="book" onclick="sgGo('book')"><span>↗</span>Réserver</button>
+ <button type="button" data-sg-view="driver" onclick="sgGo('driver')"><span>◈</span>Chauffeur</button>
+ <button type="button" data-sg-view="trips" onclick="sgGo('trips')"><span>▤</span>Courses</button>
+ <button type="button" data-sg-view="account" onclick="sgGo('account')"><span>◉</span>Compte</button>
+</nav>
+<script id="sg-2026-navigation">
+function sgGo(view){
+ var home=view==='home';
+ document.body.classList.toggle('sg-home-active',home);
+ document.body.classList.toggle('sg-trips-mode',view==='trips');
+ document.querySelectorAll('[data-sg-view]').forEach(function(el){el.classList.toggle('sg-current',el.dataset.sgView===view)});
+ if(home){window.scrollTo({top:0,behavior:'smooth'});return;}
+ if(view==='driver')setSpace('chauffeur');
+ if(view==='book')setSpace('raccompagner');
+ var target=view==='account'?'authPanel':view==='trips'?'sg-trips-note':view==='driver'?'spaceChauffeur':'spaceRaccompagner';
+ var el=document.getElementById(target);
+ if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+}
 </script>
 </body></html>
