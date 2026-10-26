@@ -76,6 +76,25 @@
 .sg-driver-profile{margin:0}.sg-driver-profile dt{font-size:11px;color:#aab7c1;margin-top:13px}
 .sg-driver-profile dd{margin:3px 0 0;font-size:14px;padding-bottom:9px;border-bottom:1px solid #364854;overflow-wrap:anywhere}
 @media(max-width:380px){.sg-driver{padding:14px!important}.sg-driver-tabs button{font-size:10px}.sg-driver-stats b{font-size:18px}.sg-driver-state strong{font-size:16px}}
+
+.sg-driver-simulation{margin:13px 0 18px;background:#162631;border:1px solid #596371;padding:14px;border-radius:14px}
+.sg-demo-heading{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sg-demo-heading strong{font-size:13px;color:#fff}
+.sg-demo-heading small{margin-left:auto;color:#f6d48d;font-weight:800;font-size:9px;letter-spacing:.09em}
+.sg-demo-dot{display:inline-block;background:#77848b;height:10px;width:10px;border-radius:100%;box-shadow:0 0 5px #667580}
+.sg-demo-dot.online{background:#74d5a7;box-shadow:0 0 8px #74d5a7}
+.sg-driver-simulation p{font-size:12px;color:#c0d0d8;line-height:1.5}
+.sg-driver-simulation button{background:#ebc878;color:#151a20;border:0;font-size:13px;width:100%;border-radius:10px;min-height:43px}
+.sg-driver-simulation button[aria-pressed="true"]{background:#253d3c;color:#bbf2dc;border:1px solid #6caa91}
+.sg-driver-simulation button:disabled{background:#343a3c;color:#d9d4c8;opacity:.7;cursor:not-allowed}
+.sg-driver-simulation .sg-demo-status{font-size:11px;color:#e7d1a2;margin-bottom:0}
+.sg-demo-mission{background:#202423;border:1px dashed #987344;border-radius:12px;padding:13px;margin-top:14px}
+.sg-demo-mission>strong{color:#eac777;display:block;font-size:10px;letter-spacing:.075em}
+.sg-demo-mission p{font-size:12px;color:#c6c6bb;margin:10px 0}
+.sg-demo-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:9px 0;font-size:12px}
+.sg-demo-row b{white-space:nowrap;color:#eac777}
+#spaceChauffeur,#spaceRaccompagner,#authPanel,#sg-trips-note{scroll-margin-top:105px}
+body:not(.sg-home-active) main.app{padding-top:34px;padding-bottom:145px}
 </style>
 <style id="sg-2026-style">
 :root{color-scheme:dark}
@@ -226,10 +245,18 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   <div class="sg-driver-pane" data-dpane="overview">
    <h3>Bienvenue sur SAMGO</h3><p id="driverHello"></p>
    <div class="sg-driver-lock">🔒 <strong>Courses désactivées</strong><p>Le service est encore en test. Même avec une candidature approuvée, aucune mission ou rémunération réelle n'est disponible.</p></div>
+   <div id="driverSimulation" class="sg-driver-simulation">
+  <div class="sg-demo-heading"><span class="sg-demo-dot" aria-hidden="true"></span><strong>Simulation de disponibilité</strong><small>DÉMONSTRATION</small></div>
+  <p>Découvre comment fonctionnerait le bouton En ligne / Hors ligne. Cela ne te rend pas visible auprès des clients.</p>
+  <button id="driverSimToggle" type="button" onclick="toggleDriverSimulation()" aria-pressed="false">Passer en ligne (démo)</button>
+  <p id="driverSimMessage" class="sg-demo-status" role="status" aria-live="polite">Mode démo : hors ligne. Aucune position envoyée.</p>
+</div>
    <p>✓ Votre compte a été créé.</p><p id="driverNext">◷ Validation de candidature à venir.</p><p>○ Missions activables seulement après vérifications, assurances et mise en service.</p>
    <button type="button" class="sg-driver-refresh" onclick="refreshCandidate()">Actualiser mon statut</button>
   </div>
-  <div class="sg-driver-pane hidden" data-dpane="missions"><h3>Mes missions</h3><div class="sg-driver-empty"><b>🚘 Aucune mission disponible</b><p>La réception et l'acceptation des courses ne sont pas encore activées. Cette page n'attribue aucune vraie course.</p></div></div>
+  <div class="sg-driver-pane hidden" data-dpane="missions"><h3>Mes missions</h3><div class="sg-driver-empty"><b>🚘 Aucune mission réelle disponible</b><p>La réception et l'acceptation des courses ne sont pas encore activées. Cette page n'attribue aucune vraie course.</p></div>
+  <div class="sg-demo-mission"><strong>APERÇU FICTIF — EXEMPLE DE COURSE</strong><p>Trajet illustratif : 12 km</p><div class="sg-demo-row"><span>Prix envisagé côté client</span><b>12 €</b></div><div class="sg-demo-row"><span>Part chauffeur théorique (90 %)</span><b>10,80 €</b></div><p>Exemple calculé sur une hypothèse de 1 €/km. Ce n'est pas une demande de client, ni un montant gagné.</p></div>
+</div>
   <div class="sg-driver-pane hidden" data-dpane="gains"><h3>Mes gains</h3><div class="sg-driver-empty"><b>0 € de gains enregistrés</b><p>Aucun paiement ni virement actif. Une commission de 10 % est envisagée, sous réserve de validation du modèle économique.</p></div></div>
   <div class="sg-driver-pane hidden" data-dpane="profil"><h3>Mon profil chauffeur</h3>
    <dl class="sg-driver-profile"><dt>Nom affiché</dt><dd id="driverName">—</dd><dt>E-mail</dt><dd id="driverMail">—</dd><dt>Inscrit le</dt><dd id="driverDate">—</dd><dt>Candidature</dt><dd id="driverStatus">—</dd></dl>
@@ -448,6 +475,29 @@ async function refreshUser(){if(!client)return;try{const {data,error}=await clie
  else $('accountTitle').textContent=space==='chauffeur'?'Créer mon compte chauffeur':'Créer mon compte';
  await refreshCandidate();
 }
+let driverSimActive=false;
+let driverSimAllowed=false;
+function updateDriverSimulation(){
+ const btn=$('driverSimToggle');
+ const message=$('driverSimMessage');
+ const dot=document.querySelector('.sg-demo-dot');
+ if(!btn||!message||!dot)return;
+ btn.disabled=!driverSimAllowed;
+ btn.setAttribute('aria-pressed',String(driverSimActive));
+ dot.classList.toggle('online',driverSimActive);
+ if(!driverSimAllowed){
+  btn.textContent='Mode démo indisponible';
+  message.textContent='Votre candidature doit être approuvée pour tester cet affichage. Aucune vraie course n’est possible.';
+ }else{
+  btn.textContent=driverSimActive?'Passer hors ligne (démo)':'Passer en ligne (démo)';
+  message.textContent=driverSimActive?'Mode démo : en ligne fictivement. Aucune géolocalisation et aucune mission réelles.':'Mode démo : hors ligne. Aucune position envoyée.';
+ }
+}
+function toggleDriverSimulation(){
+ if(!driverSimAllowed)return;
+ driverSimActive=!driverSimActive;
+ updateDriverSimulation();
+}
 function driverTab(tab){
  if(!['overview','missions','gains','profil'].includes(tab))return;
  document.querySelectorAll('[data-dpane]').forEach(el=>el.classList.toggle('hidden',el.dataset.dpane!==tab));
@@ -470,6 +520,7 @@ function showDriverRecord(record){
  const value=labels[record.statut]||['Statut non reconnu','Vérifiez votre statut avec le support.','À vérifier','! Statut à vérifier.'];
  $('driverState').textContent=value[0];$('driverStateHelp').textContent=value[1];$('driverPill').textContent=value[2];$('driverStatus').textContent=value[2];$('driverNext').textContent=value[3];
  $('driverHello').textContent='Bonjour '+(record.nom_affiche||'')+' ! Voici votre espace personnel de test.';
+ driverSimAllowed=record.statut==='approuve'; if(!driverSimAllowed)driverSimActive=false; updateDriverSimulation();
  $('driverName').textContent=record.nom_affiche||'—';$('driverMail').textContent=sessionUser.email||'—';
  const dt=new Date(record.cree_le);$('driverDate').textContent=record.cree_le&&Number.isFinite(dt.valueOf())?new Intl.DateTimeFormat('fr-FR',{dateStyle:'long'}).format(dt):'—';
 }
