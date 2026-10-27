@@ -14,6 +14,19 @@ function addButton(box,title,action,cls){
  if(cls)e.className=cls;e.addEventListener('click',action);box.append(e);return e;
 }
 function stars(value){const n=Math.min(5,Math.max(0,Number(value)||0));return '★'.repeat(n)+'☆'.repeat(5-n);}
+function stepName(stage){
+ const names={en_route_test:'Le chauffeur indique être en route (TEST)',arrive_test:'Le chauffeur indique être arrivé (TEST)',trajet_test:'Trajet fictif commencé (TEST)'};
+ return names[stage]||'Chauffeur sélectionné (TEST)';
+}
+async function nextStage(choice,record){
+ if(!driverOk())return;
+ const next=record?({en_route_test:'arrive_test',arrive_test:'trajet_test'}[record.etape]):'en_route_test';
+ if(!next)return;
+ const result=record?await client.testTracking.advance(choice.id,record.etape,next):await client.testTracking.start(choice.id,sessionUser.id);
+ if(result.error){status('sgDriverSelectionsStatus','Modification du suivi impossible : '+(result.error.message||'Réessayez.'));return;}
+ await refreshDriver();
+ status('sgDriverSelectionsStatus','✓ '+stepName(next)+'. Aucune vraie course commencée.');
+}
 function addReviewForm(box,choice){
  const form=document.createElement('div');form.className='sg-review-demo-card';
  addText(form,'strong','Donner une note au chauffeur — TEST');
@@ -72,13 +85,14 @@ async function refreshClient(){
  const uid=sessionUser.id,seq=++clientSequence;
  status('sgReviewClientStatus','Chargement des chauffeurs intéressés et avis de test…');
  try{
-  const [a,r,c,v]=await Promise.all([
-   client.testRequests.mine(uid),client.testReplies.list(),client.testChoices.list(),client.testReviews.list()
+  const [a,r,c,v,t]=await Promise.all([
+   client.testRequests.mine(uid),client.testReplies.list(),client.testChoices.list(),client.testReviews.list(),client.testTracking.list()
   ]);
   if(!signed()||uid!==sessionUser.id||seq!==clientSequence)return;
-  for(const result of [a,r,c,v])if(result.error)throw result.error;
+  for(const result of [a,r,c,v,t])if(result.error)throw result.error;
   const ads=Array.isArray(a.data)?a.data:[],replies=Array.isArray(r.data)?r.data:[],
-        choices=Array.isArray(c.data)?c.data:[],reviews=Array.isArray(v.data)?v.data:[];
+        choices=Array.isArray(c.data)?c.data:[],reviews=Array.isArray(v.data)?v.data:[],
+        tracking=Array.isArray(t.data)?t.data:[];
   status('sgReviewClientStatus',ads.length?ads.length+' annonce(s) consultée(s) en version de test.':'Aucune annonce publiée pour ce compte.');
   for(const ad of ads){
    const card=document.createElement('article');card.className='sg-reply-card';
@@ -89,6 +103,9 @@ async function refreshClient(){
    addText(card,'p',relevant.length+' chauffeur(s) intéressé(s) (test).');
    if(selected){
     addText(card,'p',selected.statut==='termine_test'?'✓ Course fictive terminée':'✓ Un chauffeur a été choisi pour cette simulation.');
+    const step=tracking.find(x=>x.choix_id===selected.id);
+    if(step)addText(card,'p',stepName(step.etape));
+    else if(selected.statut==='choisi_test')addText(card,'p','En attente du premier statut du chauffeur (test).');
     if(selected.statut==='choisi_test')addButton(card,'Terminer la simulation (test)',()=>finishRide(selected),'sg-demo-finish');
     else{
      const review=reviews.find(x=>x.choix_id===selected.id);
@@ -119,9 +136,9 @@ async function refreshDriver(){
  const uid=sessionUser.id,seq=++driverSequence;
  status('sgDriverReviewsStatus','Chargement de vos avis de test…');
  try{
-  const [ch,rev]=await Promise.all([client.testChoices.list(),client.testReviews.list()]);
+  const [ch,rev,tracking]=await Promise.all([client.testChoices.list(),client.testReviews.list(),client.testTracking.list()]);
   if(!signed()||sessionUser.id!==uid||seq!==driverSequence)return;
-  if(ch.error)throw ch.error;if(rev.error)throw rev.error;
+  for(const req of [ch,rev,tracking])if(req.error)throw req.error;
   const mine=(ch.data||[]).filter(c=>c.chauffeur_id===uid);
   const reviews=(rev.data||[]).filter(x=>x.chauffeur_id===uid);
   const avg=reviews.length?(reviews.reduce((sum,x)=>sum+Number(x.note),0)/reviews.length):0;
@@ -138,7 +155,13 @@ async function refreshDriver(){
   for(const selection of mine){
    const card=document.createElement('div');card.className='sg-review-demo-card';
    addText(card,'strong',selection.statut==='termine_test'?'Simulation terminée':'Chauffeur choisi (test)');
-   addText(card,'p','Cette étape ne représente pas une course réelle.');
+   const step=(tracking.data||[]).find(x=>x.choix_id===selection.id);
+   addText(card,'p',step?stepName(step.etape):'En attente : chauffeur non parti (test).');
+   if(selection.statut==='choisi_test'&&(!step||step.etape!=='trajet_test')){
+    const label=!step?'Indiquer : en route (TEST)':step.etape==='en_route_test'?'Indiquer : arrivé (TEST)':'Indiquer : trajet commencé (TEST)';
+    addButton(card,label,()=>nextStage(selection,step),'sg-demo-finish');
+   }
+   addText(card,'p','Aucune véritable course ni aucun déplacement n’est demandé.');
    slist.append(card);
   }
  }catch(e){status('sgDriverReviewsStatus','Impossible de lire les avis de test : '+(e.message||'réessayez.'));}
