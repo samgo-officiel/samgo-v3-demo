@@ -48,6 +48,35 @@
     footer{margin-top:26px;font-size:12px;color:#aaa;line-height:1.6}
   </style>
 
+<style id="sg-nearby-live-style">
+.sg-geo-publish,.sg-nearby-controls,.sg-demand-shortcut{border:1px solid #756137;background:linear-gradient(140deg,#29291f,#192931);border-radius:14px;padding:15px;margin:17px 0}
+.sg-geo-publish>strong,.sg-nearby-controls>strong{color:#ffda95;font-size:14px}
+.sg-geo-publish p,.sg-nearby-controls p,.sg-demand-shortcut p{color:#c9d1d7;font-size:12px;line-height:1.5}
+.sg-geo-consent{display:flex!important;gap:9px;align-items:flex-start;line-height:1.45;font-size:12px!important}
+.sg-geo-consent input{flex:0 0 18px;width:18px!important;height:18px;min-height:18px!important;margin:2px 0}
+.sg-geo-consent span{flex:1}
+#sgPublishBtn,.sg-demand-shortcut button,.sg-nearby-controls button{font-size:13px;background:#edc16f;color:#1c1c1a;padding:10px;max-width:100%}
+#sgPublishBtn:disabled{opacity:.6}
+.sg-demand-shortcut h3{font-size:19px;line-height:1.3;margin:9px 0}
+.sg-demand-shortcut small{display:block;font-size:11px;color:#cfc6b9;margin-top:10px}
+.sg-demand-badge{color:#ffe0a0;font-size:10px;font-weight:850;letter-spacing:.1em}
+.sg-demand-explain{font-size:13px;line-height:1.5;color:#bdc8d0}
+.sg-radius-line{display:flex;align-items:center;gap:12px;margin:9px 0}
+.sg-radius-line select{background:#111d22!important;color:#fff;border-radius:10px;border:1px solid #78828a;min-height:45px;padding:10px;flex:1;font-size:16px;min-width:0}
+.sg-radius-line strong{color:#f2ce84;white-space:nowrap}
+.sg-nearby-controls button{display:block;width:100%;margin:11px 0}
+.sg-nearby-controls button.alt{background:#283842;color:#f7eee2}
+.sg-nearby-card{border:1px solid #4a5960;background:#18272e;border-radius:13px;padding:14px;margin:10px 0}
+.sg-nearby-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sg-nearby-top b{font-size:13px}
+.sg-nearby-top span{padding:5px 9px;color:#f5d282;border:1px solid #92713d;border-radius:20px;font-size:12px}
+.sg-nearby-card p{font-size:13px;color:#fff;line-height:1.5}
+.sg-nearby-card small{font-size:12px;color:#bccbd1}
+.sg-nearby-card .sg-demand-disclaimer{font-size:11px;color:#eccd90}
+.sg-demand-warning{border:1px solid #7b633f;border-radius:12px;padding:12px;margin:13px 0;color:#e9d2a2;font-size:12px;line-height:1.5}
+.sg-alert-new{background:#322c1f;color:#ffdf9f;padding:12px;border:1px solid #997c45;border-radius:10px;font-weight:800;font-size:13px}
+.sg-alert-new[hidden]{display:none!important}
+</style>
 <style id="sg-client-demo-style">
 .sg-demo-panel{background:#111b21!important;border:1px solid #3b4a52!important}
 .sg-demo-eyebrow{display:block;color:#efc775;letter-spacing:.12em;font-size:11px;font-weight:800;margin-bottom:10px}
@@ -311,6 +340,13 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
     <div class="sg-demo-row"><span>Prix indicatif</span><b id="demoBookingFare"></b></div>
     <button type="button" onclick="sgGo('trips')">Voir le suivi de test</button>
   </div>
+  <div id="sgPublishBox" class="sg-geo-publish">
+   <strong>📍 Publier une demande de test à proximité</strong>
+   <p>Cette annonce sera visible par les chauffeurs de test approuvés jusqu'à 2 heures. SAMGO ne publie qu'une position arrondie à environ 1 km, jamais votre point GPS exact. Cela ne réserve aucune vraie course.</p>
+   <label class="sg-geo-consent"><input type="checkbox" id="sgPublishConsent" /><span>J'utilise des noms de lieux fictifs et j'accepte de partager une position approximative pour cette annonce de test.</span></label>
+   <button type="button" id="sgPublishBtn" onclick="window.sgDemand.publish()">Autoriser mon GPS et publier (test)</button>
+   <p id="sgPublishStatus" role="status" aria-live="polite">Publication facultative. Une confirmation de localisation sera demandée par le navigateur.</p>
+  </div>
 </section>
   <section id="spaceChauffeur" class="panel hidden sg-driver">
  <div class="sg-driver-heading"><span>ESPACE CHAUFFEUR · SAMGO</span><h2 id="driverTitle">Devenir chauffeur SAMGO</h2><p id="driverDesc">Créez un compte ou connectez-vous pour suivre votre candidature.</p></div>
@@ -322,13 +358,21 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   <div class="sg-driver-stats"><div><b>0</b><span>Missions attribuées</span></div><div><b>0 €</b><span>Gains enregistrés</span></div><div><b>—</b><span>Note chauffeur</span></div></div>
   <div class="sg-driver-tabs" role="group" aria-label="Mon espace chauffeur">
    <button type="button" data-dtab="overview" aria-pressed="true" onclick="driverTab('overview')">Accueil</button>
-   <button type="button" data-dtab="missions" aria-pressed="false" onclick="driverTab('missions')">Missions</button>
+   <button type="button" data-dtab="missions" aria-pressed="false" onclick="driverTab('missions')">Demandes</button>
    <button type="button" data-dtab="gains" aria-pressed="false" onclick="driverTab('gains')">Gains</button>
    <button type="button" data-dtab="profil" aria-pressed="false" onclick="driverTab('profil')">Profil</button>
   </div>
   <div class="sg-driver-pane" data-dpane="overview">
    <h3>Bienvenue sur SAMGO</h3><p id="driverHello"></p>
    <div class="sg-driver-lock">🔒 <strong>Courses désactivées</strong><p>Le service est encore en test. Même avec une candidature approuvée, aucune mission ou rémunération réelle n'est disponible.</p></div>
+
+   <div class="sg-demand-shortcut">
+    <span class="sg-demand-badge">DEMANDES DE TEST</span>
+    <h3>Demandes clients autour de moi</h3>
+    <p>Autorisez votre GPS, choisissez un rayon de 5 à 50 km et consultez les annonces de test déposées dans ce secteur.</p>
+    <button type="button" onclick="window.sgDemand.open()">⌖ Voir les demandes autour de moi</button>
+    <small>Votre position chauffeur n'est pas enregistrée. Aucune course réelle.</small>
+   </div>
    <div id="driverSimulation" class="sg-driver-simulation">
   <div class="sg-demo-heading"><span class="sg-demo-dot" aria-hidden="true"></span><strong>Simulation de disponibilité</strong><small>DÉMONSTRATION</small></div>
   <p>Découvre comment fonctionnerait le bouton En ligne / Hors ligne. Cela ne te rend pas visible auprès des clients.</p>
@@ -338,7 +382,31 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
    <p>✓ Votre compte a été créé.</p><p id="driverNext">◷ Validation de candidature à venir.</p><p>○ Missions activables seulement après vérifications, assurances et mise en service.</p>
    <button type="button" class="sg-driver-refresh" onclick="refreshCandidate()">Actualiser mon statut</button>
   </div>
-  <div class="sg-driver-pane hidden" data-dpane="missions"><h3>Mes missions</h3><div class="sg-driver-empty"><b>🚘 Aucune mission réelle disponible</b><p>La réception et l'acceptation des courses ne sont pas encore activées. Cette page n'attribue aucune vraie course.</p></div>
+  <div class="sg-driver-pane hidden" data-dpane="missions">
+  <span class="sg-demo-eyebrow">DÉMONSTRATION — DEMANDES PUBLIÉES</span>
+  <h3>Demandes autour de moi</h3>
+  <p class="sg-demand-explain">Choisissez un rayon autour de votre position GPS. Seules les annonces de test, sans adresse réelle ni numéro de téléphone, peuvent apparaître ici.</p>
+  <div class="sg-nearby-controls">
+   <label for="sgRadius">Distance autour de moi</label>
+   <div class="sg-radius-line"><select id="sgRadius" onchange="window.sgDemand.render()"><option value="5">5 km</option><option value="10">10 km</option><option value="20">20 km</option><option value="30" selected>30 km</option><option value="50">50 km</option></select>
+   <strong id="sgRadiusValue">30 km</strong></div>
+   <button type="button" onclick="window.sgDemand.open()">⌖ Activer / actualiser mon GPS</button>
+   <p id="sgGeoStatus" role="status" aria-live="polite">GPS non activé. Aucun suivi de position actif.</p>
+  </div>
+  <div class="sg-nearby-controls">
+    <strong>🔔 Alertes de nouvelles demandes (test)</strong>
+    <p>Actualisation environ toutes les 30 secondes lorsque le site reste ouvert et visible. Les notifications externes quand Safari est fermé ne sont pas actives.</p>
+    <button type="button" class="alt" id="sgNotifyToggle" aria-pressed="false" onclick="window.sgDemand.optIn()">Activer les alertes pendant la visite</button>
+    <p id="sgNotifyStatus" role="status">Alertes désactivées.</p>
+  </div>
+  <p id="sgInAppAlert" class="sg-alert-new" role="alert" hidden></p>
+  <p id="sgNearbyStatus" role="status" aria-live="polite">Autorisez le GPS pour rechercher des annonces.</p>
+  <div id="sgNearbyList"></div>
+  <button type="button" class="alt" onclick="window.sgDemand.refresh()">↻ Actualiser les demandes</button>
+  <div class="sg-demand-warning">🔒 Aucune annonce ne peut être acceptée en vrai : assurances, vérifications et lancement restent à finaliser.</div>
+  <h3>Autre simulation locale</h3>
+  <p class="sg-demo-small">Le parcours client-chauffeur fictif créé dans cet onglet reste disponible ci-dessous.</p>
+<div class="sg-driver-empty"><b>🚘 Aucune mission réelle disponible</b><p>La réception et l'acceptation des courses ne sont pas encore activées. Cette page n'attribue aucune vraie course.</p></div>
   <div id="driverLocalDemo" class="sg-demo-summary hidden">
   <strong>Nouvelle mission locale — SIMULATION</strong>
   <p id="driverLocalDemoInfo"></p>
@@ -528,7 +596,31 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
         }
       };
     }
-    return {auth,from,async ping(){return api('/auth/v1/settings','GET');}};
+
+    const testRequests={
+      async list(){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Connectez-vous pour consulter les annonces.');
+          const query=new URLSearchParams({
+            select:'id,client_id,depart_test,destination_test,latitude_approx,longitude_approx,distance_km,tarif_indicatif,statut,cree_le,expire_le',
+            statut:'eq.test_en_attente',expire_le:'gt.'+new Date().toISOString(),
+            order:'cree_le.desc',limit:'100'
+          });
+          const data=await api('/rest/v1/annonces_raccompagnement_test?'+query.toString(),'GET',undefined,token);
+          return {data:Array.isArray(data)?data:[],error:null};
+        }catch(error){return {data:[],error};}
+      },
+      async create(payload){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Connectez-vous avant de publier.');
+          await api('/rest/v1/annonces_raccompagnement_test','POST',payload,token,{'Prefer':'return=minimal'});
+          return {error:null};
+        }catch(error){return {error};}
+      }
+    };
+    return {auth,from,testRequests,async ping(){return api('/auth/v1/settings','GET');}};
   }
   window.samgoCreateClient = makeClient;
 })();
@@ -686,6 +778,7 @@ function toggleDriverSimulation(){
  renderLocalDemo();
 }
 function driverTab(tab){
+ if(tab==='missions'&&window.sgDemand)window.sgDemand.render();
  if(!['overview','missions','gains','profil'].includes(tab))return;
  sgMarkCurrentNav('driver');
  document.querySelectorAll('[data-dpane]').forEach(el=>el.classList.toggle('hidden',el.dataset.dpane!==tab));
@@ -700,7 +793,7 @@ function showDriverRecord(record){
  $('candidateForm').classList.toggle('hidden',has||!connected);
  $('driverTitle').textContent=has?'Mon tableau de bord chauffeur':'Devenir chauffeur SAMGO';
  $('driverDesc').textContent=has?'Suivez votre candidature et votre futur espace de missions.':'Connectez-vous ou créez un compte pour déposer votre candidature de test.';
- if(!has){driverSimAllowed=false;driverSimActive=false;updateDriverSimulation();renderLocalDemo();return;}
+ if(!has){driverSimAllowed=false;driverSimActive=false;updateDriverSimulation();renderLocalDemo();if(window.sgDemand)window.sgDemand.authChanged();return;}
  const labels={
   en_attente:['Dossier en attente','Votre candidature a été reçue et attend un examen.','En attente','◷ Validation du dossier en attente.'],
   a_completer:['Dossier à compléter','Le dossier nécessite un complément. Ne transmettez aucun document sensible ici.','À compléter','! Des informations complémentaires sont nécessaires.'],
@@ -710,7 +803,7 @@ function showDriverRecord(record){
  const value=labels[record.statut]||['Statut non reconnu','Vérifiez votre statut avec le support.','À vérifier','! Statut à vérifier.'];
  $('driverState').textContent=value[0];$('driverStateHelp').textContent=value[1];$('driverPill').textContent=value[2];$('driverStatus').textContent=value[2];$('driverNext').textContent=value[3];
  $('driverHello').textContent='Bonjour '+(record.nom_affiche||'')+' ! Voici votre espace personnel de test.';
- driverSimAllowed=record.statut==='approuve'; if(!driverSimAllowed)driverSimActive=false; updateDriverSimulation();renderLocalDemo();
+ driverSimAllowed=record.statut==='approuve'; if(!driverSimAllowed)driverSimActive=false; updateDriverSimulation();renderLocalDemo();if(window.sgDemand)window.sgDemand.authChanged();
  $('driverName').textContent=record.nom_affiche||'—';$('driverMail').textContent=sessionUser.email||'—';
  const dt=new Date(record.cree_le);$('driverDate').textContent=record.cree_le&&Number.isFinite(dt.valueOf())?new Intl.DateTimeFormat('fr-FR',{dateStyle:'long'}).format(dt):'—';
 }
@@ -758,7 +851,7 @@ async function refreshCandidate(){
  }
 }
 async function applyDriver(){if(!client||!sessionUser)return setStatus('applyStatus','Connecte-toi pour envoyer une candidature.','error');const name=$('nomAffiche').value.trim();if(name.length<2||name.length>100)return setStatus('applyStatus','Entre un nom d’affichage de 2 à 100 caractères.','error');if(!$('permisDeclare').checked)return setStatus('applyStatus','Confirme que tu as compris les conditions de validation.','error');$('applyBtn').disabled=true;setStatus('applyStatus','Envoi en cours…');try{const {error}=await client.from('candidatures_chauffeur').insert({utilisateur_id:sessionUser.id,nom_affiche:name});if(error)throw error;setStatus('applyStatus','Candidature de test enregistrée ! Statut : en attente. Tu ne peux pas encore effectuer de courses.','success');await refreshCandidate();}catch(err){setStatus('applyStatus',err?.code==='23505'?'Une candidature existe déjà pour ce compte.':errText(err),'error');$('applyBtn').disabled=false;}}
-async function signOut(){if(!client)return;await client.auth.signOut();localDemoRequest=null;saveLocalDemo();renderLocalDemo();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
+async function signOut(){if(!client)return;await client.auth.signOut();if(window.sgDemand)window.sgDemand.stop();localDemoRequest=null;saveLocalDemo();renderLocalDemo();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
 calc();restoreLocalDemo();renderLocalDemo();setAuthMode('signup');setSpace('raccompagner');
 if(client){
   setStatus('authStatus','Vérification de la connexion à Supabase…');
@@ -817,4 +910,5 @@ function sgGo(view){
  const el=document.getElementById(target);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 </script>
+<script src="assets/demandes-geoloc-test.js"></script>
 </body></html>
