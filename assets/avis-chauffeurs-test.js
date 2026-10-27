@@ -70,6 +70,14 @@ async function selectDriver(ad,answer){
  await refreshClient();
  status('sgReviewClientStatus','✓ Chauffeur sélectionné en simulation. Aucune vraie course attribuée.');
 }
+async function cancelRide(choice){
+ if(!signed())return;
+ if(typeof window.confirm==='function'&&!window.confirm('Annuler cette simulation ? Elle ne sera plus proposée comme course fictive.'))return;
+ const result=await client.testChoices.cancel(choice.id,sessionUser.id);
+ if(result.error){status('sgReviewClientStatus','Annulation impossible : '+(result.error.message||'Réessayez.'));return;}
+ await refreshClient();
+ status('sgReviewClientStatus','✓ Simulation annulée. Aucune course réelle concernée.');
+}
 async function finishRide(choice){
  if(!signed())return;
  if(typeof window.confirm==='function'&&!window.confirm('Terminer la course fictive pour pouvoir déposer un avis de test ?'))return;
@@ -102,12 +110,14 @@ async function refreshClient(){
    const active=ad.statut==='test_en_attente'&&Date.parse(ad.expire_le)>Date.now();
    addText(card,'p',relevant.length+' chauffeur(s) intéressé(s) (test).');
    if(selected){
-    addText(card,'p',selected.statut==='termine_test'?'✓ Course fictive terminée':'✓ Un chauffeur a été choisi pour cette simulation.');
+    addText(card,'p',selected.statut==='termine_test'?'✓ Course fictive terminée':selected.statut==='annule_test'?'× Simulation annulée':'✓ Un chauffeur a été choisi pour cette simulation.');
     const step=tracking.find(x=>x.choix_id===selected.id);
     if(step)addText(card,'p',stepName(step.etape));
     else if(selected.statut==='choisi_test')addText(card,'p','En attente du premier statut du chauffeur (test).');
-    if(selected.statut==='choisi_test')addButton(card,'Terminer la simulation (test)',()=>finishRide(selected),'sg-demo-finish');
-    else{
+    if(selected.statut==='choisi_test'){
+     addButton(card,'Terminer la simulation (test)',()=>finishRide(selected),'sg-demo-finish');
+     addButton(card,'Annuler cette simulation (test)',()=>cancelRide(selected),'alt');
+    }else if(selected.statut==='termine_test'){
      const review=reviews.find(x=>x.choix_id===selected.id);
      if(review){
       const view=document.createElement('div');view.className='sg-review-demo-card';
@@ -154,7 +164,7 @@ async function refreshDriver(){
   }
   for(const selection of mine){
    const card=document.createElement('div');card.className='sg-review-demo-card';
-   addText(card,'strong',selection.statut==='termine_test'?'Simulation terminée':'Chauffeur choisi (test)');
+   addText(card,'strong',selection.statut==='termine_test'?'Simulation terminée':selection.statut==='annule_test'?'Simulation annulée':'Chauffeur choisi (test)');
    const step=(tracking.data||[]).find(x=>x.choix_id===selection.id);
    addText(card,'p',step?stepName(step.etape):'En attente : chauffeur non parti (test).');
    if(selection.statut==='choisi_test'&&(!step||step.etape!=='trajet_test')){
