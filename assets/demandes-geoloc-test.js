@@ -200,12 +200,10 @@ async function refreshClient(){
    const count=allAnswers.filter(row=>row.annonce_id===ad.id).length;
    const meta=document.createElement('p');meta.textContent=(active?'Active (test)':'Expirée (test)')+' · '+Number(ad.distance_km)+' km · '+count+' réponse(s) de chauffeurs intéressés (test).';
    box.append(title,meta);
-   if(active){
-    const remove=document.createElement('button');remove.type='button';
-    remove.textContent='Retirer cette annonce de test';
-    remove.addEventListener('click',()=>removeClientAd(ad.id));
-    box.append(remove);
-   }
+   const remove=document.createElement('button');remove.type='button';
+   remove.textContent=active?'Retirer cette annonce de test':'Supprimer cette ancienne annonce de test';
+   remove.addEventListener('click',()=>removeClientAd(ad.id));
+   box.append(remove);
    list.append(box);
   }
  }catch(e){
@@ -238,6 +236,8 @@ function stop(){
  if(state.poll){clearInterval(state.poll);state.poll=null;}
  state.pos=null;state.rows=[];state.replies=[];state.notify=false;state.firstLoad=true;state.seen.clear();state.clientLoad++;
  const b=$('sgNotifyToggle');if(b){b.textContent='Activer les alertes pendant la visite';b.setAttribute('aria-pressed','false');}
+ const clientAds=$('sgMyAdsList');if(clientAds)clientAds.replaceChildren();
+ status('sgMyAdsStatus','Connectez-vous pour voir les annonces publiées.');
  const a=$('sgInAppAlert');if(a){a.hidden=true;a.textContent='';}
  const toast=$('sgRequestToast');if(toast)toast.hidden=true;
  status('sgGeoStatus','GPS non activé. Votre position chauffeur n’est pas enregistrée.');
