@@ -52,3 +52,12 @@ La validation « chauffeur approuvé » actuelle est uniquement une validation d
 - Le parcours d'une course fictive affiche une **frise à 5 étapes** côté client et chauffeur : choisi, en route, arrivé, trajet commencé, terminé. L'annulation est indiquée sans être confondue avec une mission réelle.
 - Le formulaire d'avis conserve temporairement les étoiles et le commentaire **en mémoire** lors d'une actualisation ; le brouillon est supprimé après publication ou déconnexion. L'actualisation automatique évite de remplacer le formulaire quand l'utilisateur y écrit.
 - Tests de simulation JavaScript réussis sur l'enchaînement des étapes, l'affichage du progrès, la note après la fin et la conservation du brouillon. Il reste **à tester en conditions réelles** le parcours entre plusieurs appareils avec de véritables sessions utilisateur.
+
+## Préparation Stripe Connect — 28 octobre 2026
+
+- Ajout d'un simulateur visuel dans « Réserver », avec montants client / chauffeur 90 % / SAMGO 10 %.
+- Ajout d'un encart d'information non connecté sur l'onglet « Chauffeur > Gains ».
+- Le calcul est uniquement local : aucun paiement, aucune demande de carte ou d'IBAN, aucune clé API Stripe dans le navigateur.
+- Tests JavaScript : arrondis en centimes, montants invalides, total 100 % et changement de distance. **Aucune transaction Stripe effectuée.**
+- Consulter \`PAIEMENTS-STRIPE-CONNECT.md\` pour les prérequis serveur, la sécurité et l'état des étapes.
+- Prérequis à toute intégration de paiement Stripe sandbox : un compte Stripe propriétaire connecté, validation des types de comptes Connect, une partie serveur avec secret de test, et des tests complets.
