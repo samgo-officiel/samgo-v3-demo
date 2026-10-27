@@ -316,7 +316,7 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
 <main class="app"><div class="sg-back"><button type="button" onclick="sgGo('home')">← Retour à l'accueil</button></div><section id="sg-trips-note" class="panel sg-trip-note sg-demo-panel">
  <span class="sg-demo-eyebrow">ESPACE CLIENT · DÉMONSTRATION</span>
  <h2>Mes courses</h2>
- <p class="subtle">Suivez votre simulation sur cet appareil. Aucune demande n'est envoyée à SAMGO ou à un vrai chauffeur.</p>
+ <p class="subtle">Les simulations locales restent sur cet appareil. Seules les annonces de test que vous publiez volontairement sont enregistrées sur le serveur et visibles par les chauffeurs approuvés en test.</p>
  <div id="demoTripsEmpty" class="sg-demo-placeholder">
   <strong>Aucune simulation en cours</strong><p>Allez sur Réserver pour essayer un trajet fictif.</p>
   <button type="button" onclick="sgGo('book')">Essayer la réservation</button>
@@ -680,7 +680,8 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
           const token=await accessToken();
           if(!token)throw new Error('Connectez-vous pour supprimer votre annonce.');
           const params=new URLSearchParams({id:'eq.'+id,client_id:'eq.'+userId});
-          await api('/rest/v1/annonces_raccompagnement_test?'+params,'DELETE',undefined,token);
+          const deleted=await api('/rest/v1/annonces_raccompagnement_test?'+params,'DELETE',undefined,token,{'Prefer':'return=representation'});
+          if(!Array.isArray(deleted)||deleted.length!==1)throw new Error('Aucune annonce trouvée ou suppression refusée.');
           return {error:null};
         }catch(error){return {error};}
       }
