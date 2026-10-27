@@ -104,6 +104,18 @@
 #driverLocalDemo p{font-size:12px;line-height:1.5}
 </style>
 <style id="sg-login-polish">#authEmailHelp.sg-email-help{font-size:12px;line-height:1.5;color:#dfc58b;margin:7px 0 12px}#authPanel .switch button{min-width:0}#authPanel input:focus-visible{outline:2px solid #eac577;outline-offset:2px}</style>
+<style id="sg-responses-test-style">
+.sg-reply-client-box{padding:15px;margin:16px 0;background:#17242c;border-radius:14px;border:1px solid #44545d}
+.sg-reply-client-box h3{font-size:19px;color:#f8f8f8;margin:0 0 7px}
+.sg-reply-client-box p{font-size:12px;color:#cbd4d9;line-height:1.5}
+.sg-reply-client-box>button{font-size:12px;min-height:40px}
+.sg-reply-card{padding:13px;margin:10px 0;border:1px solid #6c5b3e;border-radius:12px;background:#27271f}
+.sg-reply-card strong{display:block;color:#f4d38a;font-size:13px;margin-bottom:8px;overflow-wrap:anywhere}
+.sg-reply-card p{font-size:12px}
+.sg-reply-card button{margin-top:9px;background:#2c3541!important;color:#f5ead5!important;border:1px solid #746344!important;min-height:38px;font-size:12px}
+.sg-nearby-card button.sg-demo-interest{margin-top:13px;background:#eac06f;color:#171d21;font-size:12px;min-height:41px;width:100%}
+.sg-nearby-card button.sg-demo-interest:disabled{background:#293c39;color:#c9ead4;border:1px solid #517961}
+</style>
 <style id="sg-local-test-history-style">
 .sg-local-test-history{margin:20px 0 0;border:1px solid #44545e;border-radius:13px;padding:13px;background:#121f28}
 .sg-local-test-history>summary{cursor:pointer;list-style-position:inside;color:#f0d08e;font-size:14px;font-weight:800;line-height:1.5;padding:5px}
@@ -317,6 +329,13 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   <div class="sg-demo-row"><span>Prix estimé</span><b id="demoTripsPrice"></b></div>
   <p class="sg-demo-small">Simulation locale uniquement. Aucun paiement, aucune réservation et aucune transmission au serveur. Elle reste dans cet onglet pendant deux heures maximum, si le navigateur autorise le stockage, et s'efface à la fermeture de l'onglet.</p>
   <button type="button" class="alt" onclick="resetLocalDemo()">Effacer la simulation</button>
+ </div>
+ <div class="sg-reply-client-box" id="sgMyPublishedTest">
+  <h3>Mes annonces publiées (test)</h3>
+  <p>Retrouvez vos annonces partagées et le nombre de chauffeurs qui ont répondu <strong>« Intéressé (test) »</strong>. Cela ne confirme aucune réservation.</p>
+  <button type="button" class="alt" onclick="window.sgDemand.refreshClient()">↻ Voir mes annonces et réponses</button>
+  <p id="sgMyAdsStatus" role="status" aria-live="polite">Connectez-vous pour voir vos annonces de test.</p>
+  <div id="sgMyAdsList"></div>
  </div>
 </section>
   <header><div class="logo">SAM<b>GO</b> <span style="font-size:13px;letter-spacing:0;color:#aaa">V3</span></div><span aria-hidden="true" style="font-size:31px">🚗</span></header>
@@ -646,9 +665,46 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
           await api('/rest/v1/annonces_raccompagnement_test','POST',payload,token,{'Prefer':'return=minimal'});
           return {error:null};
         }catch(error){return {error};}
+      },
+      async mine(userId){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Connectez-vous pour consulter vos annonces.');
+          const params=new URLSearchParams({select:'id,depart_test,destination_test,distance_km,tarif_indicatif,cree_le,expire_le,statut',client_id:'eq.'+userId,order:'cree_le.desc',limit:'20'});
+          const rows=await api('/rest/v1/annonces_raccompagnement_test?'+params,'GET',undefined,token);
+          return {data:Array.isArray(rows)?rows:[],error:null};
+        }catch(error){return {data:[],error};}
+      },
+      async remove(id,userId){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Connectez-vous pour supprimer votre annonce.');
+          const params=new URLSearchParams({id:'eq.'+id,client_id:'eq.'+userId});
+          await api('/rest/v1/annonces_raccompagnement_test?'+params,'DELETE',undefined,token);
+          return {error:null};
+        }catch(error){return {error};}
       }
     };
-    return {auth,from,testRequests,async ping(){return api('/auth/v1/settings','GET');}};
+    const testReplies={
+      async list(){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Connectez-vous pour consulter les réponses.');
+          const params=new URLSearchParams({select:'id,annonce_id,chauffeur_id,statut,cree_le',order:'cree_le.desc',limit:'200'});
+          const rows=await api('/rest/v1/reponses_annonces_test?'+params,'GET',undefined,token);
+          return {data:Array.isArray(rows)?rows:[],error:null};
+        }catch(error){return {data:[],error};}
+      },
+      async create(annonceId,userId){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Connectez-vous en tant que chauffeur approuvé.');
+          await api('/rest/v1/reponses_annonces_test','POST',{annonce_id:annonceId,chauffeur_id:userId,statut:'interesse_test'},token,{'Prefer':'return=minimal'});
+          return {error:null};
+        }catch(error){return {error};}
+      }
+    };
+    return {auth,from,testRequests,testReplies,async ping(){return api('/auth/v1/settings','GET');}};
   }
   window.samgoCreateClient = makeClient;
 })();
@@ -958,6 +1014,7 @@ function sgGo(view){
  if(home){window.scrollTo({top:0,behavior:'smooth'});return;}
  if(view==='driver')setSpace('chauffeur');
  if(view==='book')setSpace('raccompagner');
+ if(view==='trips'&&window.sgDemand&&typeof window.sgDemand.refreshClient==='function')window.sgDemand.refreshClient();
  const target=view==='account'?'authPanel':view==='trips'?'sg-trips-note':view==='driver'?'spaceChauffeur':'spaceRaccompagner';
  const el=document.getElementById(target);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
