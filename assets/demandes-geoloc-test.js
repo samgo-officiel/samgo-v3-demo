@@ -181,12 +181,12 @@ async function refreshClient(){
  const sequence=++state.clientLoad;
  status('sgMyAdsStatus','Chargement de vos annonces de test…');
  try{
-  const [ads,answers]=await Promise.all([client.testRequests.mine(currentId),client.testReplies.list()]);
+  const [ads,answers,choices]=await Promise.all([client.testRequests.mine(currentId),client.testReplies.list(),client.testChoices.list()]);
   if(sequence!==state.clientLoad||!signedIn()||sessionUser.id!==currentId)return;
-  if(ads.error)throw ads.error;
-  if(answers.error)throw answers.error;
+  for(const request of [ads,answers,choices])if(request.error)throw request.error;
   const ownAds=Array.isArray(ads.data)?ads.data:[];
   const allAnswers=Array.isArray(answers.data)?answers.data:[];
+  const selected=Array.isArray(choices.data)?choices.data:[];
   if(!ownAds.length){
    status('sgMyAdsStatus','Aucune annonce de test publiée depuis ce compte. Pour publier, utilisez Réserver.');
    return;
@@ -200,10 +200,17 @@ async function refreshClient(){
    const count=allAnswers.filter(row=>row.annonce_id===ad.id).length;
    const meta=document.createElement('p');meta.textContent=(active?'Active (test)':'Expirée (test)')+' · '+Number(ad.distance_km)+' km · '+count+' réponse(s) de chauffeurs intéressés (test).';
    box.append(title,meta);
-   const remove=document.createElement('button');remove.type='button';
-   remove.textContent=active?'Retirer cette annonce de test':'Supprimer cette ancienne annonce de test';
-   remove.addEventListener('click',()=>removeClientAd(ad.id));
-   box.append(remove);
+   const hasChoice=selected.some(choice=>choice.annonce_id===ad.id&&choice.client_id===currentId);
+   if(hasChoice){
+    const info=document.createElement('p');
+    info.textContent='Historique protégé : cette annonce ne peut pas être supprimée depuis ici après le choix d’un chauffeur fictif. Utilisez le suivi de test ci-dessous.';
+    box.append(info);
+   }else{
+    const remove=document.createElement('button');remove.type='button';
+    remove.textContent=active?'Retirer cette annonce de test':'Supprimer cette ancienne annonce de test';
+    remove.addEventListener('click',()=>removeClientAd(ad.id));
+    box.append(remove);
+   }
    list.append(box);
   }
  }catch(e){
