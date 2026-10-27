@@ -3,6 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 let clientSequence=0,driverSequence=0;
+const reviewDrafts=new Map(); // Brouillons conservés uniquement dans cette page, jamais en base.
 function signed(){return typeof sessionUser!=='undefined'&&!!sessionUser&&typeof client!=='undefined'&&!!client&&!!client.testChoices&&!!client.testReviews;}
 function driverOk(){return signed()&&typeof driverSimAllowed!=='undefined'&&driverSimAllowed;}
 function status(id,value){const el=$(id);if(el)el.textContent=value;}
@@ -56,22 +57,27 @@ function addReviewForm(box,choice){
  addText(form,'p','Évaluez la course fictive avec 1 à 5 étoiles. Cet avis ne devient pas une note réelle.', 'sg-demo-small');
  const buttons=document.createElement('div');buttons.className='sg-stars-picker';
  buttons.setAttribute('role','group');buttons.setAttribute('aria-label','Choisir le nombre d’étoiles');
- let selected=0;const buttonNodes=[];
+ const previousDraft=reviewDrafts.get(choice.id)||{rating:0,comment:''};
+ let selected=previousDraft.rating;const buttonNodes=[];
  for(let n=1;n<=5;n++){
   const item=document.createElement('button');item.type='button';
   item.textContent='☆';item.setAttribute('aria-label',n+' étoile'+(n>1?'s':''));
   item.setAttribute('aria-pressed','false');
   item.addEventListener('click',()=>{
    selected=n;
+   reviewDrafts.set(choice.id,{rating:n,comment:comment.value});
    buttonNodes.forEach((s,i)=>{s.textContent=i<n?'★':'☆';s.setAttribute('aria-pressed',String(i===n-1));});
   });
   buttonNodes.push(item);buttons.append(item);
  }
+ buttonNodes.forEach((star,i)=>{star.textContent=i<selected?'★':'☆';star.setAttribute('aria-pressed',String(i===selected-1));});
  form.append(buttons);
  const comment=document.createElement('textarea');comment.className='sg-review-comment';
  comment.maxLength=300;comment.rows=3;
  comment.placeholder='Commentaire facultatif (300 caractères maximum)';
  comment.setAttribute('aria-label','Commentaire sur la course fictive');
+ comment.value=previousDraft.comment;
+ comment.addEventListener('input',()=>reviewDrafts.set(choice.id,{rating:selected,comment:comment.value}));
  form.append(comment);
  const msg=addText(form,'p','Avis visible seulement par les participants du test.','sg-demo-small');
  msg.setAttribute('role','status');
@@ -81,6 +87,7 @@ function addReviewForm(box,choice){
   submit.disabled=true;msg.textContent='Enregistrement de la note de test…';
   const result=await client.testReviews.create(choice.id,sessionUser.id,choice.chauffeur_id,selected,comment.value.trim());
   if(result.error){msg.textContent='Erreur : '+(result.error.message||'Veuillez réessayer.');submit.disabled=false;return;}
+  reviewDrafts.delete(choice.id);
   await refreshClient();
   status('sgReviewClientStatus','✓ Votre avis de '+selected+' étoile(s) a été enregistré en mode TEST.');
  },'sg-review-submit');
@@ -202,7 +209,7 @@ async function refreshDriver(){
  }catch(e){status('sgDriverReviewsStatus','Impossible de lire les avis de test : '+(e.message||'réessayez.'));}
 }
 function clear(){
- clientSequence++;driverSequence++;
+ clientSequence++;driverSequence++;reviewDrafts.clear();
  for(const id of ['sgReviewClientList','sgDriverReviewsList','sgDriverSelectionsList']){
   const el=$(id);if(el)el.replaceChildren();
  }
