@@ -6,7 +6,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const radiusOptions=[5,10,20,30,50];
-const state={pos:null,rows:[],loading:false,poll:null,notify:false,firstLoad:true,seen:new Set(),lastUser:null};
+const state={pos:null,rows:[],replies:[],loading:false,poll:null,notify:false,firstLoad:true,seen:new Set(),lastUser:null,clientLoad:0,responding:null};
 function status(id,msg){const node=$(id);if(node)node.textContent=msg;}
 function euros(x){return Number(x).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});}
 function requestLocation(){
@@ -59,7 +59,15 @@ function render(){
   details.textContent='Trajet choisi : '+Number(req.distance_km)+' km · Tarif indicatif : '+euros(req.tarif_indicatif)+' · Annonce fictive';
   const foot=document.createElement('p');foot.className='sg-demand-disclaimer';
   foot.textContent='Aucune course réelle, aucune acceptation possible.';
-  card.append(head,route,details,foot);list.append(card);
+  card.append(head,route,details,foot);
+  const replied=state.replies.some(answer=>answer.annonce_id===req.id&&answer.chauffeur_id===sessionUser.id);
+  const reply=document.createElement('button');
+  reply.type='button';reply.className='sg-demo-interest';
+  reply.textContent=replied?'✓ Intérêt déjà envoyé (test)':'Je suis intéressé (test)';
+  reply.disabled=replied||state.responding===req.id;
+  if(!reply.disabled)reply.addEventListener('click',()=>sendInterest(req.id));
+  card.append(reply);
+  list.append(card);
  }
 }
 function notifyAboutNew(rows){
@@ -87,9 +95,10 @@ async function fetchRows(silent){
  state.loading=true;
  const currentId=sessionUser.id;
  try{
-  const result=await client.testRequests.list();
+  const [result,replies]=await Promise.all([client.testRequests.list(),client.testReplies.list()]);
   if(result.error)throw result.error;
   if(!signedIn()||sessionUser.id!==currentId)return;
+  state.replies=replies.error?[]:Array.isArray(replies.data)?replies.data:[];
   const rows=Array.isArray(result.data)?result.data:[];
   state.rows=rows;
   notifyAboutNew(rows);
@@ -137,9 +146,82 @@ async function publish(){
   if(result.error)throw result.error;
   status('sgPublishStatus','Annonce de test publiée pendant deux heures maximum. Seuls les comptes chauffeurs de test approuvés peuvent la voir. Aucune vraie course créée.');
   box.checked=false;
+  await refreshClient();
  }catch(e){status('sgPublishStatus',e.message||'Publication impossible.');}
  finally{btn.disabled=false;}
 }
+
+async function sendInterest(adId){
+ if(!approved()||state.responding)return;
+ const ad=state.rows.find(r=>r.id===adId);
+ if(!ad||ad.client_id===sessionUser.id){status('sgNearbyStatus','Cette demande de test n’est plus disponible.');return;}
+ state.responding=adId;
+ try{
+  const result=await client.testReplies.create(adId,sessionUser.id);
+  if(result.error)throw result.error;
+  const response={annonce_id:adId,chauffeur_id:sessionUser.id,statut:'interesse_test'};
+  state.replies.push(response);
+  render();
+  status('sgNearbyStatus','✓ Réponse de test enregistrée. Le client pourra voir qu’un chauffeur est intéressé. Aucune course réservée.');
+ }catch(e){
+  if(String(e.code||'')==='23505'||String(e.message||'').includes('duplicate key')){
+   await fetchRows(false);
+  }else status('sgNearbyStatus','Impossible d’envoyer cette réponse : '+(e.message||'Réessayez.'));
+ }finally{state.responding=null;}
+}
+async function refreshClient(){
+ const list=$('sgMyAdsList');
+ if(!list)return;
+ list.replaceChildren();
+ if(!signedIn()){
+  status('sgMyAdsStatus','Connectez-vous à votre compte client pour consulter les annonces de test.');
+  return;
+ }
+ const currentId=sessionUser.id;
+ const sequence=++state.clientLoad;
+ status('sgMyAdsStatus','Chargement de vos annonces de test…');
+ try{
+  const [ads,answers]=await Promise.all([client.testRequests.mine(currentId),client.testReplies.list()]);
+  if(sequence!==state.clientLoad||!signedIn()||sessionUser.id!==currentId)return;
+  if(ads.error)throw ads.error;
+  if(answers.error)throw answers.error;
+  const ownAds=Array.isArray(ads.data)?ads.data:[];
+  const allAnswers=Array.isArray(answers.data)?answers.data:[];
+  if(!ownAds.length){
+   status('sgMyAdsStatus','Aucune annonce de test publiée depuis ce compte. Pour publier, utilisez Réserver.');
+   return;
+  }
+  const now=Date.now();
+  status('sgMyAdsStatus',ownAds.length+' annonce(s) de test retrouvée(s) pour ce compte.');
+  for(const ad of ownAds){
+   const box=document.createElement('article');box.className='sg-reply-card';
+   const title=document.createElement('strong');title.textContent=ad.depart_test+' → '+ad.destination_test;
+   const exp=Date.parse(ad.expire_le),active=ad.statut==='test_en_attente'&&exp>now;
+   const count=allAnswers.filter(row=>row.annonce_id===ad.id).length;
+   const meta=document.createElement('p');meta.textContent=(active?'Active (test)':'Expirée (test)')+' · '+Number(ad.distance_km)+' km · '+count+' réponse(s) de chauffeurs intéressés (test).';
+   box.append(title,meta);
+   if(active){
+    const remove=document.createElement('button');remove.type='button';
+    remove.textContent='Retirer cette annonce de test';
+    remove.addEventListener('click',()=>removeClientAd(ad.id));
+    box.append(remove);
+   }
+   list.append(box);
+  }
+ }catch(e){
+  status('sgMyAdsStatus','Impossible de consulter vos annonces : '+(e.message||'Réessayez.'));
+ }
+}
+async function removeClientAd(adId){
+ if(!signedIn())return;
+ if(typeof window.confirm==='function'&&!window.confirm('Retirer cette annonce de test ? Les chauffeurs ne la verront plus.'))return;
+ const uid=sessionUser.id;
+ const result=await client.testRequests.remove(adId,uid);
+ if(result.error){status('sgMyAdsStatus','Suppression impossible : '+(result.error.message||'Réessayez.'));return;}
+ await refreshClient();
+ status('sgMyAdsStatus','Annonce de test supprimée. Les chauffeurs ne la voient plus.');
+}
+
 async function optIn(){
  if(!approved()){status('sgGeoStatus','Ce compte chauffeur doit d’abord être approuvé (test).');return;}
  if(!state.pos){status('sgGeoStatus','Activez d’abord le GPS pour filtrer les alertes.');return;}
@@ -154,7 +236,7 @@ async function optIn(){
 }
 function stop(){
  if(state.poll){clearInterval(state.poll);state.poll=null;}
- state.pos=null;state.rows=[];state.notify=false;state.firstLoad=true;state.seen.clear();
+ state.pos=null;state.rows=[];state.replies=[];state.notify=false;state.firstLoad=true;state.seen.clear();state.clientLoad++;
  const b=$('sgNotifyToggle');if(b){b.textContent='Activer les alertes pendant la visite';b.setAttribute('aria-pressed','false');}
  const a=$('sgInAppAlert');if(a){a.hidden=true;a.textContent='';}
  const toast=$('sgRequestToast');if(toast)toast.hidden=true;
@@ -164,5 +246,5 @@ function stop(){
 }
 function authChanged(){if(!approved())stop();}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')fetchRows(true);});
-window.sgDemand={open,publish,optIn,refresh:()=>fetchRows(false),render,stop,authChanged};
+window.sgDemand={open,publish,optIn,refresh:()=>fetchRows(false),refreshClient,render,stop,authChanged};
 })();
