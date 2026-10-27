@@ -109,6 +109,19 @@
 #driverLocalDemo p{font-size:12px;line-height:1.5}
 </style>
 <style id="sg-login-polish">#authEmailHelp.sg-email-help{font-size:12px;line-height:1.5;color:#dfc58b;margin:7px 0 12px}#authPanel .switch button{min-width:0}#authPanel input:focus-visible{outline:2px solid #eac577;outline-offset:2px}</style>
+<style id="sg-mission-timeline-style">
+.sg-test-timeline{margin:12px 0 14px;padding:12px 8px;border-radius:12px;border:1px solid #4b6671;background:#192a32}
+.sg-test-timeline>small{display:block;color:#e5c889;font-size:11px;margin:0 4px 11px;font-weight:750}
+.sg-test-timeline-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px}
+.sg-test-timeline-step{text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px;color:#8799a2;font-size:10px;line-height:1.2}
+.sg-test-timeline-step .sg-test-timeline-icon{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;width:25px;height:25px;border-radius:50%;border:1px solid #62737a;background:#1d353f}
+.sg-test-timeline-step.reached{color:#f1ddab}
+.sg-test-timeline-step.reached .sg-test-timeline-icon{background:#d6b578;border-color:#d6b578;color:#13222b}
+.sg-test-timeline-step.current .sg-test-timeline-icon{outline:2px solid #fae2a0;outline-offset:2px}
+.sg-test-timeline.cancelled{border-color:#86615d;background:#282022}
+.sg-test-timeline.cancelled .sg-test-timeline-step{opacity:.65}
+@media(max-width:350px){.sg-test-timeline-step{font-size:9px}.sg-test-timeline-step .sg-test-timeline-icon{width:22px;height:22px}}
+</style>
 <style id="sg-auto-sync-style">
 .sg-sync-text{font-size:11px!important;line-height:1.45;color:#a9c6d2!important;letter-spacing:.01em;border-left:2px solid #8eaaaf;padding:4px 0 4px 10px;margin:8px 0 15px}
 </style>
