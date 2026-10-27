@@ -48,6 +48,13 @@
     footer{margin-top:26px;font-size:12px;color:#aaa;line-height:1.6}
   </style>
 
+<style id="sg-request-toast-style">
+.sg-request-toast{position:fixed;z-index:110;bottom:calc(90px + env(safe-area-inset-bottom));left:12px;right:12px;max-width:640px;margin:0 auto;padding:13px;border:1px solid #c59b57;border-radius:13px;background:#1d2931f7;color:#ffe1a1;box-shadow:0 12px 38px #000c;font-size:13px}
+.sg-request-toast[hidden]{display:none!important}
+.sg-request-toast div{display:flex;gap:9px;align-items:center;margin-top:9px}
+.sg-request-toast button{font-size:12px;min-height:38px;padding:8px 12px}
+.sg-request-toast button.alt{margin-left:auto}
+</style>
 <style id="sg-nearby-live-style">
 .sg-geo-publish,.sg-nearby-controls,.sg-demand-shortcut{border:1px solid #756137;background:linear-gradient(140deg,#29291f,#192931);border-radius:14px;padding:15px;margin:17px 0}
 .sg-geo-publish>strong,.sg-nearby-controls>strong{color:#ffda95;font-size:14px}
@@ -861,6 +868,11 @@ if(client){
 else setStatus('authStatus','Connexion Supabase indisponible. Recharge la page avec Internet activé.','error');
 </script>
 
+<div id="sgRequestToast" class="sg-request-toast" role="alert" hidden>
+ <strong id="sgRequestToastText">Nouvelle demande de test proche de vous.</strong>
+ <div><button type="button" onclick="sgGo('driver');driverTab('missions');document.getElementById('sgRequestToast').hidden=true">Voir demandes</button>
+ <button type="button" class="alt" aria-label="Fermer l'alerte" onclick="document.getElementById('sgRequestToast').hidden=true">✕</button></div>
+</div>
 <nav class="sg-nav" aria-label="Navigation SAMGO"><button type="button" data-sg-view="home" class="sg-current" onclick="sgGo('home')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" ><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg><span>Accueil</span></button><button type="button" data-sg-view="book" onclick="sgGo('book')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg><span>Réserver</span></button><button type="button" data-sg-view="driver" onclick="sgGo('driver')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M3 11c3-2 6-2 9 1 3-3 6-3 9-1M12 14v7"/></svg><span>Chauffeur</span></button><button type="button" data-sg-view="trips" onclick="sgGo('trips')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" ><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 7h6M9 12h6M9 17h4"/></svg><span>Courses</span></button><button type="button" data-sg-view="account" onclick="sgGo('account')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span>Compte</span></button></nav>
 <script id="sg-2026-navigation">
 function sgMarkCurrentNav(view){
