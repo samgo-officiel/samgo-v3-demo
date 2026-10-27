@@ -104,6 +104,12 @@
 #driverLocalDemo p{font-size:12px;line-height:1.5}
 </style>
 <style id="sg-login-polish">#authEmailHelp.sg-email-help{font-size:12px;line-height:1.5;color:#dfc58b;margin:7px 0 12px}#authPanel .switch button{min-width:0}#authPanel input:focus-visible{outline:2px solid #eac577;outline-offset:2px}</style>
+<style id="sg-local-test-history-style">
+.sg-local-test-history{margin:20px 0 0;border:1px solid #44545e;border-radius:13px;padding:13px;background:#121f28}
+.sg-local-test-history>summary{cursor:pointer;list-style-position:inside;color:#f0d08e;font-size:14px;font-weight:800;line-height:1.5;padding:5px}
+.sg-local-test-history>summary::marker{color:#efc676}
+.sg-local-test-history .sg-driver-empty{margin:12px 0}
+</style>
 <style id="sg-account-direct-requests">
 #accountNearbyLink.sg-account-nearby{background:#f0c575;color:#121a1c;font-weight:850;border:1px solid #e4b964}
 #accountNearbyLink.sg-account-nearby.hidden{display:none!important}
@@ -417,9 +423,15 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   <div id="sgNearbyList"></div>
   <button type="button" class="alt" onclick="window.sgDemand.refresh()">↻ Actualiser les demandes</button>
   <div class="sg-demand-warning">🔒 Aucune annonce ne peut être acceptée en vrai : assurances, vérifications et lancement restent à finaliser.</div>
-  <h3>Autre simulation locale</h3>
-  <p class="sg-demo-small">Le parcours client-chauffeur fictif créé dans cet onglet reste disponible ci-dessous.</p>
-<div class="sg-driver-empty"><b>🚘 Aucune mission réelle disponible</b><p>La réception et l'acceptation des courses ne sont pas encore activées. Cette page n'attribue aucune vraie course.</p></div>
+  <details id="sgLocalTestHistory" class="sg-local-test-history">
+   <summary>Historique de la simulation sur ce téléphone</summary>
+   <p class="sg-demo-small">Cette simulation locale est différente des annonces géolocalisées publiées par d'autres comptes. Elle ne modifie pas les demandes autour de vous.</p>
+   <div id="sgLocalDemoResult" class="sg-demo-summary hidden">
+    <strong id="sgLocalDemoResultStatus">Simulation terminée</strong>
+    <p id="sgLocalDemoResultTrip" class="sg-demo-small"></p>
+    <button type="button" class="alt" onclick="resetLocalDemo()">Effacer cette simulation</button>
+   </div>
+   <div class="sg-driver-empty"><b>🧪 Aucun trajet réel</b><p>Les trajets ci-dessous sont uniquement des tests réalisés sur cet appareil. Ils ne correspondent pas aux annonces des clients à proximité.</p></div>
   <div id="driverLocalDemo" class="sg-demo-summary hidden">
   <strong>Nouvelle mission locale — SIMULATION</strong>
   <p id="driverLocalDemoInfo"></p>
@@ -429,6 +441,7 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
 </div>
 <p id="driverLocalDemoHelp" class="sg-demo-small">Créez une course fictive dans Réserver, puis passez En ligne (démo) sur l'accueil chauffeur.</p>
 <div class="sg-demo-mission"><strong>APERÇU FICTIF — EXEMPLE DE COURSE</strong><p>Trajet illustratif : 12 km</p><div class="sg-demo-row"><span>Prix envisagé côté client</span><b>12 €</b></div><div class="sg-demo-row"><span>Part chauffeur théorique (90 %)</span><b>10,80 €</b></div><p>Exemple calculé sur une hypothèse de 1 €/km. Ce n'est pas une demande de client, ni un montant gagné.</p></div>
+  </details>
 </div>
   <div class="sg-driver-pane hidden" data-dpane="gains"><h3>Mes gains</h3><div class="sg-driver-empty"><b>0 € de gains enregistrés</b><p>Aucun paiement ni virement actif. Une commission de 10 % est envisagée, sous réserve de validation du modèle économique.</p></div></div>
   <div class="sg-driver-pane hidden" data-dpane="profil"><h3>Mon profil chauffeur</h3>
@@ -687,6 +700,15 @@ function renderLocalDemo(){
   const labels={waiting:'En attente (simulation locale)',accepted:'Acceptée (simulation locale)',rejected:'Refusée (simulation locale)'};
   $('demoTripsStatus').textContent=labels[req.status]||'Simulation';
  }
+ const history=$('sgLocalDemoResult'),resultStatus=$('sgLocalDemoResultStatus'),resultTrip=$('sgLocalDemoResultTrip');
+ if(history&&resultStatus&&resultTrip){
+  const finished=has&&req.status!=='waiting';
+  history.classList.toggle('hidden',!finished);
+  if(finished){
+   resultStatus.textContent=req.status==='accepted'?'✓ Course fictive acceptée':'× Course fictive refusée';
+   resultTrip.textContent=req.from+' → '+req.to+' · '+req.km+' km · Aucune vraie course attribuée.';
+  }
+ }
  const showToDriver=has&&req.status==='waiting'&&driverSimActive&&driverSimAllowed&&!!sessionUser;
  $('driverLocalDemo').classList.toggle('hidden',!showToDriver);
  if(showToDriver)$('driverLocalDemoInfo').textContent=req.from+' → '+req.to+' · '+req.km+' km · Part chauffeur théorique : '+money(req.km*.9)+'.';
@@ -716,11 +738,11 @@ function resetLocalDemo(){
 }
 function acceptLocalDemo(){
  if(!localDemoRequest||localDemoRequest.status!=='waiting'||!driverSimActive||!driverSimAllowed||!sessionUser)return;
- localDemoRequest.status='accepted';saveLocalDemo();renderLocalDemo();
+ localDemoRequest.status='accepted';saveLocalDemo();renderLocalDemo();const h=$('sgLocalTestHistory');if(h)h.open=true;
 }
 function rejectLocalDemo(){
  if(!localDemoRequest||localDemoRequest.status!=='waiting'||!driverSimActive||!driverSimAllowed||!sessionUser)return;
- localDemoRequest.status='rejected';saveLocalDemo();renderLocalDemo();
+ localDemoRequest.status='rejected';saveLocalDemo();renderLocalDemo();const h=$('sgLocalTestHistory');if(h)h.open=true;
 }
 function money(n){return n.toLocaleString('fr-FR',{style:'currency',currency:'EUR'});}
 function calc(){const v=Number($('km').value);$('fare').textContent=money(v);$('driverShare').textContent=money(v*.9);$('samgoShare').textContent=money(v*.1)}
