@@ -423,8 +423,8 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
       <option value="5">5 km</option><option value="10" selected>10 km</option><option value="15">15 km</option><option value="20">20 km</option>
     </select>
     <div class="row"><span>Prix client indicatif</span><strong id="fare" class="price">10 €</strong></div>
-    <div class="row subtle"><span>Part chauffeur envisagée : 90 %</span><span id="driverShare">9 €</span></div>
-    <div class="row subtle"><span>Commission SAMGO envisagée : 10 %</span><span id="samgoShare">1 €</span></div>
+    <div class="row subtle"><span id="sgClientDriverPercent">Part chauffeur envisagée : 100 %</span><span id="driverShare">10 €</span></div>
+    <div class="row subtle"><span id="sgClientSamgoPercent">Commission SAMGO au lancement : 0 %</span><span id="samgoShare">0 €</span></div>
     <p class="tiny line">Distance choisie à la main : aucun itinéraire calculé. Tarif non définitif, assurance et frais non compris.</p>
     <section class="sg-stripe-preview" aria-label="Préparation du paiement Stripe Connect en simulation">
       <span class="sg-stripe-label">💳 STRIPE CONNECT — SIMULATION LOCALE</span>
@@ -432,8 +432,8 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
       <p class="sg-stripe-help">Aucune carte, aucun IBAN ni aucun paiement n'est utilisé ici. Ces montants ne sont pas des gains réels.</p>
       <div class="sg-stripe-numbers">
        <div><span>Client</span><strong id="sgStripeClient">10,00 €</strong></div>
-       <div><span>Chauffeur (90 %)</span><strong id="sgStripeDriver">9,00 €</strong></div>
-       <div><span>SAMGO (10 %)</span><strong id="sgStripeSamgo">1,00 €</strong></div>
+       <div><span id="sgStripeDriverRateLabel">Chauffeur (100 %)</span><strong id="sgStripeDriver">10,00 €</strong></div>
+       <div><span id="sgStripeSamgoRateLabel">SAMGO (0 %)</span><strong id="sgStripeSamgo">0,00 €</strong></div>
       </div>
       <button type="button" class="alt sg-stripe-simulate" onclick="window.sgStripeDemo.simulate()">Voir la répartition fictive</button>
       <p id="sgStripeDemoStatus" class="sg-stripe-status" role="status" aria-live="polite">Mode démonstration : aucune connexion Stripe, aucune somme encaissée. Frais et taxes non déduits.</p>
@@ -535,7 +535,7 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   <button type="button" class="alt" onclick="rejectLocalDemo()">Refuser (démo)</button>
 </div>
 <p id="driverLocalDemoHelp" class="sg-demo-small">Créez une course fictive dans Réserver, puis passez En ligne (démo) sur l'accueil chauffeur.</p>
-<div class="sg-demo-mission"><strong>APERÇU FICTIF — EXEMPLE DE COURSE</strong><p>Trajet illustratif : 12 km</p><div class="sg-demo-row"><span>Prix envisagé côté client</span><b>12 €</b></div><div class="sg-demo-row"><span>Part chauffeur théorique (90 %)</span><b>10,80 €</b></div><p>Exemple calculé sur une hypothèse de 1 €/km. Ce n'est pas une demande de client, ni un montant gagné.</p></div>
+<div class="sg-demo-mission"><strong>APERÇU FICTIF — EXEMPLE DE COURSE</strong><p>Trajet illustratif : 12 km</p><div class="sg-demo-row"><span>Prix envisagé côté client</span><b>12 €</b></div><div class="sg-demo-row"><span id="sgDriverSampleRate">Part chauffeur théorique (100 %)</span><b id="sgDriverSampleValue">12,00 €</b></div><p>Exemple calculé sur une hypothèse de 1 €/km. Ce n'est pas une demande de client, ni un montant gagné.</p></div>
   </details>
 </div>
   <div class="sg-driver-pane hidden" data-dpane="gains"><h3>Mes gains</h3>
@@ -544,7 +544,7 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
       <span class="sg-stripe-label">💳 STRIPE CONNECT — NON CONNECTÉ</span>
       <h3>Futurs versements chauffeur</h3>
       <p class="sg-stripe-help">Lorsque le service pourra légalement démarrer, chaque chauffeur devra passer par une procédure sécurisée Stripe Connect pour recevoir des virements. Ne transmettez jamais votre IBAN ni vos documents ici.</p>
-      <p class="sg-stripe-help">Exemple basé sur la distance de démonstration choisie : part théorique chauffeur <strong id="sgStripeGainsDriver">9,00 €</strong> avant frais et taxes. Ce n'est pas votre solde.</p>
+      <p class="sg-stripe-help">Exemple basé sur la distance de démonstration choisie : part théorique chauffeur <strong id="sgStripeGainsDriver">10,00 €</strong> avant frais et taxes. Ce n'est pas votre solde.</p>
       <p class="sg-stripe-status">Aucun compte bancaire lié. Aucune transaction activée.</p>
     </section>
   </div>
@@ -954,7 +954,7 @@ function renderLocalDemo(){
  }
  const showToDriver=has&&req.status==='waiting'&&driverSimActive&&driverSimAllowed&&!!sessionUser;
  $('driverLocalDemo').classList.toggle('hidden',!showToDriver);
- if(showToDriver)$('driverLocalDemoInfo').textContent=req.from+' → '+req.to+' · '+req.km+' km · Part chauffeur théorique : '+money(req.km*.9)+'.';
+ if(showToDriver)$('driverLocalDemoInfo').textContent=req.from+' → '+req.to+' · '+req.km+' km · Part chauffeur théorique : '+money(sgDemoDistribution(req.km).driver)+'.';
  $('driverLocalDemoHelp').textContent=!has?'Aucune demande locale. Créez d’abord un trajet fictif dans Réserver.':!driverSimAllowed?'Démo inaccessible tant que la candidature chauffeur n’est pas approuvée.':!driverSimActive?'Passez en ligne (démo) pour voir la demande locale.':req.status==='waiting'?'Demande fictive à examiner dans le bloc ci-dessus.':'Réponse fictive enregistrée : '+(req.status==='accepted'?'acceptée.':'refusée.');
 }
 function createLocalDemo(e){
