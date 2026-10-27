@@ -774,6 +774,18 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
         }catch(error){return {error};}
       }
     };
+    /* Les annulations sont des états fictifs; aucune vraie commande n'existe. */
+    testChoices.cancel=async function(choixId,clientId){
+      try{
+        const token=await accessToken();
+        if(!token)throw new Error('Connectez-vous pour annuler la simulation.');
+        const params=new URLSearchParams({id:'eq.'+choixId,client_id:'eq.'+clientId,statut:'eq.choisi_test'});
+        const rows=await api('/rest/v1/choix_chauffeur_test?'+params,'PATCH',
+          {statut:'annule_test'},token,{'Prefer':'return=representation'});
+        if(!Array.isArray(rows)||rows.length!==1)throw new Error('Simulation déjà terminée, annulée ou non autorisée.');
+        return {data:rows[0],error:null};
+      }catch(error){return {data:null,error};}
+    };
     const testReviews={
       async list(){
         try{
