@@ -357,6 +357,13 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   <button type="button" class="alt" onclick="window.sgDemand.refreshClient()">↻ Voir mes annonces et réponses</button>
   <p id="sgMyAdsStatus" role="status" aria-live="polite">Connectez-vous pour voir vos annonces de test.</p>
   <div id="sgMyAdsList"></div>
+  <div class="sg-driver-ratings" id="sgReviewClientArea">
+   <h3>⭐ Choisir et noter un chauffeur (TEST)</h3>
+   <p>Après qu'un chauffeur s'est déclaré intéressé, choisissez-le pour cette simulation. Marquez ensuite le trajet fictif comme terminé pour laisser 1 à 5 étoiles et un commentaire.</p>
+   <button type="button" class="alt" onclick="window.sgReviews.refreshClient()">↻ Voir les avis et les réponses</button>
+   <p id="sgReviewClientStatus" role="status" aria-live="polite">Aucun avis de test affiché.</p>
+   <div id="sgReviewClientList"></div>
+  </div>
  </div>
 </section>
   <header><div class="logo">SAM<b>GO</b> <span style="font-size:13px;letter-spacing:0;color:#aaa">V3</span></div><span aria-hidden="true" style="font-size:31px">🚗</span></header>
@@ -956,6 +963,7 @@ function toggleDriverSimulation(){
 function driverTab(tab){
  if(tab==='missions'&&window.sgDemand)window.sgDemand.render();
  if(!['overview','missions','gains','profil'].includes(tab))return;
+ if((tab==='profil'||tab==='missions')&&window.sgReviews)window.sgReviews.refreshDriver();
  sgMarkCurrentNav('driver');
  document.querySelectorAll('[data-dpane]').forEach(el=>el.classList.toggle('hidden',el.dataset.dpane!==tab));
  document.querySelectorAll('[data-dtab]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.dtab===tab)));
@@ -1037,7 +1045,7 @@ async function refreshCandidate(){
  }
 }
 async function applyDriver(){if(!client||!sessionUser)return setStatus('applyStatus','Connecte-toi pour envoyer une candidature.','error');const name=$('nomAffiche').value.trim();if(name.length<2||name.length>100)return setStatus('applyStatus','Entre un nom d’affichage de 2 à 100 caractères.','error');if(!$('permisDeclare').checked)return setStatus('applyStatus','Confirme que tu as compris les conditions de validation.','error');$('applyBtn').disabled=true;setStatus('applyStatus','Envoi en cours…');try{const {error}=await client.from('candidatures_chauffeur').insert({utilisateur_id:sessionUser.id,nom_affiche:name});if(error)throw error;setStatus('applyStatus','Candidature de test enregistrée ! Statut : en attente. Tu ne peux pas encore effectuer de courses.','success');await refreshCandidate();}catch(err){setStatus('applyStatus',err?.code==='23505'?'Une candidature existe déjà pour ce compte.':errText(err),'error');$('applyBtn').disabled=false;}}
-async function signOut(){if(!client)return;await client.auth.signOut();if(window.sgDemand)window.sgDemand.stop();localDemoRequest=null;saveLocalDemo();renderLocalDemo();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
+async function signOut(){if(!client)return;await client.auth.signOut();if(window.sgReviews)window.sgReviews.clear();if(window.sgDemand)window.sgDemand.stop();localDemoRequest=null;saveLocalDemo();renderLocalDemo();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
 calc();restoreLocalDemo();renderLocalDemo();setAuthMode('signup');setSpace('raccompagner');
 if(client){
   setStatus('authStatus','Vérification de la connexion à Supabase…');
@@ -1103,6 +1111,7 @@ function sgGo(view){
 }
 </script>
 <script src="assets/demandes-geoloc-test.js"></script>
+<script src="assets/avis-chauffeurs-test.js"></script>
 <script>
 /* Installation optionnelle de l'app web. Aucun abonnement push n'est lancé ici. */
 window.addEventListener('load',function(){
