@@ -4,7 +4,7 @@ Mise à jour : 28 octobre 2026.
 
 ## Statut exact
 - [x] Interface de simulation dans « Réserver » et « Chauffeur > Gains ».
-- [x] Exemple 90 % chauffeur / 10 % SAMGO calculé en centimes, avec arrondi et contrôle des montants.
+- [x] Phase de lancement : 100 % du tarif théorique chauffeur / 0 % de commission SAMGO, avec contrôle des montants en centimes. Le 90 % / 10 % reste une évolution future, pas automatique.
 - [x] Calcul protégé contre les montants négatifs ou déraisonnables, testé sans requêtes au réseau.
 - [ ] Compte Stripe SAMGO créé et connecté par le propriétaire.
 - [ ] Intégration du système d'inscription/validation des comptes Stripe Connect chauffeur.
@@ -18,11 +18,13 @@ Mise à jour : 28 octobre 2026.
 
 Pour un prix fictif de 20,00 € :
 - Montant présenté au client : 20,00 €
-- Montant théorique chauffeur : 18,00 €
-- Commission théorique SAMGO : 2,00 €
+- Montant théorique chauffeur au lancement : 20,00 €
+- Commission théorique SAMGO au lancement : 0,00 €
 - Frais de paiement, frais éventuels de Connect, TVA, charges et remboursements **non déduits**.
 
-La commission de 10 % est une **hypothèse** et doit être validée avant la mise en production. Les barèmes Stripe peuvent dépendre du type d'intégration, de la région et des responsabilités de chacun.
+**Politique retenue :** au lancement, SAMGO applique 0 % de commission sur le tarif de course. Le passage éventuel à 10 % plus tard exige une **décision explicite du propriétaire**, une information claire des chauffeurs et la mise à jour des contrats, tarifs et systèmes serveur. Il n'est pas déclenché automatiquement par un seuil de succès.
+
+**Important :** 100 % du tarif pour le chauffeur ne signifie pas nécessairement 100 % net sur son compte bancaire : des frais de traitement Stripe, de virement, des taxes et autres frais peuvent rester dus. Définir contractuellement qui supporte les coûts, et ne pas promettre un virement intégral sans l'avoir vérifié. Les barèmes Stripe dépendent du mode de paiement et de l'intégration Connect. https://stripe.com/fr/connect/pricing
 
 ## Architecture prévue, sans secret dans le navigateur
 
