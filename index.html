@@ -104,6 +104,12 @@
 #driverLocalDemo p{font-size:12px;line-height:1.5}
 </style>
 <style id="sg-login-polish">#authEmailHelp.sg-email-help{font-size:12px;line-height:1.5;color:#dfc58b;margin:7px 0 12px}#authPanel .switch button{min-width:0}#authPanel input:focus-visible{outline:2px solid #eac577;outline-offset:2px}</style>
+<style id="sg-account-direct-requests">
+#accountNearbyLink.sg-account-nearby{background:#f0c575;color:#121a1c;font-weight:850;border:1px solid #e4b964}
+#accountNearbyLink.sg-account-nearby.hidden{display:none!important}
+#accountNearbyHint.sg-account-nearby-hint{color:#bbc5ca;font-size:12px;line-height:1.5;margin:6px 0 14px}
+#accountNearbyHint.sg-account-nearby-hint.hidden{display:none!important}
+</style>
 <style id="sg-focused-views">
 body.sg-inner-page main.app>header,body.sg-inner-page main.app>.tagline,
 body.sg-inner-page main.app>.notice,body.sg-inner-page main.app>.hero,
@@ -459,6 +465,8 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
     <div id="loggedIn" class="hidden">
       <p class="subtle">Connecté : <strong id="userEmail"></strong></p>
       <p id="profileStatus" class="subtle" role="status" aria-live="polite">Vérification de votre candidature…</p>
+      <button id="accountNearbyLink" type="button" class="sg-driver-link sg-account-nearby hidden" onclick="openNearbyFromAccount()">📍 Demandes autour de moi — 30 km</button>
+      <p id="accountNearbyHint" class="sg-account-nearby-hint hidden">Voir les demandes de test à proximité. Autorisation GPS demandée uniquement lorsque vous appuyez sur ce bouton.</p>
       <button id="accountDriverLink" type="button" class="sg-driver-link hidden" onclick="sgGo('driver')">◈ Ouvrir mon tableau de bord chauffeur</button>
       <button type="button" class="alt" onclick="signOut()">Me déconnecter</button>
     </div>
@@ -815,8 +823,18 @@ function showDriverRecord(record){
  const dt=new Date(record.cree_le);$('driverDate').textContent=record.cree_le&&Number.isFinite(dt.valueOf())?new Intl.DateTimeFormat('fr-FR',{dateStyle:'long'}).format(dt):'—';
 }
 let driverCandidateRequest=0;
+function openNearbyFromAccount(){
+ if(!sessionUser || !driverSimAllowed)return;
+ sgGo('driver');
+ driverTab('missions');
+ if(window.sgDemand)window.sgDemand.open();
+}
 function setAccountCandidate(record,error){
  const status=$('profileStatus'),button=$('accountDriverLink');
+ const nearby=$('accountNearbyLink'),hint=$('accountNearbyHint');
+ const approved=!!sessionUser&&!error&&!!record&&record.statut==='approuve';
+ nearby.classList.toggle('hidden',!approved);
+ hint.classList.toggle('hidden',!approved);
  if(!sessionUser){button.classList.add('hidden');status.textContent='Connectez-vous pour voir votre profil.';return;}
  if(error){status.textContent='Impossible de consulter le statut chauffeur pour le moment. Réessayez en actualisant.';button.classList.add('hidden');return;}
  if(!record){
