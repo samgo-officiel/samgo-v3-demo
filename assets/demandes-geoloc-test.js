@@ -67,7 +67,7 @@ function notifyAboutNew(rows){
  const radius=Number($('sgRadius').value)||30;
  const newly=rows.filter(r=>!state.seen.has(r.id)&&r.client_id!==sessionUser.id);
  rows.forEach(r=>state.seen.add(r.id));
- if(!state.notify||!state.pos||!document.hidden===false)return;
+ if(!state.notify||!state.pos||document.visibilityState!=='visible')return;
  const local=newly.filter(r=>{
   const distance=nearKm(state.pos.lat,state.pos.lng,Number(r.latitude_approx),Number(r.longitude_approx));
   return Number.isFinite(distance)&&distance<=radius;
