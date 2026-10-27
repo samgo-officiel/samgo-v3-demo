@@ -55,9 +55,16 @@ La validation « chauffeur approuvé » actuelle est uniquement une validation d
 
 ## Préparation Stripe Connect — 28 octobre 2026
 
-- Ajout d'un simulateur visuel dans « Réserver », avec montants client / chauffeur 90 % / SAMGO 10 %.
+- Ajout d'un simulateur visuel dans « Réserver », configuré au lancement pour 100 % chauffeur / 0 % SAMGO. Le futur 90 % / 10 % n'est qu'une évolution possible, **jamais automatique** et nécessitant communication aux chauffeurs.
 - Ajout d'un encart d'information non connecté sur l'onglet « Chauffeur > Gains ».
 - Le calcul est uniquement local : aucun paiement, aucune demande de carte ou d'IBAN, aucune clé API Stripe dans le navigateur.
 - Tests JavaScript : arrondis en centimes, montants invalides, total 100 % et changement de distance. **Aucune transaction Stripe effectuée.**
 - Consulter \`PAIEMENTS-STRIPE-CONNECT.md\` pour les prérequis serveur, la sécurité et l'état des étapes.
 - Prérequis à toute intégration de paiement Stripe sandbox : un compte Stripe propriétaire connecté, validation des types de comptes Connect, une partie serveur avec secret de test, et des tests complets.
+
+## Répartition au lancement — décision du 28 octobre 2026
+
+- Commission SAMGO : **0 % au lancement** ; part du chauffeur : **100 % du tarif hors frais de paiement et taxes**, uniquement à titre de simulation pour le moment.
+- Un éventuel **10 % SAMGO / 90 % chauffeur** sera décidé plus tard, après communication des tarifs et conditions aux chauffeurs, sans activation automatique.
+- L'unique paramètre visible de démonstration est `SG_DEMO_COMMISSION_PERCENT` dans `index.html`. Ce paramètre navigateur n'a **aucune autorité** pour de véritables paiements, qui devront être calculés et validés côté serveur.
+- La répartition se retrouve dans la réservation, les missions simulées, l'onglet Gains et le simulateur Stripe Connect. Les frais Stripe ne sont pas automatiquement pris en charge par SAMGO : leurs modalités restent à définir.
