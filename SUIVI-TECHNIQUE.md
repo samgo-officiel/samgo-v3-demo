@@ -44,3 +44,11 @@ Mise à jour : 27 octobre 2026. Ce dépôt est une **démo**, pas un service de 
 ## Notes importantes
 
 La validation « chauffeur approuvé » actuelle est uniquement une validation de dossier **de test**, et ne garantit ni identité, ni permis, ni assurance. Le prototype ne doit attribuer ni conduire aucune course réelle.
+
+## Améliorations ajoutées le 27 octobre 2026 — synchronisation et lisibilité
+
+- Les panneaux « Mes courses » et « Demandes / profil chauffeur » rechargent automatiquement leurs informations **environ toutes les 45 secondes**, uniquement tant que SAMGO est ouvert, visible et que l'utilisateur est connecté.
+- Le GPS n'est **jamais demandé** par cette actualisation. La page signale une connexion hors ligne et l'heure du dernier rafraîchissement tenté. Les annonces géolocalisées conservent leur propre actualisation de test.
+- Le parcours d'une course fictive affiche une **frise à 5 étapes** côté client et chauffeur : choisi, en route, arrivé, trajet commencé, terminé. L'annulation est indiquée sans être confondue avec une mission réelle.
+- Le formulaire d'avis conserve temporairement les étoiles et le commentaire **en mémoire** lors d'une actualisation ; le brouillon est supprimé après publication ou déconnexion. L'actualisation automatique évite de remplacer le formulaire quand l'utilisateur y écrit.
+- Tests de simulation JavaScript réussis sur l'enchaînement des étapes, l'affichage du progrès, la note après la fin et la conservation du brouillon. Il reste **à tester en conditions réelles** le parcours entre plusieurs appareils avec de véritables sessions utilisateur.
