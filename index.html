@@ -425,18 +425,18 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
     <div class="row"><span>Prix client indicatif</span><strong id="fare" class="price">10 €</strong></div>
     <div class="row subtle"><span id="sgClientDriverPercent">Part chauffeur envisagée : 100 %</span><span id="driverShare">10 €</span></div>
     <div class="row subtle"><span id="sgClientSamgoPercent">Commission SAMGO au lancement : 0 %</span><span id="samgoShare">0 €</span></div>
-    <p class="tiny line">Distance choisie à la main : aucun itinéraire calculé. Tarif non définitif, assurance et frais non compris.</p>
+    <p class="tiny line">Distance choisie à la main : aucun itinéraire calculé. Tarif non définitif, assurance et frais non compris. Au lancement, SAMGO prévoit 0 % de commission. Toute future commission de 10 % devra être annoncée aux chauffeurs avant application.</p>
     <section class="sg-stripe-preview" aria-label="Préparation du paiement Stripe Connect en simulation">
       <span class="sg-stripe-label">💳 STRIPE CONNECT — SIMULATION LOCALE</span>
       <h3>Répartition du paiement envisagée</h3>
-      <p class="sg-stripe-help">Aucune carte, aucun IBAN ni aucun paiement n'est utilisé ici. Ces montants ne sont pas des gains réels.</p>
+      <p class="sg-stripe-help">Pendant le lancement, SAMGO ne retient aucune commission : 100 % du tarif revient théoriquement au chauffeur, avant frais Stripe et taxes. Aucun paiement ni IBAN n'est utilisé ici.</p>
       <div class="sg-stripe-numbers">
        <div><span>Client</span><strong id="sgStripeClient">10,00 €</strong></div>
        <div><span id="sgStripeDriverRateLabel">Chauffeur (100 %)</span><strong id="sgStripeDriver">10,00 €</strong></div>
        <div><span id="sgStripeSamgoRateLabel">SAMGO (0 %)</span><strong id="sgStripeSamgo">0,00 €</strong></div>
       </div>
       <button type="button" class="alt sg-stripe-simulate" onclick="window.sgStripeDemo.simulate()">Voir la répartition fictive</button>
-      <p id="sgStripeDemoStatus" class="sg-stripe-status" role="status" aria-live="polite">Mode démonstration : aucune connexion Stripe, aucune somme encaissée. Frais et taxes non déduits.</p>
+      <p id="sgStripeDemoStatus" class="sg-stripe-status" role="status" aria-live="polite">Aucune connexion Stripe, aucune somme encaissée. Le modèle 0 % SAMGO est un calcul théorique avant frais et taxes.</p>
     </section>
     <button type="submit" class="sg-demo-submit">Créer une simulation de course</button>
     <p id="demoBookingMessage" class="sg-demo-small" role="status" aria-live="polite">Test local uniquement : la simulation peut être retrouvée après actualisation dans ce même onglet pendant deux heures maximum.</p>
@@ -539,7 +539,7 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   </details>
 </div>
   <div class="sg-driver-pane hidden" data-dpane="gains"><h3>Mes gains</h3>
-    <div class="sg-driver-empty"><b>0 € de gains enregistrés</b><p>Aucun paiement ni virement actif. Une commission de 10 % est envisagée, sous réserve de validation du modèle économique.</p></div>
+    <div class="sg-driver-empty"><b>0 € de gains enregistrés</b><p id="sgDriverCommissionNotice">Au lancement, SAMGO retient 0 % : 100 % du tarif de course revient théoriquement au chauffeur, avant frais de paiement et taxes. Le passage futur à 10 % ne sera pas automatique.</p></div>
     <section class="sg-stripe-preview">
       <span class="sg-stripe-label">💳 STRIPE CONNECT — NON CONNECTÉ</span>
       <h3>Futurs versements chauffeur</h3>
