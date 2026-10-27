@@ -18,6 +18,29 @@ function stepName(stage){
  const names={en_route_test:'Le chauffeur indique être en route (TEST)',arrive_test:'Le chauffeur indique être arrivé (TEST)',trajet_test:'Trajet fictif commencé (TEST)'};
  return names[stage]||'Chauffeur sélectionné (TEST)';
 }
+function renderTimeline(target,choice,track){
+ const phaseNames=['Chauffeur choisi','En route','Arrivé','Trajet commencé','Terminé'];
+ const stageMap={en_route_test:1,arrive_test:2,trajet_test:3};
+ const current=choice.statut==='termine_test'?4:(track&&Object.prototype.hasOwnProperty.call(stageMap,track.etape)?stageMap[track.etape]:0);
+ const wrap=document.createElement('div');wrap.className='sg-test-timeline';
+ wrap.setAttribute('role','group');wrap.setAttribute('aria-label','Progression de la course fictive');
+ const heading=document.createElement('small');
+ heading.textContent=choice.statut==='annule_test'?'Simulation annulée (aucune vraie course)':'Étapes de votre course fictive — TEST';
+ wrap.append(heading);
+ if(choice.statut==='annule_test')wrap.classList.add('cancelled');
+ const steps=document.createElement('div');steps.className='sg-test-timeline-steps';
+ phaseNames.forEach((label,i)=>{
+  const item=document.createElement('div');item.className='sg-test-timeline-step';
+  const active=choice.statut!=='annule_test'&&i<=current;
+  if(active)item.classList.add('reached');
+  if(choice.statut!=='annule_test'&&i===current)item.classList.add('current');
+  const symbol=document.createElement('span');symbol.className='sg-test-timeline-icon';
+  symbol.textContent=active?'✓':String(i+1);
+  const caption=document.createElement('span');caption.textContent=label;
+  item.append(symbol,caption);steps.append(item);
+ });
+ wrap.append(steps);target.append(wrap);
+}
 async function nextStage(choice,record){
  if(!driverOk())return;
  const next=record?({en_route_test:'arrive_test',arrive_test:'trajet_test'}[record.etape]):'en_route_test';
@@ -112,6 +135,7 @@ async function refreshClient(){
    if(selected){
     addText(card,'p',selected.statut==='termine_test'?'✓ Course fictive terminée':selected.statut==='annule_test'?'× Simulation annulée':'✓ Un chauffeur a été choisi pour cette simulation.');
     const step=tracking.find(x=>x.choix_id===selected.id);
+    renderTimeline(card,selected,step);
     if(step)addText(card,'p',stepName(step.etape));
     else if(selected.statut==='choisi_test')addText(card,'p','En attente du premier statut du chauffeur (test).');
     if(selected.statut==='choisi_test'){
@@ -166,6 +190,7 @@ async function refreshDriver(){
    const card=document.createElement('div');card.className='sg-review-demo-card';
    addText(card,'strong',selection.statut==='termine_test'?'Simulation terminée':selection.statut==='annule_test'?'Simulation annulée':'Chauffeur choisi (test)');
    const step=(tracking.data||[]).find(x=>x.choix_id===selection.id);
+   renderTimeline(card,selection,step);
    addText(card,'p',step?stepName(step.etape):'En attente : chauffeur non parti (test).');
    if(selection.statut==='choisi_test'&&(!step||step.etape!=='trajet_test')){
     const label=!step?'Indiquer : en route (TEST)':step.etape==='en_route_test'?'Indiquer : arrivé (TEST)':'Indiquer : trajet commencé (TEST)';
