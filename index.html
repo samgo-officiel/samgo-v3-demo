@@ -987,8 +987,30 @@ function rejectLocalDemo(){
  if(!localDemoRequest||localDemoRequest.status!=='waiting'||!driverSimActive||!driverSimAllowed||!sessionUser)return;
  localDemoRequest.status='rejected';saveLocalDemo();renderLocalDemo();const h=$('sgLocalTestHistory');if(h)h.open=true;
 }
+// Politique du simulateur, sans effet sur de vrais paiements.
+// 0 % pendant le lancement ; passage éventuel à 10 % uniquement après décision du propriétaire.
+const SG_DEMO_COMMISSION_PERCENT=0;
+window.sgDemoCommissionPercent=SG_DEMO_COMMISSION_PERCENT;
+function sgDemoDistribution(value){
+ const cents=Math.round(Number(value)*100);
+ if(!Number.isSafeInteger(cents)||cents<0||cents>100000000)throw new RangeError('Montant fictif invalide.');
+ const fee=Math.round(cents*SG_DEMO_COMMISSION_PERCENT/100);
+ return {driver:(cents-fee)/100,samgo:fee/100};
+}
 function money(n){return n.toLocaleString('fr-FR',{style:'currency',currency:'EUR'});}
-function calc(){const v=Number($('km').value);$('fare').textContent=money(v);$('driverShare').textContent=money(v*.9);$('samgoShare').textContent=money(v*.1)}
+function calc(){
+ const v=Number($('km').value),shares=sgDemoDistribution(v);
+ $('fare').textContent=money(v);$('driverShare').textContent=money(shares.driver);$('samgoShare').textContent=money(shares.samgo);
+ const part=100-SG_DEMO_COMMISSION_PERCENT;
+ for(const [id,label] of Object.entries({
+  sgClientDriverPercent:'Part chauffeur envisagée : '+part+' %',
+  sgClientSamgoPercent:'Commission SAMGO envisagée : '+SG_DEMO_COMMISSION_PERCENT+' %',
+  sgDriverSampleRate:'Part chauffeur théorique ('+part+' %)'
+ })){const field=$(id);if(field)field.textContent=label;}
+ const sample=$('sgDriverSampleValue');if(sample)sample.textContent=money(sgDemoDistribution(12).driver);
+ const notice=$('sgDriverCommissionNotice');
+ if(notice)notice.textContent='Commission SAMGO de '+SG_DEMO_COMMISSION_PERCENT+' % : '+part+' % du prix de course au chauffeur, avant les frais et taxes. Tout passage futur à 10 % devra être annoncé aux chauffeurs avant activation.';
+}
 function setSpace(mode){space=mode;const d=mode==='chauffeur';$('spaceChauffeur').classList.toggle('hidden',!d);$('spaceRaccompagner').classList.toggle('hidden',d);$('goChauffeur').classList.toggle('alt',!d);$('goRaccompagner').classList.toggle('alt',d);$('accountTitle').textContent=authPageTitle();refreshCandidate();}
 function authPageTitle(){
  if(sessionUser)return 'Mon compte';
