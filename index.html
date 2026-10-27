@@ -3,7 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#080a09" />
+  <meta name="theme-color" content="#10171b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="SAMGO" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/samgo-app-icon.svg" type="image/svg+xml" />
   <meta name="description" content="SAMGO — Ta voiture, notre chauffeur. Prototype d'inscription de test et de candidature chauffeur." />
   <title>SAMGO — Ta voiture, notre chauffeur</title>
   <style>
@@ -1021,4 +1026,12 @@ function sgGo(view){
 }
 </script>
 <script src="assets/demandes-geoloc-test.js"></script>
+<script>
+/* Installation optionnelle de l'app web. Aucun abonnement push n'est lancé ici. */
+window.addEventListener('load',function(){
+ if('serviceWorker' in navigator && window.isSecureContext){
+  navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(function(){});
+ }
+});
+</script>
 </body></html>
