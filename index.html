@@ -109,6 +109,22 @@
 #driverLocalDemo p{font-size:12px;line-height:1.5}
 </style>
 <style id="sg-login-polish">#authEmailHelp.sg-email-help{font-size:12px;line-height:1.5;color:#dfc58b;margin:7px 0 12px}#authPanel .switch button{min-width:0}#authPanel input:focus-visible{outline:2px solid #eac577;outline-offset:2px}</style>
+<style id="sg-driver-stars-style">
+.sg-driver-ratings{margin:16px 0;background:#162630;border:1px solid #4c5d66;border-radius:14px;padding:14px}
+.sg-driver-ratings h3{font-size:16px;color:#f4cf85;margin:2px 0 9px}
+.sg-driver-ratings>p{font-size:12px;color:#cad4da;line-height:1.5}
+.sg-review-demo-card{background:#2d2b23;border:1px solid #746447;border-radius:12px;padding:12px;margin:10px 0}
+.sg-review-demo-card strong{color:#ffdc91;font-size:14px;overflow-wrap:anywhere}
+.sg-review-demo-card p{font-size:12px;color:#e3e5e1;line-height:1.5;margin:9px 0 5px}
+.sg-review-demo-card small{font-size:11px;color:#bfcbd1}
+.sg-stars-picker{display:flex;gap:5px;flex-wrap:nowrap;margin:11px 0}
+.sg-stars-picker button{flex:1;min-width:0;padding:6px 2px;min-height:43px;font-size:25px;border:1px solid #665536;background:#27343b;color:#8b8981}
+.sg-stars-picker button[aria-pressed="true"]{background:#53421d;color:#ffd56c;border-color:#dcaa59}
+.sg-review-comment{width:100%;min-height:82px;border:1px solid #6b7580;background:#101b21;color:white;border-radius:10px;font:inherit;font-size:14px;padding:11px;resize:vertical}
+.sg-demo-finish,.sg-demo-select{width:100%;font-size:12px!important;min-height:43px!important;margin-top:10px;background:#e8bc72!important;color:#152028!important}
+.sg-review-submit{width:100%;font-size:12px!important;min-height:42px!important;background:#e9c577!important;color:#162025!important;margin:10px 0 0}
+.sg-review-submit:disabled{opacity:.6}
+</style>
 <style id="sg-responses-test-style">
 .sg-reply-client-box{padding:15px;margin:16px 0;background:#17242c;border-radius:14px;border:1px solid #44545d}
 .sg-reply-client-box h3{font-size:19px;color:#f8f8f8;margin:0 0 7px}
@@ -398,7 +414,7 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
    <div><small>STATUT DE MA CANDIDATURE</small><strong id="driverState">En cours de vérification</strong><p id="driverStateHelp">Chargement…</p></div>
    <span id="driverPill">En cours</span>
   </div>
-  <div class="sg-driver-stats"><div><b>0</b><span>Missions attribuées</span></div><div><b>0 €</b><span>Gains enregistrés</span></div><div><b>—</b><span>Note chauffeur</span></div></div>
+  <div class="sg-driver-stats"><div><b>0</b><span>Courses réelles</span></div><div><b>0 €</b><span>Gains réels</span></div><div><b id="sgDriverRatingValue">—</b><span>Avis de test</span></div></div>
   <div class="sg-driver-tabs" role="group" aria-label="Mon espace chauffeur">
    <button type="button" data-dtab="overview" aria-pressed="true" onclick="driverTab('overview')">Accueil</button>
    <button type="button" data-dtab="missions" aria-pressed="false" onclick="driverTab('missions')">Demandes</button>
@@ -445,6 +461,11 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   <p id="sgInAppAlert" class="sg-alert-new" role="alert" hidden></p>
   <p id="sgNearbyStatus" role="status" aria-live="polite">Autorisez le GPS pour rechercher des annonces.</p>
   <div id="sgNearbyList"></div>
+  <div class="sg-driver-ratings"><h3>Mes réponses et simulations (test)</h3>
+    <p>Consultez les clients qui ont sélectionné votre réponse en démonstration. Aucune course réelle n'est attribuée.</p>
+    <p id="sgDriverSelectionsStatus" role="status" aria-live="polite">Actualisez pour consulter vos réponses.</p>
+    <div id="sgDriverSelectionsList"></div>
+  </div>
   <button type="button" class="alt" onclick="window.sgDemand.refresh()">↻ Actualiser les demandes</button>
   <div class="sg-demand-warning">🔒 Aucune annonce ne peut être acceptée en vrai : assurances, vérifications et lancement restent à finaliser.</div>
   <details id="sgLocalTestHistory" class="sg-local-test-history">
@@ -470,6 +491,12 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   <div class="sg-driver-pane hidden" data-dpane="gains"><h3>Mes gains</h3><div class="sg-driver-empty"><b>0 € de gains enregistrés</b><p>Aucun paiement ni virement actif. Une commission de 10 % est envisagée, sous réserve de validation du modèle économique.</p></div></div>
   <div class="sg-driver-pane hidden" data-dpane="profil"><h3>Mon profil chauffeur</h3>
    <dl class="sg-driver-profile"><dt>Nom affiché</dt><dd id="driverName">—</dd><dt>E-mail</dt><dd id="driverMail">—</dd><dt>Candidature déposée le</dt><dd id="driverDate">—</dd><dt>Candidature</dt><dd id="driverStatus">—</dd></dl>
+   <div class="sg-driver-ratings"><h3>⭐ Mes avis chauffeurs (test)</h3>
+    <p>Les étoiles proviennent uniquement de simulations terminées. Elles ne constituent pas encore une note publique vérifiée.</p>
+    <button type="button" class="alt" onclick="window.sgDemand.refreshDriverReviews()">↻ Actualiser mes avis</button>
+    <p id="sgDriverReviewsStatus" role="status" aria-live="polite">Aucun avis de test chargé.</p>
+    <div id="sgDriverReviewsList"></div>
+   </div>
    <div class="sg-driver-lock">🔒 N'envoyez aucune pièce d'identité, photo de permis ou selfie sur cette page. Les vérifications nécessiteront un dispositif sécurisé.</div>
    <button type="button" class="sg-driver-refresh" onclick="sgGo('account')">Gérer mon compte</button>
   </div>
@@ -710,7 +737,57 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
         }catch(error){return {error};}
       }
     };
-    return {auth,from,testRequests,testReplies,async ping(){return api('/auth/v1/settings','GET');}};
+    const testChoices={
+      async list(){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Connectez-vous pour consulter les choix de test.');
+          const params=new URLSearchParams({select:'id,annonce_id,reponse_id,client_id,chauffeur_id,statut,cree_le,termine_le',order:'cree_le.desc',limit:'100'});
+          const rows=await api('/rest/v1/choix_chauffeur_test?'+params,'GET',undefined,token);
+          return {data:Array.isArray(rows)?rows:[],error:null};
+        }catch(error){return {data:[],error};}
+      },
+      async choose(annonceId,reponseId,chauffeurId,clientId){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Connectez-vous comme client pour choisir.');
+          const record={annonce_id:annonceId,reponse_id:reponseId,chauffeur_id:chauffeurId,client_id:clientId,statut:'choisi_test'};
+          await api('/rest/v1/choix_chauffeur_test','POST',record,token,{'Prefer':'return=minimal'});
+          return {error:null};
+        }catch(error){return {error};}
+      },
+      async finish(choixId,clientId){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Reconnectez-vous pour terminer la simulation.');
+          const params=new URLSearchParams({id:'eq.'+choixId,client_id:'eq.'+clientId,statut:'eq.choisi_test'});
+          const rows=await api('/rest/v1/choix_chauffeur_test?'+params,'PATCH',{statut:'termine_test',termine_le:new Date().toISOString()},token,{'Prefer':'return=representation'});
+          if(!Array.isArray(rows)||rows.length!==1)throw new Error('Cette simulation n’est plus disponible.');
+          return {error:null};
+        }catch(error){return {error};}
+      }
+    };
+    const testReviews={
+      async list(){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Connectez-vous pour voir les avis de test.');
+          const params=new URLSearchParams({select:'id,choix_id,client_id,chauffeur_id,note,commentaire,cree_le',order:'cree_le.desc',limit:'100'});
+          const rows=await api('/rest/v1/avis_chauffeurs_test?'+params,'GET',undefined,token);
+          return {data:Array.isArray(rows)?rows:[],error:null};
+        }catch(error){return {data:[],error};}
+      },
+      async create(choixId,clientId,chauffeurId,note,commentaire){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Connectez-vous avant de noter un chauffeur.');
+          const payload={choix_id:choixId,client_id:clientId,chauffeur_id:chauffeurId,note,commentaire};
+          await api('/rest/v1/avis_chauffeurs_test','POST',payload,token,{'Prefer':'return=minimal'});
+          return {error:null};
+        }catch(error){return {error};}
+      }
+    };
+    return {auth,from,testRequests,testReplies,testChoices,testReviews,async ping(){return api('/auth/v1/settings','GET');}};
   }
   window.samgoCreateClient = makeClient;
 })();
