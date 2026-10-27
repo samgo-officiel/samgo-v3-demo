@@ -1,0 +1,158 @@
+/* SAMGO — avis et étoiles de démonstration, non publics et non vérifiés. */
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+let clientSequence=0,driverSequence=0;
+function signed(){return typeof sessionUser!=='undefined'&&!!sessionUser&&typeof client!=='undefined'&&!!client&&!!client.testChoices&&!!client.testReviews;}
+function driverOk(){return signed()&&typeof driverSimAllowed!=='undefined'&&driverSimAllowed;}
+function status(id,value){const el=$(id);if(el)el.textContent=value;}
+function addText(box,tag,value,cls){
+ const e=document.createElement(tag);e.textContent=value;if(cls)e.className=cls;box.append(e);return e;
+}
+function addButton(box,title,action,cls){
+ const e=document.createElement('button');e.type='button';e.textContent=title;
+ if(cls)e.className=cls;e.addEventListener('click',action);box.append(e);return e;
+}
+function stars(value){const n=Math.min(5,Math.max(0,Number(value)||0));return '★'.repeat(n)+'☆'.repeat(5-n);}
+function addReviewForm(box,choice){
+ const form=document.createElement('div');form.className='sg-review-demo-card';
+ addText(form,'strong','Donner une note au chauffeur — TEST');
+ addText(form,'p','Évaluez la course fictive avec 1 à 5 étoiles. Cet avis ne devient pas une note réelle.', 'sg-demo-small');
+ const buttons=document.createElement('div');buttons.className='sg-stars-picker';
+ buttons.setAttribute('role','group');buttons.setAttribute('aria-label','Choisir le nombre d’étoiles');
+ let selected=0;const buttonNodes=[];
+ for(let n=1;n<=5;n++){
+  const item=document.createElement('button');item.type='button';
+  item.textContent='☆';item.setAttribute('aria-label',n+' étoile'+(n>1?'s':''));
+  item.setAttribute('aria-pressed','false');
+  item.addEventListener('click',()=>{
+   selected=n;
+   buttonNodes.forEach((s,i)=>{s.textContent=i<n?'★':'☆';s.setAttribute('aria-pressed',String(i===n-1));});
+  });
+  buttonNodes.push(item);buttons.append(item);
+ }
+ form.append(buttons);
+ const comment=document.createElement('textarea');comment.className='sg-review-comment';
+ comment.maxLength=300;comment.rows=3;
+ comment.placeholder='Commentaire facultatif (300 caractères maximum)';
+ comment.setAttribute('aria-label','Commentaire sur la course fictive');
+ form.append(comment);
+ const msg=addText(form,'p','Avis visible seulement par les participants du test.','sg-demo-small');
+ msg.setAttribute('role','status');
+ const submit=addButton(form,'Publier mon avis de TEST',async()=>{
+  if(!signed())return;
+  if(selected<1||selected>5){msg.textContent='Sélectionnez entre 1 et 5 étoiles.';return;}
+  submit.disabled=true;msg.textContent='Enregistrement de la note de test…';
+  const result=await client.testReviews.create(choice.id,sessionUser.id,choice.chauffeur_id,selected,comment.value.trim());
+  if(result.error){msg.textContent='Erreur : '+(result.error.message||'Veuillez réessayer.');submit.disabled=false;return;}
+  await refreshClient();
+  status('sgReviewClientStatus','✓ Votre avis de '+selected+' étoile(s) a été enregistré en mode TEST.');
+ },'sg-review-submit');
+ box.append(form);
+}
+async function selectDriver(ad,answer){
+ if(!signed())return;
+ const result=await client.testChoices.choose(ad.id,answer.id,answer.chauffeur_id,sessionUser.id);
+ if(result.error){status('sgReviewClientStatus','Impossible de sélectionner ce chauffeur : '+(result.error.message||'Réessayez.'));return;}
+ await refreshClient();
+ status('sgReviewClientStatus','✓ Chauffeur sélectionné en simulation. Aucune vraie course attribuée.');
+}
+async function finishRide(choice){
+ if(!signed())return;
+ if(typeof window.confirm==='function'&&!window.confirm('Terminer la course fictive pour pouvoir déposer un avis de test ?'))return;
+ const result=await client.testChoices.finish(choice.id,sessionUser.id);
+ if(result.error){status('sgReviewClientStatus','Erreur de clôture : '+(result.error.message||'Réessayez.'));return;}
+ await refreshClient();
+ status('sgReviewClientStatus','✓ Simulation terminée. Vous pouvez noter le chauffeur avec les étoiles.');
+}
+async function refreshClient(){
+ const list=$('sgReviewClientList');if(!list)return;
+ list.replaceChildren();
+ if(!signed()){status('sgReviewClientStatus','Connectez-vous pour choisir et noter un chauffeur de test.');return;}
+ const uid=sessionUser.id,seq=++clientSequence;
+ status('sgReviewClientStatus','Chargement des chauffeurs intéressés et avis de test…');
+ try{
+  const [a,r,c,v]=await Promise.all([
+   client.testRequests.mine(uid),client.testReplies.list(),client.testChoices.list(),client.testReviews.list()
+  ]);
+  if(!signed()||uid!==sessionUser.id||seq!==clientSequence)return;
+  for(const result of [a,r,c,v])if(result.error)throw result.error;
+  const ads=Array.isArray(a.data)?a.data:[],replies=Array.isArray(r.data)?r.data:[],
+        choices=Array.isArray(c.data)?c.data:[],reviews=Array.isArray(v.data)?v.data:[];
+  status('sgReviewClientStatus',ads.length?ads.length+' annonce(s) consultée(s) en version de test.':'Aucune annonce publiée pour ce compte.');
+  for(const ad of ads){
+   const card=document.createElement('article');card.className='sg-reply-card';
+   addText(card,'strong',ad.depart_test+' → '+ad.destination_test);
+   const relevant=replies.filter(x=>x.annonce_id===ad.id);
+   const selected=choices.find(x=>x.annonce_id===ad.id&&x.client_id===uid);
+   const active=ad.statut==='test_en_attente'&&Date.parse(ad.expire_le)>Date.now();
+   addText(card,'p',relevant.length+' chauffeur(s) intéressé(s) (test).');
+   if(selected){
+    addText(card,'p',selected.statut==='termine_test'?'✓ Course fictive terminée':'✓ Un chauffeur a été choisi pour cette simulation.');
+    if(selected.statut==='choisi_test')addButton(card,'Terminer la simulation (test)',()=>finishRide(selected),'sg-demo-finish');
+    else{
+     const review=reviews.find(x=>x.choix_id===selected.id);
+     if(review){
+      const view=document.createElement('div');view.className='sg-review-demo-card';
+      addText(view,'strong',stars(review.note)+' · '+review.note+'/5 — Avis TEST');
+      if(review.commentaire)addText(view,'p',review.commentaire);
+      card.append(view);
+     }else addReviewForm(card,selected);
+    }
+   }else if(active&&relevant.length){
+    addText(card,'p','Choisissez un chauffeur intéressé pour essayer le parcours de notation.');
+    relevant.forEach((answer,i)=>addButton(card,'Choisir chauffeur de test n°'+(i+1),()=>selectDriver(ad,answer),'sg-demo-select'));
+   }else addText(card,'p',active?'En attente de réponses des chauffeurs de test.':'Annonce expirée : aucun nouveau choix possible.');
+   list.append(card);
+  }
+ }catch(e){status('sgReviewClientStatus','Chargement impossible : '+(e.message||'Veuillez réessayer.'));}
+}
+async function refreshDriver(){
+ const rlist=$('sgDriverReviewsList'),slist=$('sgDriverSelectionsList');
+ if(!rlist||!slist)return;
+ rlist.replaceChildren();slist.replaceChildren();
+ if(!driverOk()){
+  status('sgDriverReviewsStatus','Connectez-vous en tant que chauffeur approuvé (test).');
+  status('sgDriverSelectionsStatus','Aucune sélection chargée.');
+  const b=$('sgDriverRatingValue');if(b)b.textContent='—';return;
+ }
+ const uid=sessionUser.id,seq=++driverSequence;
+ status('sgDriverReviewsStatus','Chargement de vos avis de test…');
+ try{
+  const [ch,rev]=await Promise.all([client.testChoices.list(),client.testReviews.list()]);
+  if(!signed()||sessionUser.id!==uid||seq!==driverSequence)return;
+  if(ch.error)throw ch.error;if(rev.error)throw rev.error;
+  const mine=(ch.data||[]).filter(c=>c.chauffeur_id===uid);
+  const reviews=(rev.data||[]).filter(x=>x.chauffeur_id===uid);
+  const avg=reviews.length?(reviews.reduce((sum,x)=>sum+Number(x.note),0)/reviews.length):0;
+  const rating=$('sgDriverRatingValue');
+  if(rating)rating.textContent=reviews.length?avg.toFixed(1).replace('.',',')+'★':'—';
+  status('sgDriverReviewsStatus',reviews.length?reviews.length+' avis de test (non publics).':'Aucune étoile de test reçue pour le moment.');
+  status('sgDriverSelectionsStatus',mine.length?mine.length+' client(s) vous ont choisi en simulation.':'Aucune course fictive sélectionnée.');
+  for(const review of reviews){
+   const card=document.createElement('div');card.className='sg-review-demo-card';
+   addText(card,'strong',stars(review.note)+' · '+review.note+'/5 — TEST');
+   if(review.commentaire)addText(card,'p',review.commentaire);
+   rlist.append(card);
+  }
+  for(const selection of mine){
+   const card=document.createElement('div');card.className='sg-review-demo-card';
+   addText(card,'strong',selection.statut==='termine_test'?'Simulation terminée':'Chauffeur choisi (test)');
+   addText(card,'p','Cette étape ne représente pas une course réelle.');
+   slist.append(card);
+  }
+ }catch(e){status('sgDriverReviewsStatus','Impossible de lire les avis de test : '+(e.message||'réessayez.'));}
+}
+function clear(){
+ clientSequence++;driverSequence++;
+ for(const id of ['sgReviewClientList','sgDriverReviewsList','sgDriverSelectionsList']){
+  const el=$(id);if(el)el.replaceChildren();
+ }
+ const rating=$('sgDriverRatingValue');if(rating)rating.textContent='—';
+}
+if(window.sgDemand){
+ const old=window.sgDemand.refreshClient;
+ window.sgDemand.refreshClient=async function(){if(old)await old();await refreshClient();};
+}
+window.sgReviews={refreshClient,refreshDriver,clear};
+})();
