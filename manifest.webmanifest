@@ -1,0 +1,20 @@
+{
+  "id": "/samgo-v3-demo/",
+  "name": "SAMGO — Ta voiture, notre chauffeur",
+  "short_name": "SAMGO",
+  "description": "Prototype SAMGO : demandes et chauffeurs en version de test.",
+  "start_url": "/samgo-v3-demo/",
+  "scope": "/samgo-v3-demo/",
+  "display": "standalone",
+  "background_color": "#10171b",
+  "theme_color": "#10171b",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "assets/samgo-app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
