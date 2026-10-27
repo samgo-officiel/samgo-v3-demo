@@ -794,7 +794,40 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
         }catch(error){return {error};}
       }
     };
-    return {auth,from,testRequests,testReplies,testChoices,testReviews,async ping(){return api('/auth/v1/settings','GET');}};
+    const testTracking={
+      async list(){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Connectez-vous pour consulter le suivi de test.');
+          const params=new URLSearchParams({select:'choix_id,chauffeur_id,etape,actualise_le',limit:'100'});
+          const rows=await api('/rest/v1/suivi_course_test?'+params,'GET',undefined,token);
+          return {data:Array.isArray(rows)?rows:[],error:null};
+        }catch(error){return {data:[],error};}
+      },
+      async start(choixId,chauffeurId){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Reconnectez-vous comme chauffeur.');
+          const payload={choix_id:choixId,chauffeur_id:chauffeurId,etape:'en_route_test'};
+          const rows=await api('/rest/v1/suivi_course_test','POST',payload,token,{'Prefer':'return=representation'});
+          if(!Array.isArray(rows)||rows.length!==1)throw new Error('La simulation n’a pas été enregistrée.');
+          return {data:rows[0],error:null};
+        }catch(error){return {data:null,error};}
+      },
+      async advance(choixId,oldStage,nextStage){
+        try{
+          const allowed={en_route_test:'arrive_test',arrive_test:'trajet_test'};
+          if(allowed[oldStage]!==nextStage)throw new Error('Étape de simulation invalide.');
+          const token=await accessToken();
+          if(!token)throw new Error('Reconnectez-vous comme chauffeur.');
+          const params=new URLSearchParams({choix_id:'eq.'+choixId,etape:'eq.'+oldStage});
+          const rows=await api('/rest/v1/suivi_course_test?'+params,'PATCH',{etape:nextStage},token,{'Prefer':'return=representation'});
+          if(!Array.isArray(rows)||rows.length!==1)throw new Error('Étape déjà modifiée ou non autorisée.');
+          return {data:rows[0],error:null};
+        }catch(error){return {data:null,error};}
+      }
+    };
+    return {auth,from,testRequests,testReplies,testChoices,testReviews,testTracking,async ping(){return api('/auth/v1/settings','GET');}};
   }
   window.samgoCreateClient = makeClient;
 })();
