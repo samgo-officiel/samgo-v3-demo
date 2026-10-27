@@ -109,6 +109,9 @@
 #driverLocalDemo p{font-size:12px;line-height:1.5}
 </style>
 <style id="sg-login-polish">#authEmailHelp.sg-email-help{font-size:12px;line-height:1.5;color:#dfc58b;margin:7px 0 12px}#authPanel .switch button{min-width:0}#authPanel input:focus-visible{outline:2px solid #eac577;outline-offset:2px}</style>
+<style id="sg-auto-sync-style">
+.sg-sync-text{font-size:11px!important;line-height:1.45;color:#a9c6d2!important;letter-spacing:.01em;border-left:2px solid #8eaaaf;padding:4px 0 4px 10px;margin:8px 0 15px}
+</style>
 <style id="sg-driver-stars-style">
 .sg-driver-ratings{margin:16px 0;background:#162630;border:1px solid #4c5d66;border-radius:14px;padding:14px}
 .sg-driver-ratings h3{font-size:16px;color:#f4cf85;margin:2px 0 9px}
@@ -353,6 +356,7 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
  </div>
  <div class="sg-reply-client-box" id="sgMyPublishedTest">
   <h3>Mes annonces publiées (test)</h3>
+  <p class="sg-sync-text" id="sgRefreshClientInfo" aria-live="polite">Synchronisation des annonces pendant l'utilisation de SAMGO.</p>
   <p>Retrouvez vos annonces partagées et le nombre de chauffeurs qui ont répondu <strong>« Intéressé (test) »</strong>. Cela ne confirme aucune réservation.</p>
   <button type="button" class="alt" onclick="window.sgDemand.refreshClient()">↻ Voir mes annonces et réponses</button>
   <p id="sgMyAdsStatus" role="status" aria-live="polite">Connectez-vous pour voir vos annonces de test.</p>
@@ -451,6 +455,7 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   <div class="sg-driver-pane hidden" data-dpane="missions">
   <span class="sg-demo-eyebrow">DÉMONSTRATION — DEMANDES PUBLIÉES</span>
   <h3>Demandes autour de moi</h3>
+  <p class="sg-sync-text" id="sgRefreshDriverInfo" aria-live="polite">Synchronisation du suivi lorsque SAMGO est ouvert.</p>
   <p class="sg-demand-explain">Choisissez un rayon autour de votre position GPS. Seules les annonces de test, sans adresse réelle ni numéro de téléphone, peuvent apparaître ici.</p>
   <div class="sg-nearby-controls">
    <label for="sgRadius">Distance autour de moi</label>
@@ -1157,6 +1162,7 @@ function sgGo(view){
 </script>
 <script src="assets/demandes-geoloc-test.js"></script>
 <script src="assets/avis-chauffeurs-test.js"></script>
+<script src="assets/actualisation-test.js"></script>
 <script>
 /* Installation optionnelle de l'app web. Aucun abonnement push n'est lancé ici. */
 window.addEventListener('load',function(){
