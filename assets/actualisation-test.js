@@ -28,6 +28,12 @@
   const target=route();
   if(!target||document.visibilityState==='hidden'||!signed())return;
   if(inFlight)return;
+  // Ne jamais remplacer le formulaire pendant la saisie d'un avis client.
+  const focused=document.activeElement;
+  if(target==='client'&&focused&&typeof focused.closest==='function'){
+   const form=focused.closest('.sg-review-demo-card');
+   if(form&&form.querySelector('.sg-review-comment'))return;
+  }
   if(!force&&Date.now()-lastRun<INTERVAL_MS-1000)return;
   if(navigator.onLine===false){setDisplay('Hors connexion — affichage potentiellement ancien.');return;}
   inFlight=true;lastRun=Date.now();
