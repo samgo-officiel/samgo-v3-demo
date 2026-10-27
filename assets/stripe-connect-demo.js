@@ -10,8 +10,11 @@
   if(!Number.isSafeInteger(amountCents)||amountCents<0||amountCents>100000000){
    throw new RangeError('Montant de simulation invalide.');
   }
-  const platformCents=Math.round(amountCents*10/100);
-  return {amountCents,platformCents,driverCents:amountCents-platformCents,feesIncluded:false,paymentCreated:false};
+  // Politique de démonstration fixée dans index.html. Jamais un montant de confiance pour des paiements réels.
+  const rate=Number(window.sgDemoCommissionPercent);
+  if(rate!==0&&rate!==10)throw new Error('Politique de commission de test indisponible.');
+  const platformCents=Math.round(amountCents*rate/100);
+  return {amountCents,platformCents,driverCents:amountCents-platformCents,rate,feesIncluded:false,paymentCreated:false};
  }
  function current(){
   const km=$('km');
@@ -29,6 +32,8 @@
   }
   const fields={sgStripeClient:eur(calc.amountCents),sgStripeDriver:eur(calc.driverCents),sgStripeSamgo:eur(calc.platformCents),sgStripeGainsDriver:eur(calc.driverCents)};
   Object.keys(fields).forEach(id=>{const node=$(id);if(node)node.textContent=fields[id];});
+  const rates={sgStripeDriverRateLabel:'Chauffeur ('+(100-calc.rate)+' %)',sgStripeSamgoRateLabel:'SAMGO ('+calc.rate+' %)'};
+  Object.entries(rates).forEach(([id,label])=>{const node=$(id);if(node)node.textContent=label;});
   return calc;
  }
  function simulate(){
