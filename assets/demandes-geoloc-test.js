@@ -75,6 +75,8 @@ function notifyAboutNew(rows){
  if(local.length){
   status('sgInAppAlert','🔔 '+local.length+' nouvelle(s) demande(s) de test dans un rayon de '+radius+' km !');
   const alert=$('sgInAppAlert');alert.hidden=false;
+  const toast=$('sgRequestToast'),toastText=$('sgRequestToastText');
+  if(toast&&toastText){toastText.textContent=local.length+' nouvelle(s) demande(s) de test près de vous !';toast.hidden=false;}
   if('Notification' in window&&Notification.permission==='granted'&&document.visibilityState==='visible'){
    try{new Notification('SAMGO — nouvelle demande de test',{body:local.length+' annonce(s) de test à proximité. Ouvrez Missions.',tag:'samgo-test-demandes'});}catch(_){}
   }
@@ -155,6 +157,7 @@ function stop(){
  state.pos=null;state.rows=[];state.notify=false;state.firstLoad=true;state.seen.clear();
  const b=$('sgNotifyToggle');if(b){b.textContent='Activer les alertes pendant la visite';b.setAttribute('aria-pressed','false');}
  const a=$('sgInAppAlert');if(a){a.hidden=true;a.textContent='';}
+ const toast=$('sgRequestToast');if(toast)toast.hidden=true;
  status('sgGeoStatus','GPS non activé. Votre position chauffeur n’est pas enregistrée.');
  status('sgNotifyStatus','Alertes désactivées.');
  render();
