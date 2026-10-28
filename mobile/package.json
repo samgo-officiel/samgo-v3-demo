@@ -1,7 +1,7 @@
 {
   "name": "samgo-mobile-prototype",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Emballage natif PREPARATOIRE de SAMGO TEST - ne pas publier",
   "scripts": {
     "build:web": "node scripts/prepare-web.cjs",
@@ -15,7 +15,8 @@
     "@capacitor/android": "8.5.2",
     "@capacitor/ios": "8.5.2",
     "@capacitor/app": "8.1.2",
-    "@capacitor/browser": "8.0.5"
+    "@capacitor/browser": "8.0.5",
+    "@capacitor/geolocation": "8.2.4"
   },
   "devDependencies": {
     "@capacitor/cli": "8.5.2"
