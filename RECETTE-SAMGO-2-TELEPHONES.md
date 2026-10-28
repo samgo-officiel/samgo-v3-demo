@@ -132,3 +132,14 @@ La réussite du diagnostic est indicative : elle ne remplace pas les tests sur t
 - [ ] Documenter les erreurs avec captures sans jetons de session ni données personnelles.
 
 `mobile/` est uniquement préparatoire, sans binaires natifs compilés.
+
+
+## Tests fonctionnels à reprendre sur téléphones
+
+- [ ] Depuis Client → Mes courses, utiliser « Modifier ma simulation » ; le formulaire Réserver doit retrouver les champs, sans changer une annonce déjà publiée.
+- [ ] Dans la messagerie, choisir une simulation puis un message rapide : le texte doit remplir la zone **sans être envoyé** avant clic sur Envoyer.
+- [ ] Un autre utilisateur envoie un message fictif : la bannière doit apparaître sans contenu privé, s'ouvrir au bon endroit et disparaître après déconnexion.
+- [ ] Couper Internet avant d'envoyer un message : le brouillon doit rester et aucun message fictif ne doit être envoyé.
+- [ ] Couper Internet avant la publication d'une annonce : vérifier le refus sans dialogue de permission GPS.
+- [ ] Dans Chauffeur → Missions, trier par proximité, tarif indicatif et trajet court ; vérifier la cohérence des numéros sur le radar, puis recharger l'application (rayon et tri doivent être conservés).
+- [ ] Signaler un problème TEST depuis Client et Chauffeur : le formulaire d'assistance doit s'ouvrir sans ajouter d'identifiants à l'adresse.
