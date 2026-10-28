@@ -9,6 +9,13 @@ const radiusOptions=[5,10,20,30,50];
 const state={pos:null,rows:[],replies:[],loading:false,poll:null,notify:false,firstLoad:true,seen:new Set(),lastUser:null,clientLoad:0,responding:null,replyGeneration:0,publishGeneration:0,gpsPending:false,gpsGeneration:0,fetchGeneration:0,fetchKey:null};
 function status(id,msg){const node=$(id);if(node)node.textContent=msg;}
 function euros(x){return Number(x).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});}
+function remainingTime(expireAt,now=Date.now()){
+ const minutes=Math.ceil((Number(expireAt)-now)/60000);
+ if(!Number.isFinite(minutes)||minutes<=0)return 'expirée';
+ if(minutes<60)return 'expire dans environ '+minutes+' min';
+ const hours=Math.floor(minutes/60),rest=minutes%60;
+ return 'expire dans environ '+hours+' h'+(rest?' '+rest+' min':'');
+}
 function normalizePosition(p){
  const lat=Number(p?.coords?.latitude),lng=Number(p?.coords?.longitude);
  if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)
@@ -319,7 +326,7 @@ async function refreshClient(){
    const title=document.createElement('strong');title.textContent=ad.depart_test+' → '+ad.destination_test;
    const exp=Date.parse(ad.expire_le),active=ad.statut==='test_en_attente'&&exp>now;
    const count=allAnswers.filter(row=>row.annonce_id===ad.id).length;
-   const meta=document.createElement('p');meta.textContent=(active?'Active (test)':'Expirée (test)')+' · '+Number(ad.distance_km)+' km · '+count+' réponse(s) de chauffeurs intéressés (test).';
+   const meta=document.createElement('p');meta.textContent=(active?'Active (test), '+remainingTime(exp,now):'Expirée (test)')+' · '+Number(ad.distance_km)+' km · '+count+' réponse(s) de chauffeurs intéressés (test).';
    box.append(title,meta);
    const hasChoice=selected.some(choice=>choice.annonce_id===ad.id&&choice.client_id===currentId);
    if(hasChoice){
@@ -402,5 +409,5 @@ function radiusChanged(){
  if(state.pos)fetchRows(false);
 }
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')fetchRows(true);});
-window.sgDemand={open,publish,optIn,refresh:()=>fetchRows(false),refreshClient,render,stop,authChanged,radiusChanged,sortChanged,sortRequests};
+window.sgDemand={open,publish,optIn,refresh:()=>fetchRows(false),refreshClient,render,stop,authChanged,radiusChanged,sortChanged,sortRequests,remainingTime};
 })();
