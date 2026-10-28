@@ -76,6 +76,17 @@ function render(){
   reply.disabled=replied||state.responding===req.id;
   if(!reply.disabled)reply.addEventListener('click',()=>sendInterest(req.id));
   card.append(reply);
+  // Carte externe sur clic explicite : destination seulement approximative.
+  // Ne jamais transmettre ici la position GPS precise du chauffeur.
+  const mapBtn=document.createElement('button');mapBtn.type='button';
+  mapBtn.className='alt sg-zone-map-btn';
+  mapBtn.textContent='📍 Voir zone approximative (carte externe TEST)';
+  mapBtn.setAttribute('aria-label','Ouvrir la zone approximative de cette annonce fictive sur une carte externe');
+  mapBtn.addEventListener('click',()=>{
+   if(!approved()||sessionUser.id===req.client_id)return;
+   window.sgMapsZoneTest?.open(req.latitude_approx,req.longitude_approx);
+  });
+  card.append(mapBtn);
   list.append(card);
  }
 }
