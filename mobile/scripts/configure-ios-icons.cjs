@@ -14,7 +14,7 @@ function brandIosIcons(catalog=path.join(root,'ios/App/App/Assets.xcassets/AppIc
  const meta=JSON.parse(fs.readFileSync(path.join(catalog,'Contents.json'),'utf8'));
  let count=0;
  for(const item of meta.images||[]){
-  if(!item.filename||!/^[-\w.]+\.png$/.test(item.filename))continue;
+  if(!item.filename||!/^[A-Za-z0-9_.@-]+\.png$/.test(item.filename))continue;
   const requested=Number(String(item.size||'1024x1024').split('x')[0]);
   const scale=Number(String(item.scale||'1x').replace('x',''))||1;
   const pixels=Math.round(requested*scale);
