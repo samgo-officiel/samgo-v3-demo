@@ -1,7 +1,7 @@
 {
   "name": "samgo-mobile-prototype",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Emballage natif PREPARATOIRE de SAMGO TEST - ne pas publier",
   "scripts": {
     "build:web": "node scripts/prepare-web.cjs",
