@@ -3,7 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 let clientSequence=0,driverSequence=0,accountRevision=0;
-const pendingActions=new Set();
+const pendingActions=new Map();
 const reviewDrafts=new Map(); // Brouillons conservés uniquement dans cette page, jamais en base.
 function signed(){return typeof sessionUser!=='undefined'&&!!sessionUser&&typeof client!=='undefined'&&!!client&&!!client.testChoices&&!!client.testReviews;}
 function driverOk(){return signed()&&typeof driverSimAllowed!=='undefined'&&driverSimAllowed;}
@@ -13,7 +13,8 @@ function ownerIs(uid,revision,role='client'){
 }
 async function mutateOnce(key,uid,revision,role,request,onSuccess,onError,statusId){
  if(pendingActions.has(key))return;
- pendingActions.add(key);
+ const actionKey={};
+ pendingActions.set(key,actionKey);
  try{
   const result=await request();
   if(!ownerIs(uid,revision,role))return;
@@ -22,7 +23,9 @@ async function mutateOnce(key,uid,revision,role,request,onSuccess,onError,status
  }catch(e){
   if(ownerIs(uid,revision,role))
    status(statusId,onError+': '+(e.message||'Réessayez.'));
- }finally{pendingActions.delete(key);}
+ }finally{
+  if(pendingActions.get(key)===actionKey)pendingActions.delete(key);
+ }
 }
 function status(id,value){const el=$(id);if(el)el.textContent=value;}
 function addText(box,tag,value,cls){
@@ -158,8 +161,10 @@ async function finishRide(choice){
 }
 async function refreshClient(){
  const list=$('sgReviewClientList');if(!list)return;
- list.replaceChildren();
- if(!signed()){status('sgReviewClientStatus','Connectez-vous pour choisir et noter un chauffeur de test.');return;}
+ if(!signed()){
+  list.replaceChildren();
+  status('sgReviewClientStatus','Connectez-vous pour choisir et noter un chauffeur de test.');return;
+ }
  const uid=sessionUser.id,seq=++clientSequence;
  status('sgReviewClientStatus','Chargement des chauffeurs intéressés et avis de test…');
  try{
@@ -172,6 +177,8 @@ async function refreshClient(){
   const ads=Array.isArray(a.data)?a.data:[],replies=Array.isArray(r.data)?r.data:[],
         choices=Array.isArray(c.data)?c.data:[],reviews=Array.isArray(v.data)?v.data:[],
         tracking=Array.isArray(t.data)?t.data:[],payments=Array.isArray(p.data)?p.data:[];
+  // Garder les annonces à l'écran jusqu'au succès d'une lecture.
+  list.replaceChildren();
   status('sgReviewClientStatus',ads.length?ads.length+' annonce(s) consultée(s) en version de test.':'Aucune annonce publiée pour ce compte.');
   for(const ad of ads){
    const card=document.createElement('article');card.className='sg-reply-card';
@@ -222,8 +229,8 @@ async function refreshClient(){
 async function refreshDriver(){
  const rlist=$('sgDriverReviewsList'),slist=$('sgDriverSelectionsList');
  if(!rlist||!slist)return;
- rlist.replaceChildren();slist.replaceChildren();
  if(!driverOk()){
+  rlist.replaceChildren();slist.replaceChildren();
   status('sgDriverReviewsStatus','Connectez-vous en tant que chauffeur approuvé (test).');
   status('sgDriverSelectionsStatus','Aucune sélection chargée.');
   const b=$('sgDriverRatingValue');if(b)b.textContent='—';return;
@@ -238,6 +245,7 @@ async function refreshDriver(){
   for(const req of [ch,rev,tracking,payments])if(req.error)throw req.error;
   const mine=(ch.data||[]).filter(c=>c.chauffeur_id===uid);
   const reviews=(rev.data||[]).filter(x=>x.chauffeur_id===uid);
+  rlist.replaceChildren();slist.replaceChildren();
   const avg=reviews.length?(reviews.reduce((sum,x)=>sum+Number(x.note),0)/reviews.length):0;
   const rating=$('sgDriverRatingValue');
   if(rating)rating.textContent=reviews.length?avg.toFixed(1).replace('.',',')+'★':'—';
