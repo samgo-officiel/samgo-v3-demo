@@ -166,3 +166,12 @@ Les changements ci-dessous sont des améliorations de **démonstration**. Ce ne 
 - **Audit read-only Supabase** : RLS activée sur les tables publiques déjà contrôlées. Alerte persistante **Leaked Password Protection Disabled** ; trois tables anciennes avec RLS sans policy (accès refusé par défaut) ; avertissements de performance (index de FK manquants et multiples policies permissives). Aucun changement de DB, de configuration Auth, ni de flux financier n'a été effectué ici.
 - **Limites réelles** : accès au site public en navigateur non confirmé depuis cet environnement ; tests mobiles avec un véritable GPS, e-mails de confirmation/récupération, itinéraire routier/ETA, notification hors site, assurance, KYC et paiement live encore manquants. Ne pas présenter le schéma comme une véritable carte routière et ne pas lancer de courses.
 
+
+
+## Diagnostic téléphone et contrôle des boutons — 28 octobre 2026
+
+- Le bouton « Actualiser mes avis » du profil chauffeur n'appelle plus une méthode inexistante : il lance maintenant `sgReviews.refreshDriver()`.
+- Dans Compte, un bloc « Diagnostic de mon téléphone (TEST) » contrôle sur demande : HTTPS/contexte sécurisé, état réseau approximatif, mode d'installation PWA, présence de l'API GPS, état de l'autorisation GPS en lecture seule, disponibilité des notifications et service worker. Il ne sollicite pas la position et n'envoie aucune donnée.
+- `tests/diagnostic-appareil.test.cjs` apporte 5 cas de régression sans géolocalisation réelle.
+- `tests/ui-action-contract.test.cjs` vérifie les appels de fonctions depuis les contrôles HTML (ainsi que le bouton des avis et le chargement des scripts GPS/diagnostic), évitant qu'une fonction absente laisse un bouton inactif.
+- Les contrôles de GitHub Actions sur le commit `ecd9697a64ea22111954eb96573aaea277b04495` ont réussi. Il reste à vérifier le comportement sur appareils réels ; ne pas confondre réussite des tests simulés et validation de l'application prête au public.
