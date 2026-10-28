@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>SAMGO TEST — Mes alertes privées</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{background:#101015;color:#eee;font:16px/1.55 system-ui,sans-serif;margin:0}
+main{max-width:720px;margin:auto;padding:24px 18px}h1{font-size:26px}a{color:#ffc768}
+.card{background:#1d1d26;border:1px solid #41414d;border-radius:14px;padding:18px;margin:16px 0}
+small{color:#bbb}button{padding:12px;border-radius:10px;background:#d6a94b;color:#17130a;font:inherit;border:0;cursor:pointer}
+#results article{border-top:1px solid #393944;padding:18px 0}#results p{margin:6px 0}
+</style></head><body><main>
+<p><a href="./index.html">← Retour à SAMGO</a></p>
+<h1>🔔 Mes alertes personnelles</h1>
+<p class="card">VERSION TEST — Cette boîte privée concerne les clients et chauffeurs inscrits, y compris les utilisateurs invités qui ont activé leur compte SAMGO. Un invité sans compte vérifié ne peut pas recevoir ici une notification privée. Aucun e-mail automatique n'est envoyé pour le moment.</p>
+<div class="card"><p id="status" role="status" aria-live="polite">Vérification de la connexion…</p><button type="button" id="refresh">↻ Actualiser mes alertes</button></div>
+<section id="results" class="card" aria-label="Notifications privées"></section>
+<p><small>Les avertissements sont examinés par SAMGO avant notification. Nous ne divulguons jamais le nom du déclarant à la personne concernée. Vous pouvez demander un réexamen auprès du <a href="./aide.html">support SAMGO</a>. En cas de danger immédiat, appelez le 112.</small></p>
+</main>
+<script>
+(function(){
+ 'use strict';
+ const BASE='https://tgwdycgwgfisuskxwkvk.supabase.co';
+ const KEY='sb_publishable__7iZjXTqZLuuNQje8HF5wA_B6gKLoI0';
+ const STORAGE='samgo_v3_test_session';
+ const $=id=>document.getElementById(id);
+ let serial=0;
+ function status(message){$('status').textContent=message;}
+ async function token(){
+  let session=null;
+  try{session=JSON.parse(sessionStorage.getItem(STORAGE)||'null');}catch(_){}
+  if(!session?.access_token)return null;
+  if(Date.now()<Number(session.expires_at||0)-60000)return session.access_token;
+  if(!session.refresh_token)return null;
+  const res=await fetch(BASE+'/auth/v1/token?grant_type=refresh_token',{
+   method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},
+   body:JSON.stringify({refresh_token:session.refresh_token}),cache:'no-store'
+  });
+  if(!res.ok)throw Error('Session expirée. Reconnectez-vous.');
+  const next=await res.json();
+  try{sessionStorage.setItem(STORAGE,JSON.stringify({access_token:next.access_token,refresh_token:next.refresh_token,expires_at:Date.now()+(Number(next.expires_in)||3600)*1000,user:next.user||null}));}catch(_){}
+  return next.access_token;
+ }
+ async function refresh(){
+  const rev=++serial;
+  $('results').replaceChildren();
+  status('Chargement de vos alertes privées…');
+  try{
+   const jwt=await token();
+   if(!jwt)throw Error('Connecte-toi d’abord à ton compte sur SAMGO.');
+   const params=new URLSearchParams({select:'message,type,nombre_avertissements,cree_le',order:'cree_le.desc',limit:'50'});
+   const response=await fetch(BASE+'/rest/v1/samgo_notifications_test?'+params,{
+    headers:{apikey:KEY,Authorization:'Bearer '+jwt},cache:'no-store'});
+   if(!response.ok)throw Error('L’accès aux alertes est momentanément indisponible.');
+   const rows=await response.json();
+   if(rev!==serial)return;
+   status(rows.length+' notification(s) de test.');
+   if(!rows.length){const p=document.createElement('p');p.textContent='Aucune alerte personnelle.';$('results').append(p);}
+   for(const entry of rows){
+    const box=document.createElement('article'),title=document.createElement('strong'),text=document.createElement('p'),date=document.createElement('small');
+    title.textContent=entry.type==='escalade_test'?'Examen par le responsable SAMGO':'Avertissement SAMGO TEST';
+    text.textContent=entry.message;
+    date.textContent=new Date(entry.cree_le).toLocaleString('fr-FR');
+    box.append(title,text,date);$('results').append(box);
+   }
+  }catch(error){if(rev!==serial)return;status(error.message||'Connexion indisponible.');}
+ }
+ $('refresh').addEventListener('click',refresh);refresh();
+})();
+</script></body></html>
