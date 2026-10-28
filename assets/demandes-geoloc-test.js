@@ -95,7 +95,7 @@ async function fetchRows(silent){
  state.loading=true;
  const currentId=sessionUser.id;
  try{
-  const [result,replies]=await Promise.all([client.testRequests.list(),client.testReplies.list()]);
+  const [result,replies]=await Promise.all([client.testRequests.list(state.pos,Number($('sgRadius').value)||30),client.testReplies.list()]);
   if(result.error)throw result.error;
   if(!signedIn()||sessionUser.id!==currentId)return;
   state.replies=replies.error?[]:Array.isArray(replies.data)?replies.data:[];
