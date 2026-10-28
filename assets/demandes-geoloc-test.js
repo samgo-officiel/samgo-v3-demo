@@ -6,7 +6,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const radiusOptions=[5,10,20,30,50];
-const state={pos:null,rows:[],replies:[],loading:false,poll:null,notify:false,firstLoad:true,seen:new Set(),lastUser:null,clientLoad:0,responding:null,gpsPending:false,gpsGeneration:0,fetchGeneration:0,fetchKey:null};
+const state={pos:null,rows:[],replies:[],loading:false,poll:null,notify:false,firstLoad:true,seen:new Set(),lastUser:null,clientLoad:0,responding:null,replyGeneration:0,publishGeneration:0,gpsPending:false,gpsGeneration:0,fetchGeneration:0,fetchKey:null};
 function status(id,msg){const node=$(id);if(node)node.textContent=msg;}
 function euros(x){return Number(x).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});}
 function requestLocation(){
@@ -166,7 +166,7 @@ async function publish(){
  if(!signedIn()){status('sgPublishStatus','Connectez-vous dans Compte avant de publier une demande de test.');return;}
  if(typeof localDemoRequest==='undefined'||!localDemoRequest){status('sgPublishStatus','Créez d’abord une simulation de trajet.');return;}
  const btn=$('sgPublishBtn');btn.disabled=true;
- const requestingUserId=sessionUser.id;
+ const requestingUserId=sessionUser.id,requestGeneration=state.publishGeneration;
  try{
   status('sgPublishStatus','Autorisez le GPS : SAMGO arrondira votre position avant publication.');
   const p=await requestLocation();
@@ -181,11 +181,15 @@ async function publish(){
    distance_km:Number(req.km)};
   if(payload.depart_test.length<3||payload.destination_test.length<3)throw new Error('Utilisez des noms de lieux fictifs comportant au moins trois caractères.');
   const result=await client.testRequests.create(payload);
+  if(state.publishGeneration!==requestGeneration||!signedIn()||sessionUser.id!==requestingUserId)return;
   if(result.error)throw result.error;
   status('sgPublishStatus','Annonce de test publiée pendant deux heures maximum. Seuls les comptes chauffeurs de test approuvés peuvent la voir. Aucune vraie course créée.');
   box.checked=false;
   await refreshClient();
- }catch(e){status('sgPublishStatus',e.message||'Publication impossible.');}
+ }catch(e){
+  if(state.publishGeneration===requestGeneration&&signedIn()&&sessionUser.id===requestingUserId)
+   status('sgPublishStatus',e.message||'Publication impossible.');
+ }
  finally{btn.disabled=false;}
 }
 
@@ -193,19 +197,26 @@ async function sendInterest(adId){
  if(!approved()||state.responding)return;
  const ad=state.rows.find(r=>r.id===adId);
  if(!ad||ad.client_id===sessionUser.id){status('sgNearbyStatus','Cette demande de test n’est plus disponible.');return;}
+ const uid=sessionUser.id,requestGeneration=++state.replyGeneration;
+ const stillCurrent=()=>state.replyGeneration===requestGeneration&&approved()&&
+   sessionUser.id===uid&&state.pos!==null;
  state.responding=adId;
  try{
-  const result=await client.testReplies.create(adId,sessionUser.id);
+  const result=await client.testReplies.create(adId,uid);
+  if(!stillCurrent())return;
   if(result.error)throw result.error;
-  const response={annonce_id:adId,chauffeur_id:sessionUser.id,statut:'interesse_test'};
+  const response={annonce_id:adId,chauffeur_id:uid,statut:'interesse_test'};
   state.replies.push(response);
   render();
   status('sgNearbyStatus','✓ Réponse de test enregistrée. Le client pourra voir qu’un chauffeur est intéressé. Aucune course réservée.');
  }catch(e){
+  if(!stillCurrent())return;
   if(String(e.code||'')==='23505'||String(e.message||'').includes('duplicate key')){
    await fetchRows(false);
   }else status('sgNearbyStatus','Impossible d’envoyer cette réponse : '+(e.message||'Réessayez.'));
- }finally{state.responding=null;}
+ }finally{
+  if(state.replyGeneration===requestGeneration)state.responding=null;
+ }
 }
 async function refreshClient(){
  const list=$('sgMyAdsList');
@@ -252,7 +263,8 @@ async function refreshClient(){
    list.append(box);
   }
  }catch(e){
-  status('sgMyAdsStatus','Impossible de consulter vos annonces : '+(e.message||'Réessayez.'));
+  if(sequence===state.clientLoad&&signedIn()&&sessionUser.id===currentId)
+   status('sgMyAdsStatus','Impossible de consulter vos annonces : '+(e.message||'Réessayez.'));
  }
 }
 async function removeClientAd(adId){
@@ -260,9 +272,11 @@ async function removeClientAd(adId){
  if(typeof window.confirm==='function'&&!window.confirm('Retirer cette annonce de test ? Les chauffeurs ne la verront plus.'))return;
  const uid=sessionUser.id;
  const result=await client.testRequests.remove(adId,uid);
+ if(!signedIn()||sessionUser.id!==uid)return;
  if(result.error){status('sgMyAdsStatus','Suppression impossible : '+(result.error.message||'Réessayez.'));return;}
  await refreshClient();
- status('sgMyAdsStatus','Annonce de test supprimée. Les chauffeurs ne la voient plus.');
+ if(signedIn()&&sessionUser.id===uid)
+  status('sgMyAdsStatus','Annonce de test supprimée. Les chauffeurs ne la voient plus.');
 }
 
 async function optIn(){
@@ -279,7 +293,8 @@ async function optIn(){
 }
 function stop({clearClient=false}={}){
  const stopButton=$('sgGeoStop');if(stopButton)stopButton.disabled=true;
- ++state.gpsGeneration;++state.fetchGeneration;
+ ++state.gpsGeneration;++state.fetchGeneration;++state.replyGeneration;
+ state.responding=null;
  state.fetchKey=null;state.gpsPending=false;state.lastUser=null;
  if(state.poll){clearInterval(state.poll);state.poll=null;}
  state.pos=null;state.rows=[];state.replies=[];state.notify=false;state.firstLoad=true;state.seen.clear();
@@ -288,6 +303,7 @@ function stop({clearClient=false}={}){
  // Arrêter le GPS chauffeur ne doit pas effacer l'historique client.
  // Seul un changement de compte / une déconnexion purge la vue privée.
  if(clearClient){
+  ++state.publishGeneration;
   state.clientLoad++;
   const clientAds=$('sgMyAdsList');if(clientAds)clientAds.replaceChildren();
   status('sgMyAdsStatus','Connectez-vous pour voir les annonces publiées.');
