@@ -70,6 +70,11 @@
     <select id="ticketsFilter"><option value="all">Toutes les demandes</option><option value="critique">🚨 Critiques</option><option value="important">⚠️ Importantes</option><option value="nouveau">Nouvelles</option><option value="en_cours">En cours</option><option value="resolu">Résolues</option></select>
     <div id="tickets" aria-live="polite"></div>
   </section>
+  <section id="sgAgentUrgentPanel" class="panel hidden">
+    <div class="row space"><div><h2>🚨 Urgences à examiner — dès le 1er signalement</h2><p class="small" id="sgAgentUrgentCount">Aucun dossier chargé.</p></div><button type="button" class="alt" onclick="window.sgAdminAgentsTest.load()">↻ Actualiser</button></div>
+    <p class="notice">Les signalements de danger, d'agression ou d'accident remontent ici sans attendre trois avertissements. Vérifiez les faits et, en cas d'urgence immédiate, contactez les secours. Aucun compte n'est suspendu automatiquement.</p>
+    <div id="sgAgentUrgentCases" aria-live="polite"></div>
+  </section>
   <section id="sgAgentEscalationsPanel" class="panel hidden">
     <div class="row space"><div><h2>🚨 Agent — 3e avertissement</h2><p class="small" id="sgAgentEscCount">Aucun dossier chargé.</p></div><button type="button" class="alt" onclick="window.sgAdminAgentsTest.load()">↻ Actualiser</button></div>
     <p class="notice">Uniquement des signalements examinés et validés. Aucun compte n’est suspendu automatiquement. Une accusation grave doit être examinée immédiatement.</p>
@@ -127,7 +132,7 @@ function renderAccess(){
   $('loginPanel').classList.toggle('hidden',!!user);
   $('loggedPanel').classList.toggle('hidden',!user);
   $('adminPanel').classList.toggle('hidden',!isAdmin);$('ticketsPanel').classList.toggle('hidden',!isAdmin);
-  for(const id of ['sgAgentEscalationsPanel','sgAgentReportsPanel','sgAgentInvoicesPanel'])$(id).classList.toggle('hidden',!isAdmin);
+  for(const id of ['sgAgentUrgentPanel','sgAgentEscalationsPanel','sgAgentReportsPanel','sgAgentInvoicesPanel'])$(id).classList.toggle('hidden',!isAdmin);
   if(!isAdmin)window.sgAdminAgentsTest?.clear();
   $('identity').textContent=user?(user.email||'Compte connecté'):'';
   $('permissionInfo').textContent=user?(isAdmin?'Accès administrateur confirmé.':'Ce compte n’a pas le rôle administrateur. Utilise un compte autorisé.') : '';
