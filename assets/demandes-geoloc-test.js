@@ -9,18 +9,35 @@ const radiusOptions=[5,10,20,30,50];
 const state={pos:null,rows:[],replies:[],loading:false,poll:null,notify:false,firstLoad:true,seen:new Set(),lastUser:null,clientLoad:0,responding:null,replyGeneration:0,publishGeneration:0,gpsPending:false,gpsGeneration:0,fetchGeneration:0,fetchKey:null};
 function status(id,msg){const node=$(id);if(node)node.textContent=msg;}
 function euros(x){return Number(x).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});}
+function normalizePosition(p){
+ const lat=Number(p?.coords?.latitude),lng=Number(p?.coords?.longitude);
+ if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)
+  throw new Error('Position GPS invalide. Réessayez depuis votre téléphone ou navigateur.');
+ return {lat,lng,accuracy:Math.max(0,Number(p.coords?.accuracy)||0),
+  measuredAt:Number(p.timestamp)||Date.now()};
+}
 function requestLocation(){
+ // Dans l'application native, le GPS du système est obtenu avec Capacitor.
+ // Le composant n'est sollicité que lors d'un clic explicite du client ou chauffeur.
+ if(window.Capacitor?.isNativePlatform?.()===true){
+  const plugin=window.Capacitor.Plugins?.Geolocation;
+  if(!plugin?.getCurrentPosition)
+   return Promise.reject(new Error('Module GPS natif indisponible. Réinstallez une version de test récente de SAMGO.'));
+  return plugin.getCurrentPosition({enableHighAccuracy:false,maximumAge:60000,timeout:12000})
+   .then(normalizePosition)
+   .catch(error=>{
+    if(error?.message?.includes('Position GPS invalide'))throw error;
+    const info=String(error?.message||'').toLowerCase();
+    if(info.includes('denied')||info.includes('permission')||info.includes('refus'))
+     throw new Error('Localisation refusée. Autorisez SAMGO dans les réglages de localisation du téléphone.');
+    throw new Error('GPS natif indisponible. Vérifiez les réglages de localisation et réessayez.');
+   });
+ }
  return new Promise((resolve,reject)=>{
   if(!navigator.geolocation){reject(new Error('La géolocalisation n’est pas disponible dans ce navigateur.'));return;}
   if(!window.isSecureContext){reject(new Error('Le GPS nécessite HTTPS.'));return;}
   navigator.geolocation.getCurrentPosition(
-   p=>{
-    const lat=Number(p.coords?.latitude),lng=Number(p.coords?.longitude);
-    if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180){
-      reject(new Error('Position GPS invalide. Réessayez depuis votre navigateur.'));return;
-    }
-    resolve({lat,lng,accuracy:Math.max(0,Number(p.coords?.accuracy)||0),measuredAt:Number(p.timestamp)||Date.now()});
-   },
+   p=>{try{resolve(normalizePosition(p));}catch(e){reject(e);}},
    e=>reject(new Error(e.code===1?'Localisation refusée. Autorisez-la dans les réglages de localisation de votre navigateur ou téléphone.':e.code===2?'Position introuvable. Vérifiez le GPS.':'Le GPS ne répond pas. Réessayez.')),
    {enableHighAccuracy:false,maximumAge:60000,timeout:12000}
   );
