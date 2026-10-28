@@ -73,6 +73,7 @@
 .sg-client-reply-alert{margin:12px 0;padding:12px;border:1px solid #d3ac57;border-radius:12px;
  background:#353026;color:#ffe7ab;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
 .sg-client-reply-alert button{min-height:42px;flex:0 0 auto}
+.sg-password-toggle{min-height:44px;width:100%;margin:8px 0 12px;font-size:13px}
 #sgTripsFilter{width:100%;max-width:480px;min-height:44px;margin:6px 0 9px;padding:10px 12px;border-radius:11px;background:#122733;color:#f5f6f8;border:1px solid #637b84}
 .sg-reply-card[hidden]{display:none!important}
 .sg-chat-test-choices button{width:auto;margin-top:0}
@@ -762,6 +763,7 @@ input,select,textarea{font-size:16px}
         <p id="authEmailHelp" class="sg-email-help">Utilise ton adresse e-mail complète, celle de ton compte SAMGO. Un pseudo seul ne fonctionne pas.</p>
         <label for="password">Mot de passe</label>
         <input id="password" type="password" placeholder="8 caractères minimum" autocomplete="new-password" minlength="8" required />
+        <button type="button" id="sgPasswordToggle" class="alt sg-password-toggle" aria-controls="password" aria-pressed="false" onclick="window.sgPasswordPreview.toggle()">Afficher le mot de passe</button>
         <div class="agree" id="testAcknowledgement"><input type="checkbox" id="ack" required /><label for="ack">Je comprends que SAMGO est en phase de test et qu'aucune course ni prestation réelle n'est disponible.</label></div>
         <button type="submit" id="authBtn">Créer mon compte</button>
       </form>
@@ -1345,6 +1347,7 @@ function authPageTitle(){
 }
 function setAuthMode(mode){
  authMode=mode;
+ window.sgPasswordPreview?.reset();
  const signingUp=mode==='signup';
  $('signupModeBtn').classList.toggle('alt',!signingUp);
  $('signinModeBtn').classList.toggle('alt',signingUp);
@@ -1568,6 +1571,7 @@ async function applyDriver(){
  }
 }
 async function signOut(){
+ window.sgPasswordPreview?.reset();
  if(!client)return;
  ++sgUserRefreshSequence;
  ++driverApplyAttempt;driverApplyPendingUser=null;
@@ -1675,6 +1679,7 @@ function sgGo(view){
 <script src="assets/etat-reseau-test.js?v=20261028a"></script>
 <script src="assets/installation-mobile-test.js?v=20261028"></script>
 <script src="assets/recuperation-compte-test.js?v=20261028"></script>
+<script src="assets/afficher-mot-de-passe-test.js?v=20261028-a"></script>
 <script src="assets/fidelite-test.js?v=20261028"></script>
 <script>
 /* Installation optionnelle de l'app web. Aucun abonnement push n'est lancé ici. */
