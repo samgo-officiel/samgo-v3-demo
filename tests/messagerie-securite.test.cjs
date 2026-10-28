@@ -14,7 +14,7 @@ class Node{
  setAttribute(name,value){this.attrs[name]=String(value);}
  addEventListener(name,fn){this.listeners[name]=fn;}
 }
-function boot(){
+function boot({online=true}={}){
  const nodes=new Map(),get=id=>{
   if(!nodes.has(id))nodes.set(id,new Node(id));
   return nodes.get(id);
@@ -41,7 +41,7 @@ function boot(){
  };
  const win={};
  vm.runInNewContext(source,{document,window:win,sessionUser:user,client:data,
-  Intl,Date,Promise},{filename:'SAMGO-chat'});
+  Intl,Date,Promise,navigator:{onLine:online}},{filename:'SAMGO-chat'});
  return {chat:win.sgChatTest,get,user,created,messages,
   finish:value=>{assert.ok(settle);settle(value);}};
 }
@@ -113,4 +113,14 @@ test('déconnexion purge le signal des messages du précédent compte',async()=>
  app.user.id='B';
  await app.chat.refresh('client');
  assert.doesNotMatch(app.get('sgChatClientStatus').textContent,/Nouveau message/);
+});
+
+test('hors connexion : envoyer garde le brouillon et ne crée pas de message distant',async()=>{
+ const app=boot({online:false});
+ await app.chat.refresh('client');
+ app.get('sgChatClientInput').value='Brouillon non envoyé';
+ await app.chat.send('client');
+ assert.equal(app.created.length,0);
+ assert.equal(app.get('sgChatClientInput').value,'Brouillon non envoyé');
+ assert.match(app.get('sgChatClientStatus').textContent,/Hors connexion/);
 });
