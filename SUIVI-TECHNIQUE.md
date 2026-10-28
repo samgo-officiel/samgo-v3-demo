@@ -272,3 +272,18 @@ Les changements ci-dessous sont des améliorations de **démonstration**. Ce ne 
 - Liens ajoutés à l'accueil, au pied de page, à l'espace compte, au texte de reconnaissance de l'inscription TEST et à la candidature chauffeur. Les conditions sont incluses dans `mobile/scripts/prepare-web.cjs`. Il n'y a pas encore de procédure conservant une preuve d'acceptation versionnée côté serveur ; **le simple cochage local ne prouve pas le consentement juridique aux CGV définitives**.
 - `tests/conditions-generales.test.cjs` : **4 contrôles statiques réussis sur 4**, et scripts de `index.html` sans erreur de syntaxe. Le déploiement effectif GitHub Pages n'a pas été confirmé par le navigateur de recherche.
 - Sources vérifiées : Code consommation R212-1 (clauses abusives), L111-7 II (transparence plateforme), Code assurances L211-1 et Service Public F2632 (assurance auto/prêt volant), Service Public F2123 (RC habitation ne couvre pas l'activité professionnelle), Service Public Entreprendre F37351 (mentions légales). **Document à valider avec avocat et assureur avant commercialisation.**
+
+
+## Renforcement argumentaire juridique des CGU — 28 octobre 2026
+
+Suite à la demande de clauses protégeant SAMGO en cas de litige, le projet `conditions-generales.html` a été renforcé, sans promettre une irresponsabilité générale (prohibée / inefficace dans de nombreux cas) :
+
+- Le modèle **plateforme de mise en relation** doit correspondre aux faits, au paiement, au rôle de chaque partie et au contrat de prestation : l'intitulé de la plateforme ne suffit pas.
+- Les contrats distincts précisent les engagements du chauffeur (indépendance réelle, statut légal, permis en cours de validité, assurance spécifique à la conduite rémunérée de véhicules confiés, signalement des changements) et ceux du client (véhicule autorisé, assurance auto adaptée, vérifications contractuelles).
+- Répartition des fautes seulement **dans les limites légales** ; aucun renoncement des consommateurs/victimes à réparation, aucune exclusion des propres manquements de SAMGO.
+- Nouvelle section **11 « Vérifications préalables et conservation proportionnée des preuves »** : contrôle des habilitations et couvertures, refus des courses non vérifiées, suivi des acceptations de conditions, journaux de réservations et d'incidents, traçabilité sécurisée, proportionnalité RGPD. Ces mesures restent à développer ou vérifier **avant tout lancement réel** ; les simples CGU ne constituent pas preuve de leur exécution.
+- Nouvelle section **12 « Contrat professionnel distinct et recours entre parties »** : possibilité de recours justifié contre un chauffeur en cas de faute contractuelle professionnelle démontrée, sans transférer automatiquement les fautes de SAMGO ou enlever des droits aux clients.
+- Section **13 « État du service »** : nécessité d'une acceptation versionnée et enregistrée, à déployer avant des réservations réelles.
+- Textes officiels de référence mis à jour : Code consommation L.212-1/R.212-1, L.111-7, Code civil 1240, Code pénal 121-1, Service Public assurance auto en cas de prêt de volant.
+- `tests/conditions-generales.test.cjs` enrichi à **7 contrôles statiques (tous réussis lors de la vérification)** ; 13 sections et tous les liens du sommaire présents.
+- La page est bien enregistrée dans GitHub, mais la disponibilité publique immédiate du lien GitHub Pages n'a pas pu être confirmée via recherche. Les conditions restent **un projet de test**, nécessitant la validation d'un avocat connaissant les services de conduite de véhicules confiés et les assurances avant toute opération commerciale.
