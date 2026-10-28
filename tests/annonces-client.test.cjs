@@ -56,3 +56,19 @@ test('déconnexion efface les annonces privées du client',async()=>{
  app.api.stop({clearClient:true});
  assert.equal(app.get('sgMyAdsList').children.length,0);
 });
+
+test('une annonce client indique le temps approximatif avant expiration',async()=>{
+ const app=start();
+ await app.api.refreshClient();
+ const card=app.get('sgMyAdsList').children[0];
+ const info=card.children[1].textContent;
+ assert.match(info,/Active \(test\), expire dans environ/);
+ assert.match(info,/réponse\(s\) de chauffeurs/);
+});
+test('durée restante : minutes et heures sans valeur négative',()=>{
+ const app=start(),now=Date.now();
+ assert.equal(app.api.remainingTime(now+5*60000,now),'expire dans environ 5 min');
+ assert.equal(app.api.remainingTime(now+75*60000,now),'expire dans environ 1 h 15 min');
+ assert.equal(app.api.remainingTime(now-1000,now),'expirée');
+ assert.equal(app.api.remainingTime(NaN,now),'expirée');
+});
