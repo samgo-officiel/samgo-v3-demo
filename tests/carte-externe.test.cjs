@@ -57,3 +57,17 @@ test('en cas de blocage popup, annonce explicite plutot que succes',()=>{
 test('aucune geolocalisation ou requete externe sans clic',()=>{
  assert.doesNotMatch(script,/getCurrentPosition|watchPosition|fetch\(/);
 });
+
+test('itineraire pieton ne transmet pas la position exacte du chauffeur',()=>{
+ const x=boot();
+ const url=x.api.walkingRouteUrl(44.123,-0.456);
+ const parsed=new URL(url);
+ assert.equal(parsed.origin,'https://www.google.com');
+ assert.equal(parsed.pathname,'/maps/dir/');
+ assert.equal(parsed.searchParams.get('api'),'1');
+ assert.equal(parsed.searchParams.get('destination'),'44.12,-0.46');
+ assert.equal(parsed.searchParams.get('travelmode'),'walking');
+ assert.equal(parsed.searchParams.has('origin'),false);
+ assert.equal(x.api.walkingRouteUrl(150,0),null);
+ assert.equal(x.opened.length,0);
+});
