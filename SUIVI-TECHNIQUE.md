@@ -215,3 +215,14 @@ Les changements ci-dessous sont des améliorations de **démonstration**. Ce ne 
 - **Diagnostic appareil :** distingue module GPS natif et navigateur sans demander de permission ni position, montre un message si la compilation ne fournit pas le plugin.
 - **Automatisation :** 154 tests Node réussis sur 154 pour la dernière validation `40766577326` ; compilations Android/iOS 0.1.2 demandées, succès natif et essais GPS sur téléphones réels **non encore confirmés** lors de ce suivi.
 - **Blocages conservés :** deux vrais téléphones, parcours e-mail, habilitations et assurances, tests de courses en conditions réelles, signatures de distribution et validation juridique/paiements. Aucun de ces éléments n'est considéré comme terminé.
+
+
+## Dossier chauffeur : premier contrôle sécurisé — 28 octobre 2026 (nouveau tchat)
+
+- Supabase `SAMGO-V3` : le bucket `samgo-driver-documents` est **privé**, limité à 5 Mo et à des formats image/PDF ; **0 objet** lors du contrôle. Des règles RLS de consultation propres au chauffeur, et une règle de lecture réservée à l'administrateur, étaient déjà configurées. Cela ne prouve pas encore que l'ensemble du parcours soit sûr en production.
+- L'interface Profil chauffeur affiche désormais un **état de dépôt** pour permis, justificatif de domicile et selfie, obtenu **uniquement à la demande** par le point d'accès authentifié Supabase Storage `/object/list`, sur les dossiers de la personne connectée.
+- L'application ne télécharge **aucun contenu** de justificatif, n'ouvre aucun fichier, et n'affiche que « Aucun dépôt » ou « Dépôt détecté — NON VÉRIFIÉ ». Aucun permis/identité/assurance n'est validé par ce contrôle. Les réponses de l'ancien compte sont ignorées après déconnexion ou changement d'utilisateur.
+- Aucune interface de collecte de vraies pièces d'identité, de permis, de selfie ou de RIB n'est ouverte. Un prestataire spécialisé, le consentement et la durée de conservation sont à définir pour la vérification réelle.
+- Le RIB/IBAN devra passer par **Stripe Connect** ou un prestataire autorisé, pas par le coffre de fichiers SAMGO. Une migration Supabase `samgo_bloquer_depot_rib_hors_stripe` a ajouté deux politiques Storage **RESTRICTIVE** qui bloquent les `INSERT` et `UPDATE` du dossier `rib` dans le bucket SAMGO, sans affecter les autres buckets. Les nouvelles politiques ont été confirmées par lecture SQL après migration.
+- Nouveau module `assets/dossier-chauffeur-test.js`, interface dans `index.html` et tests `tests/dossier-chauffeur-test.test.cjs` : présence/non-vérification, blocage sans compte candidat, annulation d'un résultat tardif après changement de compte, absence d'upload de documents sensibles. Ajout au contrat des actions HTML.
+- Les essais **réels** sur deux téléphones, l'accès Storage avec un chauffeur connecté réel, la vérification par un tiers, la réception d'un RIB chez Stripe, la politique RGPD et les assurances demeurent à valider avant toute vraie course.
