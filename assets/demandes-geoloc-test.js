@@ -78,15 +78,17 @@ function render(){
   card.append(reply);
   // Carte externe sur clic explicite : destination seulement approximative.
   // Ne jamais transmettre ici la position GPS precise du chauffeur.
-  const mapBtn=document.createElement('button');mapBtn.type='button';
-  mapBtn.className='alt sg-zone-map-btn';
-  mapBtn.textContent='📍 Voir zone approximative (carte externe TEST)';
-  mapBtn.setAttribute('aria-label','Ouvrir la zone approximative de cette annonce fictive sur une carte externe');
-  mapBtn.addEventListener('click',()=>{
-   if(!approved()||sessionUser.id===req.client_id)return;
-   window.sgMapsZoneTest?.open(req.latitude_approx,req.longitude_approx);
-  });
-  card.append(mapBtn);
+  const zoneUrl=window.sgMapsZoneTest?.mapsUrl(req.latitude_approx,req.longitude_approx);
+  if(zoneUrl){
+   const mapLink=document.createElement('a');
+   mapLink.className='sg-zone-map-btn';
+   mapLink.href=zoneUrl;
+   mapLink.target='_blank';
+   mapLink.rel='noopener noreferrer';
+   mapLink.textContent='📍 Voir zone approximative (carte externe TEST)';
+   mapLink.setAttribute('aria-label','Ouvrir, volontairement, la zone approximative de l’annonce fictive sur une carte externe');
+   card.append(mapLink);
+  }
   list.append(card);
  }
 }
