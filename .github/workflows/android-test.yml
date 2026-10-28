@@ -1,0 +1,64 @@
+name: SAMGO - Construire Android TEST (APK de diagnostic)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/android-test.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: samgo-android-test
+  cancel-in-progress: true
+
+jobs:
+  build-android-debug:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Cloner le code SAMGO
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Java 21 pour Capacitor 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: SDK Android
+        uses: android-actions/setup-android@v3
+      - name: Installer les dependances Capacitor
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+      - name: Preparer les pages locales de SAMGO
+        working-directory: mobile
+        run: npm run build:web
+      - name: Generer le projet Android (aucune publication)
+        working-directory: mobile
+        run: npx cap add android
+      - name: Ajouter permissions GPS pendant utilisation uniquement
+        working-directory: mobile
+        run: node scripts/configure-native.cjs
+      - name: Synchroniser le bundle
+        working-directory: mobile
+        run: npx cap sync android
+      - name: Compiler APK DEBUG sans signature de distribution
+        working-directory: mobile/android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+      - name: Verifier la presence de l'APK de test
+        run: test -s mobile/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Deposer APK de test en artefact GitHub (7 jours)
+        uses: actions/upload-artifact@v4
+        with:
+          name: samgo-android-test-debug
+          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 7
+          if-no-files-found: error
