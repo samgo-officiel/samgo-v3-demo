@@ -34,6 +34,21 @@ function nearKm(a,b,c,d){
 }
 function signedIn(){return typeof sessionUser!=='undefined'&&!!sessionUser&&!!client&&!!client.testRequests;}
 function approved(){return signedIn()&&typeof driverSimAllowed!=='undefined'&&driverSimAllowed;}
+function sortRequests(rows,mode){
+ const order=['proximite','tarif','trajet'].includes(mode)?mode:'proximite';
+ const safe=(value,missing)=>value==null||value===''||!Number.isFinite(Number(value))?missing:Number(value);
+ return rows.slice().sort((a,b)=>{
+  if(order==='tarif'){
+   const byPrice=safe(b.tarif_indicatif,-1)-safe(a.tarif_indicatif,-1);
+   if(byPrice)return byPrice;
+  }
+  if(order==='trajet'){
+   const byDistance=safe(a.distance_km,Infinity)-safe(b.distance_km,Infinity);
+   if(byDistance)return byDistance;
+  }
+  return safe(a.approach,Infinity)-safe(b.approach,Infinity);
+ });
+}
 function render(){
  const list=$('sgNearbyList');
  if(!list)return;
@@ -53,10 +68,11 @@ function render(){
  const filtered=state.rows.filter(r=>{
   const lat=Number(r.latitude_approx),lon=Number(r.longitude_approx);
   return r.client_id!==sessionUser.id&&Number.isFinite(lat)&&Number.isFinite(lon)&&nearKm(state.pos.lat,state.pos.lng,lat,lon)<=radius;
- }).map(r=>({...r,approach:nearKm(state.pos.lat,state.pos.lng,Number(r.latitude_approx),Number(r.longitude_approx))})).sort((a,b)=>a.approach-b.approach);
- status('sgNearbyStatus',filtered.length+' demande'+(filtered.length===1?'':'s')+' de test dans un rayon de '+radius+' km. Distance approximative.');
- window.sgProximityMap?.render({center:state.pos,requests:filtered,radius});
- for(const req of filtered){
+ }).map(r=>({...r,approach:nearKm(state.pos.lat,state.pos.lng,Number(r.latitude_approx),Number(r.longitude_approx))}));
+ const sorted=sortRequests(filtered,$('sgDemandSort')?.value||'proximite');
+ status('sgNearbyStatus',sorted.length+' demande'+(sorted.length===1?'':'s')+' de test dans un rayon de '+radius+' km. Distance approximative.');
+ window.sgProximityMap?.render({center:state.pos,requests:sorted,radius});
+ for(const req of sorted){
   const card=document.createElement('article');card.className='sg-nearby-card';
   const head=document.createElement('div');head.className='sg-nearby-top';
   const name=document.createElement('b');name.textContent='Demande de test';
@@ -347,11 +363,12 @@ function authChanged(){
  else if(state.lastUser&&sessionUser.id!==state.lastUser)stop({clearClient:true});
  else if(!approved())stop();
 }
+function sortChanged(){render();}
 function radiusChanged(){
  ++state.fetchGeneration;state.fetchKey=null;
  render();
  if(state.pos)fetchRows(false);
 }
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')fetchRows(true);});
-window.sgDemand={open,publish,optIn,refresh:()=>fetchRows(false),refreshClient,render,stop,authChanged,radiusChanged};
+window.sgDemand={open,publish,optIn,refresh:()=>fetchRows(false),refreshClient,render,stop,authChanged,radiusChanged,sortChanged,sortRequests};
 })();
