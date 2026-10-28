@@ -88,6 +88,17 @@ function render(){
    mapLink.textContent='📍 Voir zone approximative (carte externe TEST)';
    mapLink.setAttribute('aria-label','Ouvrir, volontairement, la zone approximative de l’annonce fictive sur une carte externe');
    card.append(mapLink);
+   const walkingUrl=window.sgMapsZoneTest?.walkingRouteUrl(req.latitude_approx,req.longitude_approx);
+   if(walkingUrl){
+    const walkLink=document.createElement('a');
+    walkLink.className='sg-zone-map-btn';
+    walkLink.href=walkingUrl;
+    walkLink.target='_blank';
+    walkLink.rel='noopener noreferrer';
+    walkLink.textContent='🚶 Itinéraire piéton vers la zone (TEST)';
+    walkLink.setAttribute('aria-label','Ouvrir un itinéraire piéton vers une zone approximative, pas vers une adresse exacte');
+    card.append(walkLink);
+   }
   }
   list.append(card);
  }
