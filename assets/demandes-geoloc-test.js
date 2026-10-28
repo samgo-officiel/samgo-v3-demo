@@ -15,7 +15,7 @@ function requestLocation(){
   if(!window.isSecureContext){reject(new Error('Le GPS nécessite HTTPS.'));return;}
   navigator.geolocation.getCurrentPosition(
    p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),
-   e=>reject(new Error(e.code===1?'Localisation refusée. Autorisez-la dans les réglages Safari.':e.code===2?'Position introuvable. Vérifiez le GPS.':'Le GPS ne répond pas. Réessayez.')),
+   e=>reject(new Error(e.code===1?'Localisation refusée. Autorisez-la dans les réglages de localisation de votre navigateur ou téléphone.':e.code===2?'Position introuvable. Vérifiez le GPS.':'Le GPS ne répond pas. Réessayez.')),
    {enableHighAccuracy:false,maximumAge:60000,timeout:12000}
   );
  });
