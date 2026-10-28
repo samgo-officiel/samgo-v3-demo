@@ -3,7 +3,7 @@
 Mise à jour : 28 octobre 2026.
 
 ## Ce qui est déjà fait
-- Compte Stripe connecté à ChatGPT : **environnement de test Samgo** (aucun compte chauffeur Stripe Connect créé pour le moment).
+- Compte Stripe connecté à ChatGPT : **environnement de test Samgo** (un compte Express TEST est créé et associé au chauffeur SAMGO approuvé, onboarding non terminé).
 - Backend Supabase Edge Function `samgo-stripe-sandbox` déployé, **JWT utilisateur obligatoire**.
 - Webhook `samgo-stripe-webhook` déployé ; il vérifie la signature Stripe HMAC et rejette tout évènement `livemode=true`.
 - Endpoint webhook **créé dans Stripe en environnement test** : `https://tgwdycgwgfisuskxwkvk.supabase.co/functions/v1/samgo-stripe-webhook`.
@@ -13,7 +13,7 @@ Mise à jour : 28 octobre 2026.
 
 ## Ce qui manque pour activer les véritables essais SANDBOX
 
-**Intervention du propriétaire indispensable.** Les deux secrets Stripe ne sont pas transmis à ChatGPT ou au dépôt public.
+**Situation mise à jour :** les trois paramètres secrets TEST figurent maintenant dans Supabase, et aucun secret n'a été communiqué dans ChatGPT ou ajouté sur GitHub. Les étapes ci-dessous restent utiles en cas de rotation des clés, sans afficher leurs valeurs.
 
 1. Ouvrir **Stripe Dashboard** avec l'environnement **test/sandbox Samgo**. Dans « Développeurs » / « Clés API », récupérer **uniquement la clé secrète TEST**, commençant par `sk_test_`. Ne jamais copier une clé `sk_live_`.
 2. Dans Stripe, ouvrir les **webhooks en mode test**, retrouver l'URL `https://tgwdycgwgfisuskxwkvk.supabase.co/functions/v1/samgo-stripe-webhook`, puis afficher son **secret de signature**, commençant par `whsec_`.
@@ -28,7 +28,7 @@ Mise à jour : 28 octobre 2026.
 
 ## Sécurité / limites
 
-- Les deux Edge Functions sont actuellement déployées mais **ne peuvent pas initier de paiement tant que les secrets et l'activation sandbox ne sont pas configurés**.
+- Les deux Edge Functions sont déployées et les noms des secrets de test figurent dans Supabase. Leurs valeurs ne peuvent pas être vérifiées via les accès de ChatGPT ; un essai de lien d'onboarding depuis SAMGO reste nécessaire.
 - Aucune opération de paiement réel n'est autorisée par le code : seules les clés `sk_test_` sont acceptées, et les évènements `livemode=true` sont rejetés.
 - Un paiement de test peut être créé seulement après une **connexion utilisateur**, une **sélection valide de chauffeur fictif** et un **compte chauffeur Stripe test complet**.
 - La distance des annonces est manuelle ; ce prix est **fictif** et **jamais utilisable pour une facturation réelle**. Un tarif vérifié côté serveur, les assurances et la conformité sont des préalables au lancement.
