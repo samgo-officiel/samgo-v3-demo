@@ -827,10 +827,10 @@ input,select,textarea{font-size:16px}
         }
       },
       async signOut() {
-        // Même hors connexion, l'utilisateur doit pouvoir vider sa session locale.
-        let token = null;
-        try { token = await accessToken(); } catch (_) {}
-
+        // Déconnexion locale immédiate, même si le réseau est absent ou lent.
+        // Ne jamais rafraîchir le jeton pour se déconnecter.
+        const token = session && Date.now() < session.expires_at - 60000
+          ? session.access_token : null;
         saveSession(null, 'SIGNED_OUT');
         try{sessionStorage.removeItem('samgo_v3_recovery_pending');}catch(_){}
         if (token) { try {await api('/auth/v1/logout', 'POST', {}, token);} catch(_) {} }
@@ -1236,16 +1236,45 @@ async function handleAuth(e){e.preventDefault();if(!client)return setStatus('aut
  if(sessionUser&&document.body.classList.contains('sg-route-driver'))sgGo('driver');
 }catch(err){setStatus('authStatus',errText(err),'error')}finally{busy=false;$('authBtn').disabled=false;}
 }
-async function refreshUser(){if(!client)return;try{const {data,error}=await client.auth.getUser();sessionUser=error?null:data.user;}catch{sessionUser=null}
+let sgUserRefreshSequence=0;
+async function refreshUser(){
+ if(!client)return;
+ const sequence=++sgUserRefreshSequence;
+ const previous=sessionUser;
+ let temporarilyOffline=false;
+ try {
+   const {data,error}=await client.auth.getUser();
+   if(sequence!==sgUserRefreshSequence)return;
+   if(error){
+     if([400,401,403].includes(error.status))sessionUser=null;
+     else{sessionUser=previous;temporarilyOffline=true;}
+   }else sessionUser=data?.user||null;
+ }catch(_){
+   if(sequence!==sgUserRefreshSequence)return;
+   sessionUser=previous;
+   temporarilyOffline=true;
+ }
  const logged=!!sessionUser;
-  const recovering=logged&&window.sgAccountRecovery?.isPending()===true;
-  $('loggedOut').classList.toggle('hidden',logged);
-  $('loggedIn').classList.toggle('hidden',!logged||recovering);
-  window.sgAccountRecovery?.render();
+ const recovering=logged&&window.sgAccountRecovery?.isPending()===true;
+ $('loggedOut').classList.toggle('hidden',logged);
+ $('loggedIn').classList.toggle('hidden',!logged||recovering);
+ window.sgAccountRecovery?.render();
  $('userEmail').textContent=logged?(sessionUser.email||'Compte confirmé'):'';
  document.body.classList.toggle('sg-authenticated',logged);
- if(logged){$('accountTitle').textContent='Mon compte';$('profileStatus').textContent='Vérification de votre candidature chauffeur…';$('accountDriverLink').classList.add('hidden');}
- else $('accountTitle').textContent=authPageTitle();
+ if(logged){
+   $('accountTitle').textContent='Mon compte';
+   $('profileStatus').textContent='Vérification de votre candidature chauffeur…';
+   $('accountDriverLink').classList.add('hidden');
+ }else $('accountTitle').textContent=authPageTitle();
+ if(temporarilyOffline){
+   // L'identité en mémoire peut être affichée, mais jamais autoriser
+   // une action chauffeur tant que le serveur ne peut pas la confirmer.
+   driverSimAllowed=false;driverSimActive=false;updateDriverSimulation();
+   if(window.sgDemand)window.sgDemand.authChanged();
+   setAccountCandidate(null,true);
+   $('profileStatus').textContent='Connexion indisponible. Votre compte n’a pas été déconnecté : réessayez avec Internet.';
+   return;
+ }
  await refreshCandidate();
 }
 let driverSimActive=false;
@@ -1359,7 +1388,7 @@ async function refreshCandidate(){
  }
 }
 async function applyDriver(){if(!client||!sessionUser)return setStatus('applyStatus','Connecte-toi pour envoyer une candidature.','error');const name=$('nomAffiche').value.trim();if(name.length<2||name.length>100)return setStatus('applyStatus','Entre un nom d’affichage de 2 à 100 caractères.','error');if(!$('permisDeclare').checked)return setStatus('applyStatus','Confirme que tu as compris les conditions de validation.','error');$('applyBtn').disabled=true;setStatus('applyStatus','Envoi en cours…');try{const {error}=await client.from('candidatures_chauffeur').insert({utilisateur_id:sessionUser.id,nom_affiche:name});if(error)throw error;setStatus('applyStatus','Candidature de test enregistrée ! Statut : en attente. Tu ne peux pas encore effectuer de courses.','success');await refreshCandidate();}catch(err){setStatus('applyStatus',err?.code==='23505'?'Une candidature existe déjà pour ce compte.':errText(err),'error');$('applyBtn').disabled=false;}}
-async function signOut(){if(!client)return;await client.auth.signOut();if(window.sgReviews)window.sgReviews.clear();if(window.sgDemand)window.sgDemand.stop();if(window.sgChatTest)window.sgChatTest.stop();localDemoRequest=null;saveLocalDemo();renderLocalDemo();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
+async function signOut(){if(!client)return;++sgUserRefreshSequence;await client.auth.signOut();if(window.sgReviews)window.sgReviews.clear();if(window.sgDemand)window.sgDemand.stop();if(window.sgChatTest)window.sgChatTest.stop();localDemoRequest=null;saveLocalDemo();renderLocalDemo();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
 calc();restoreLocalDemo();renderLocalDemo();setAuthMode('signup');setSpace('raccompagner');
 if(client){
   setStatus('authStatus','Vérification de la connexion à Supabase…');
