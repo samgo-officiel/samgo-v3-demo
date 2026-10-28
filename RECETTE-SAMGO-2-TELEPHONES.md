@@ -101,3 +101,14 @@ Les fonctions de localisation ci-dessous utilisent le GPS seulement après appui
 - [ ] Vérifier une carte routière, ETA et tarification réelle **seulement après choix d'un fournisseur et validation de sa politique de confidentialité, de ses quotas et coûts**.
 
 La carte actuelle est **schématique et locale**, non une carte OpenStreetMap/Google Maps, et n'a aucune fonction de navigation vers un client. GitHub Actions vérifie la syntaxe et les tests de régression ; ce n'est pas un test d'intégration mobile ni une preuve de lancement possible.
+
+
+## Contrôle du téléphone — diagnostic sans autorisation GPS
+
+- [ ] Depuis le **site ou la PWA**, ouvrir **Compte**, dérouler « Diagnostic de mon téléphone (TEST) » puis toucher « Vérifier mon téléphone ».
+- [ ] Vérifier les mentions HTTPS, installation ou navigateur, disponibilité du GPS et état de l'autorisation. **Ce bouton ne doit pas déclencher de demande de position**.
+- [ ] Le diagnostic doit afficher un état compréhensible en cas de GPS refusé, d'absence de permissions API ou de mode hors connexion.
+- [ ] Depuis **Chauffeur → Missions**, appuyer séparément sur « Activer / actualiser mon GPS » pour faire le vrai test d'autorisation sur un appareil ; n'utiliser que les annonces fictives.
+- [ ] Depuis le profil chauffeur, appuyer sur « Actualiser mes avis » et vérifier que le chargement des avis de **test** se lance, même si aucun avis n'existe.
+
+La réussite du diagnostic est indicative : elle ne remplace pas les tests sur téléphone, les assurances ni les contrôles d'identité avant un lancement réel.
