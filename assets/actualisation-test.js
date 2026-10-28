@@ -41,6 +41,8 @@
   try{
    if(target==='client'){
     if(window.sgDemand&&typeof window.sgDemand.refreshClient==='function')await window.sgDemand.refreshClient();
+    // Le suivi de course et les avis clients doivent aussi refléter le chauffeur.
+    if(window.sgReviews&&typeof window.sgReviews.refreshClient==='function')await window.sgReviews.refreshClient();
     if(window.sgChatTest&&typeof window.sgChatTest.refresh==='function')await window.sgChatTest.refresh('client');
    }else{
     if(window.sgReviews&&typeof window.sgReviews.refreshDriver==='function')await window.sgReviews.refreshDriver();
@@ -48,11 +50,14 @@
     if(document.querySelector('[data-dpane="missions"]:not(.hidden)')&&window.sgDemand&&typeof window.sgDemand.refresh==='function')await window.sgDemand.refresh();
    }
    if(my!==sequence)return;
-   const clientError=$('sgReviewClientStatus')?.textContent||'';
-   const driverError=$('sgDriverReviewsStatus')?.textContent||'';
-   if((target==='client'&&/impossible|erreur|indisponible/i.test(clientError))||(target==='driver'&&/impossible|erreur|indisponible/i.test(driverError))){
-    setDisplay('Certaines données ne se chargent pas. Réessayez avec ↻.');
-   }else setDisplay('Tests synchronisés à '+localTime()+' · Rafraîchissement automatique toutes les 45 s.');
+   const clientErrors=['sgMyAdsStatus','sgReviewClientStatus','sgChatClientStatus'];
+   const driverErrors=['sgDriverReviewsStatus','sgDriverSelectionsStatus','sgChatDriverStatus'];
+   // Ne pas afficher « synchronisé » si un sous-module a signalé un échec
+   // sans lever d'exception à l'appelant.
+   const ids=target==='client'?clientErrors:driverErrors;
+   const failed=ids.some(id=>/impossible|erreur|indisponible|échec|refus|connexion instable/i.test($(id)?.textContent||''));
+   if(failed)setDisplay('Certaines données de TEST n’ont pas été actualisées. Réessayez avec ↻.');
+   else setDisplay('Tests synchronisés à '+localTime()+' · Rafraîchissement automatique toutes les 45 s.');
   }catch(_){
    if(my===sequence)setDisplay('Connexion instable : actualisation impossible, réessayez.');
   }finally{inFlight=false;}
