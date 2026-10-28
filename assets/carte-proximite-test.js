@@ -26,16 +26,48 @@
   return Math.atan2(Math.sin(delta)*Math.cos(b),
     Math.cos(a)*Math.sin(b)-Math.sin(a)*Math.cos(b)*Math.cos(delta));
  }
+ function sectors(center,requests,radius){
+  const counts={N:0,E:0,S:0,O:0};
+  const limit=Number(radius);
+  if(!center||!Array.isArray(requests)||!Number.isFinite(limit)||limit<=0)return counts;
+  for(const item of requests){
+   const lat=Number(item.latitude_approx),lng=Number(item.longitude_approx);
+   const distance=Number(item.approach);
+   if(item.latitude_approx==null||item.longitude_approx==null||
+      !Number.isFinite(lat)||!Number.isFinite(lng)||!Number.isFinite(distance)||
+      Math.abs(lat)>90||Math.abs(lng)>180||distance<0||distance>limit)continue;
+   const angle=bearing(center.lat,center.lng,lat,lng)*180/Math.PI;
+   if(!Number.isFinite(angle))continue;
+   const zone=angle>=-45&&angle<45?'N':angle>=45&&angle<135?'E':
+    angle>=-135&&angle<-45?'O':'S';
+   counts[zone]++;
+  }
+  return counts;
+ }
  function clear(){
   const container=el('sgNearbyMap');
   if(container)container.replaceChildren();
+  const summary=el('sgHeatmapStatus');
+  if(summary)summary.textContent='Activez le GPS pour voir les secteurs fictifs.';
  }
  function render({center,requests,radius}={}){
   const container=el('sgNearbyMap');
   if(!container)return;
   container.replaceChildren();
   if(!center||!Array.isArray(requests)||!Number.isFinite(Number(radius))||Number(radius)<=0)return;
-  const size=340,mid=170,outer=132,limit=Math.max(5,Math.min(50,Number(radius)));
+  const mid=170,outer=132,limit=Math.max(5,Math.min(50,Number(radius)));
+  const demandSectors=sectors(center,requests,limit);
+  const count=Object.values(demandSectors).reduce((total,n)=>total+n,0);
+  const summary=el('sgHeatmapStatus');
+  if(summary){
+   const max=Math.max(...Object.values(demandSectors));
+   const names={N:'Nord',E:'Est',S:'Sud',O:'Ouest'};
+   const leads=Object.entries(demandSectors).filter(([,v])=>v===max).map(([k])=>names[k]);
+   summary.textContent=!count?'Aucune zone active dans les demandes fictives.':
+    'Secteur(s) avec le plus de demandes TEST : '+leads.join(', ')+
+    ' ('+max+' annonce'+(max>1?'s':'')+' fictive'+(max>1?'s':'')+
+    ' par secteur). Indicateur approximatif, pas une prévision réelle.';
+  }
   const svg=svgNode('svg',{
    viewBox:'0 0 340 340',role:'img',
    'aria-label':'Schéma directionnel de '+requests.length+' demande(s) fictive(s) à proximité ; distances à vol d\u2019oiseau, sans rues ni trajet',
@@ -43,6 +75,15 @@
   });
   svg.style.width='100%';svg.style.height='auto';svg.style.display='block';
   circle(svg,mid,mid,outer,'#152b35','#647a7e');
+  // Halos de concentration par direction, uniquement sur les annonces de test.
+  const marks={N:[mid,mid-78],E:[mid+78,mid],S:[mid,mid+78],O:[mid-78,mid]};
+  for(const [direction,count] of Object.entries(demandSectors)){
+   if(!count)continue;
+   const [x,y]=marks[direction];
+   const halo=svgNode('circle',{cx:x,cy:y,r:Math.min(57,23+count*6),
+    fill:'#efb456',opacity:Math.min(0.46,0.13+count*0.065)});
+   svg.append(halo);
+  }
   for(const k of [1/3,2/3]){
    circle(svg,mid,mid,outer*k,'none','#465e66');
   }
@@ -73,5 +114,5 @@
   });
   container.append(svg);
  }
- window.sgProximityMap={render,clear,bearing};
+ window.sgProximityMap={render,clear,bearing,sectors};
 })();
