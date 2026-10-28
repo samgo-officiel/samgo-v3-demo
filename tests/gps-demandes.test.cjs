@@ -277,3 +277,44 @@ test('aucune annonce n est publiée quand SAMGO passe en arrière-plan',async()=
  assert.equal(x.published(),0);
  assert.match(x.get('sgPublishStatus').textContent,/Publication annulée/);
 });
+
+
+test('recherche locale : accents, majuscules et plusieurs mots dans trajet fictif',()=>{
+ const x=boot();
+ const rows=[
+  {id:'1',depart_test:'Gare de Bordeaux',destination_test:'Mérignac centre'},
+  {id:'2',depart_test:'Paris',destination_test:'Lyon'},
+  {id:'3',depart_test:'Bordeaux Lac',destination_test:'Pessac'}
+ ];
+ assert.equal(x.geo.filterRequests(rows,'BORDEAUX merignac')[0].id,'1');
+ assert.equal(x.geo.filterRequests(rows,'éRiGnAc').length,1);
+ assert.equal(x.geo.filterRequests(rows,'bordeaux').length,2);
+ assert.equal(x.geo.filterRequests(rows,'').length,3);
+ assert.equal(rows.length,3,'le filtrage ne modifie pas les données reçues');
+});
+test('changer le filtre texte n appelle ni GPS ni serveur',async()=>{
+ const x=boot();
+ x.get('sgDemandTextFilter').value='Bordeaux';
+ x.geo.filterChanged();
+ assert.equal(x.prompts.length,0);
+ assert.equal(x.calls(),0);
+});
+test('filtre texte sur annonces déjà chargées sans nouvelle requête réseau',async()=>{
+ const x=boot({fetchRequests:async()=>({data:[
+  {id:'1',client_id:'other',latitude_approx:48.86,longitude_approx:2.35,
+   depart_test:'Bordeaux gare',destination_test:'Mérignac',
+   distance_km:6,tarif_indicatif:12},
+  {id:'2',client_id:'other',latitude_approx:48.86,longitude_approx:2.35,
+   depart_test:'Paris gare',destination_test:'Pessac',
+   distance_km:5,tarif_indicatif:10}
+ ],error:null})});
+ const pending=x.geo.open();
+ x.giveGPS();await pending;
+ const calls=x.calls();
+ assert.equal(x.get('sgNearbyList').children.length,2);
+ x.get('sgDemandTextFilter').value='borDeaux';
+ x.geo.filterChanged();
+ assert.equal(x.get('sgNearbyList').children.length,1);
+ assert.match(x.get('sgNearbyStatus').textContent,/Filtre texte actif/);
+ assert.equal(x.calls(),calls,'aucun nouvel appel réseau');
+});
