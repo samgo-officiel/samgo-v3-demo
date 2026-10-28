@@ -472,7 +472,7 @@ input,select,textarea{font-size:16px}
   <div id="sgMobileInstallInstructions" hidden></div>
   <p id="sgMobileInstallStatus" role="status" aria-live="polite">Aucune course réelle disponible.</p>
 </section>
- <p class="sg-bottom-info">SAMGO est un prototype. Service non disponible. Avant son lancement, le cadre juridique, les assurances et les chauffeurs devront être validés.</p>
+ <p class="sg-bottom-info">SAMGO est un prototype. Service non disponible. Avant son lancement, le cadre juridique, les assurances et les chauffeurs devront être validés. <a href="./conditions-generales.html">Lire les conditions générales — projet TEST</a>.</p>
 </section>
 <main class="app"><div class="sg-back"><button type="button" onclick="sgGo('home')">← Retour à l'accueil</button></div><section id="sg-trips-note" class="panel sg-trip-note sg-demo-panel">
  <span class="sg-demo-eyebrow">ESPACE CLIENT · DÉMONSTRATION</span>
@@ -773,7 +773,7 @@ input,select,textarea{font-size:16px}
   <div id="candidateForm" class="hidden">
    <h3>Ma candidature de test</h3>
    <label for="nomAffiche">Prénom et nom d'affichage</label><input id="nomAffiche" autocomplete="name" maxlength="100" placeholder="Ex. Karim D." />
-   <div class="agree"><input id="permisDeclare" type="checkbox" /><label for="permisDeclare">Je comprends qu'un permis B valide, un statut professionnel conforme et des assurances adaptées seront exigés avant toute mission.</label></div>
+   <div class="agree"><input id="permisDeclare" type="checkbox" /><label for="permisDeclare">Je comprends qu'un permis B valide, un statut professionnel conforme, une assurance professionnelle réellement adaptée et une assurance auto compatible du client seront nécessaires avant toute mission. <a href="./conditions-generales.html" target="_blank" rel="noopener noreferrer">Lire le projet de conditions générales</a>.</label></div>
    <button type="button" id="applyBtn" onclick="applyDriver()">Envoyer ma candidature de test</button>
    <p id="applyStatus" class="status" role="status" aria-live="polite">Aucune course réelle ne sera attribuée.</p>
   </div>
@@ -790,7 +790,7 @@ input,select,textarea{font-size:16px}
         <label for="password">Mot de passe</label>
         <input id="password" type="password" placeholder="8 caractères minimum" autocomplete="new-password" minlength="8" required />
         <button type="button" id="sgPasswordToggle" class="alt sg-password-toggle" aria-controls="password" aria-pressed="false" onclick="window.sgPasswordPreview.toggle()">Afficher le mot de passe</button>
-        <div class="agree" id="testAcknowledgement"><input type="checkbox" id="ack" required /><label for="ack">Je comprends que SAMGO est en phase de test et qu'aucune course ni prestation réelle n'est disponible.</label></div>
+        <div class="agree" id="testAcknowledgement"><input type="checkbox" id="ack" required /><label for="ack">Je comprends que SAMGO est en phase de test, qu'aucune course réelle n'est disponible, et j'ai pu consulter le <a href="./conditions-generales.html" target="_blank" rel="noopener noreferrer">projet de conditions générales SAMGO</a>. Ce document ne vaut pas contrat définitif pour une prestation de conduite.</label></div>
         <button type="submit" id="authBtn">Créer mon compte</button>
       </form>
     </div>
@@ -820,6 +820,7 @@ input,select,textarea{font-size:16px}
       <button type="button" class="alt" onclick="signOut()">Me déconnecter</button>
     </div>
     <p id="authStatus" class="status" role="status" aria-live="polite">Tu peux créer un compte de test ou te connecter.</p>
+    <p class="subtle"><a href="./conditions-generales.html" id="sgTermsLink">📄 Conditions générales — projet TEST</a></p>
     <p class="subtle"><a href="./securite.html" id="sgSafetyLink">🚨 Sécurité et numéros d'urgence</a></p>
     <p class="subtle"><a href="./aide.html" id="sgSupportLink">🆘 Aide et signalement — version TEST</a></p>
     <p class="subtle"><a href="./mes-alertes.html" id="sgConfidentialAlertsLink">🔔 Mes alertes confidentielles — clients et chauffeurs TEST</a></p>
@@ -834,7 +835,7 @@ input,select,textarea{font-size:16px}
     </details>
   </section>
   <section class="panel" id="samgoLegacyClosing"><h2>❤️ Prenez soin de vous et de vos amis.</h2><p>Si tu as consommé de l'alcool, ne conduis pas. Prévois une solution sûre pour rentrer.</p><strong class="gold">SAMGO — Ta voiture, notre chauffeur.</strong></section>
-  <footer>© SAMGO — Prototype de test. Ne transmets pas de documents sensibles. Les inscriptions ne constituent pas une embauche ni une autorisation de conduire. La mise en service nécessitera des contrats et assurances adaptés ainsi que les informations légales et de confidentialité obligatoires. <a href="./aide.html">Aide et signalements</a></footer>
+  <footer>© SAMGO — Prototype de test. Ne transmets pas de documents sensibles. Les inscriptions ne constituent pas une embauche ni une autorisation de conduire. La mise en service nécessitera des contrats et assurances adaptés ainsi que les informations légales et de confidentialité obligatoires. <a href="./conditions-generales.html">Conditions générales — projet TEST</a> · <a href="./aide.html">Aide et signalements</a></footer>
 </main>
 <script>
 /* SAMGO V3 — Client navigateur léger, sans bibliothèque/CDN externe.
