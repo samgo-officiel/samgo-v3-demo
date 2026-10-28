@@ -5,15 +5,15 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'..','assets','demandes-geoloc-test.js'),'utf8');
-function boot({approved=true,fetchRequests}={}){
+function boot({approved=true,fetchRequests,createReply}={}){
  const nodes=new Map(),prompts=[];
  class Element {
   constructor(id){this.id=id;this.textContent='';this.value=id==='sgRadius'?'30':'';this.checked=false;this.disabled=true;
-   this.hidden=true;this.children=[];this.attrs={};}
+   this.hidden=true;this.children=[];this.attrs={};this.listeners={};}
   replaceChildren(){this.children=[];}
   append(...args){this.children.push(...args);}
   setAttribute(k,v){this.attrs[k]=v;}
-  addEventListener(){}
+  addEventListener(type,fn){this.listeners[type]=fn;}
  }
  const get=id=>{if(!nodes.has(id))nodes.set(id,new Element(id));return nodes.get(id);};
  const document={getElementById:get,createElement:tag=>new Element(tag),
@@ -24,7 +24,7 @@ function boot({approved=true,fetchRequests}={}){
  const client={
   testRequests:{list:async (position,radius)=>{calls++;return fetchRequests?
     fetchRequests(position,radius):{data:[],error:null};}},
-  testReplies:{list:async()=>({data:[],error:null})}
+  testReplies:{list:async()=>({data:[],error:null}),create:(adId,uid)=>createReply?createReply(adId,uid):Promise.resolve({error:null})}
  };
  const window={isSecureContext:true};
  vm.runInNewContext(source,{
@@ -109,4 +109,38 @@ test('déconnexion ou changement de compte efface les annonces privées',()=>{
  x.geo.stop({clearClient:true});
  assert.equal(x.get('sgMyAdsList').children.length,0);
  assert.match(x.get('sgMyAdsStatus').textContent,/Connectez-vous/);
+});
+
+test('une réponse intéressée en retard ne réapparait pas après arrêt GPS et changement de compte',async()=>{
+ let resolveReply;
+ const replyWait=new Promise(r=>{resolveReply=r;});
+ const data=[{
+  id:'annonce-1',client_id:'client-fictif',latitude_approx:48.85,longitude_approx:2.35,
+  depart_test:'Lieu fictif',destination_test:'Maison fictive',distance_km:7,tarif_indicatif:7
+ }];
+ const x=boot({fetchRequests:async()=>({data,error:null}),createReply:()=>replyWait});
+ const initial=x.geo.open();x.giveGPS();await initial;
+ const card=x.get('sgNearbyList').children[0];
+ assert.ok(card,'l’annonce doit être visible avant envoi');
+ const btn=card.children.find(v=>v.listeners?.click);
+ assert.ok(btn,'le bouton intéressé doit exister');
+ const old=btn.listeners.click();
+ x.geo.stop({clearClient:true});
+ x.sessionUser.id='driver-B';
+ resolveReply({error:null});
+ await old;
+ assert.equal(x.get('sgNearbyList').children.length,0);
+ assert.doesNotMatch(x.get('sgNearbyStatus').textContent,/Réponse de test enregistrée/);
+});
+test('une ancienne erreur de recherche GPS ne remplace pas la vue du nouveau compte',async()=>{
+ let rejectFetch;
+ const waiting=new Promise((resolve,reject)=>{rejectFetch=reject;});
+ const x=boot({fetchRequests:async()=>waiting});
+ const initial=x.geo.open();x.giveGPS();
+ await Promise.resolve();
+ x.geo.stop({clearClient:true});
+ x.sessionUser.id='driver-B';
+ rejectFetch(Error('erreur de l’ancien compte'));
+ await initial;
+ assert.doesNotMatch(x.get('sgNearbyStatus').textContent,/erreur de l’ancien compte/);
 });
