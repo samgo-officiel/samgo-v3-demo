@@ -88,7 +88,7 @@ function render(){
    mapLink.textContent='📍 Voir zone approximative (carte externe TEST)';
    mapLink.setAttribute('aria-label','Ouvrir, volontairement, la zone approximative de l’annonce fictive sur une carte externe');
    card.append(mapLink);
-   const walkingUrl=window.sgMapsZoneTest?.walkingRouteUrl(req.latitude_approx,req.longitude_approx);
+   const walkingUrl=window.sgMapsZoneTest?.walkingRouteUrl?.(req.latitude_approx,req.longitude_approx);
    if(walkingUrl){
     const walkLink=document.createElement('a');
     walkLink.className='sg-zone-map-btn';
