@@ -123,6 +123,8 @@
 @media(max-width:350px){.sg-test-timeline-step{font-size:9px}.sg-test-timeline-step .sg-test-timeline-icon{width:22px;height:22px}}
 </style>
 <style id="sg-stripe-preview-style">
+#sgStripeReturnStatus{padding:12px 15px;border-color:#d3ab71;color:#fce8b6;font-size:13px;line-height:1.5}
+#sgStripeReturnStatus[hidden]{display:none}
 .sg-stripe-preview{margin:18px 0;padding:15px;border-radius:15px;background:linear-gradient(145deg,#14242f,#1c3040);border:1px solid #607384;color:#f5f8fb}
 .sg-stripe-preview h3{color:#f4cd82;font-size:17px;margin:8px 0}
 .sg-stripe-label{font-size:11px;font-weight:800;color:#ffd58d;letter-spacing:.05em}
@@ -406,6 +408,7 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   <header><div class="logo">SAM<b>GO</b> <span style="font-size:13px;letter-spacing:0;color:#aaa">V3</span></div><span aria-hidden="true" style="font-size:31px">🚗</span></header>
   <div class="tagline">Ta voiture, notre chauffeur.</div>
   <div class="notice">🚧 <strong>VERSION TEST</strong> — Les comptes et candidatures de test peuvent être enregistrés dans Supabase. Aucune course réelle, aucun paiement et aucune vérification automatique ne sont actifs. N'envoie aucun document d'identité.</div>
+  <div id="sgStripeReturnStatus" class="sg-stripe-preview" role="status" aria-live="polite" hidden></div>
   <section class="panel hero">
     <h1>Tu as bu ? <span class="gold">Ne prends pas le volant.</span></h1>
     <p>Le projet SAMGO : un chauffeur indépendant te rejoint et te raccompagne <strong>dans ta propre voiture</strong>.</p>
