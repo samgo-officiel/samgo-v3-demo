@@ -68,7 +68,7 @@ Ce fichier est une liste technique et opérationnelle, **pas un avis juridique n
 ## 8. Qualité, application mobile et lancement
 - [x] Démonstration web accessible dans un navigateur, manifeste PWA, iconographie SVG.
 - [ ] Audit accessibilité, performance, erreurs réseau, sauvegarde, rétention et tests d'endurance.
-- [ ] Vérifier installation PWA, icônes adaptées PNG iOS/Android, navigateur hors connexion, absence de cache de données privées et mises à jour.
+- [ ] Vérifier installation PWA sur téléphone, icône PNG 192 désormais ajoutée, icône PNG 512 à prévoir, navigateur hors connexion, absence de cache de données privées et mises à jour.
 - [ ] Construire et signer les véritables apps iOS/Android ou choisir une PWA, en fonction du budget et des fonctionnalités push.
 - [ ] Créer comptes développeurs officiels si nécessaire (coûts potentiels, uniquement après accord), revoir politiques de publication.
 - [ ] Lancer d'abord un test contrôlé sans course réelle ; ouverture au public uniquement après assurance, juridique, KYC et paiements vérifiés.
@@ -79,3 +79,12 @@ Ce fichier est une liste technique et opérationnelle, **pas un avis juridique n
 - La protection Supabase Auth contre les mots de passe divulgués est encore désactivée. À activer et tester selon plan/console : https://supabase.com/docs/guides/auth/password-security
 - Trois anciennes tables ont RLS mais aucune politique ; elles sont fermées aux rôles clients. Ne pas les rouvrir sans examen.
 - Une app public-facing avec route de démonstration n'est **pas un lancement de service**. Tant que les étapes rouges ne sont pas fermées, annoncer systématiquement « TEST » et refuser les missions réelles.
+
+## Prochaines validations uniquement réalisables avec le propriétaire
+
+- [ ] Confirmation e-mail et récupération du mot de passe depuis une véritable boîte mail contrôlée.
+- [ ] Parcours complet client/chauffeur approuvé avec deux téléphones et localisation accordée/refusée.
+- [ ] Corriger les paramètres Auth (URL de retour et protection mots de passe divulgués) dans Supabase si encore nécessaires.
+- [ ] Finaliser le compte Connect Stripe **fictif** avec les données officiellement prévues par Stripe pour les tests, puis Checkout et webhook, sans pièce d'identité réelle.
+- [ ] Faire confirmer par écrit assurance, activité réglementée, contrat chauffeur, responsabilités et régime de plateforme.
+- [ ] Décider des prix, frais Stripe, récompense fidélité et fournisseurs payants éventuels avant leur activation.
