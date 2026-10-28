@@ -801,14 +801,17 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
             statut:'eq.test_en_attente',expire_le:'gt.'+new Date().toISOString(),
             order:'cree_le.desc',limit:'100'
           });
-          // Filtrer côté base une zone géographique bornée avant le calcul exact côté navigateur.
-          // Marges car les positions CLIENT sont arrondies à 0,01°.
+          // Filtrer par zone approximative côté base, puis distance exacte côté navigateur.
+          // Ne jamais transmettre le GPS exact du chauffeur : centre arrondi à 0,1°.
           if(position&&Number.isFinite(position.lat)&&Number.isFinite(position.lng)){
-            const lat=Math.max(-90,Math.min(90,Number(position.lat)));
-            const lng=Number(position.lng);
+            // Envoyer uniquement un CENTRE arrondi à 0,1° (~11 km de latitude).
+            // La position GPS exacte reste exclusivement dans le navigateur.
+            const lat=Math.max(-90,Math.min(90,Math.round(Number(position.lat)*10)/10));
+            const lng=Math.round(Number(position.lng)*10)/10;
             const radius=Math.max(5,Math.min(50,Number(radiusKm)||30));
-            const latDelta=radius/110.574+0.025;
-            const lonDelta=radius/(111.32*Math.max(0.08,Math.abs(Math.cos(lat*Math.PI/180))))+0.025;
+            // ~0,06° de marge : l'arrondi du centre et du client ne doit pas exclure un voisin.
+            const latDelta=radius/110.574+0.06;
+            const lonDelta=radius/(111.32*Math.max(0.08,Math.abs(Math.cos(lat*Math.PI/180))))+0.06;
             query.set('latitude_approx','gte.'+Math.max(-90,lat-latDelta).toFixed(3));
             query.append('latitude_approx','lte.'+Math.min(90,lat+latDelta).toFixed(3));
             if(lng-lonDelta>=-180&&lng+lonDelta<=180){
