@@ -1,0 +1,66 @@
+name: SAMGO - Demarrer iPhone TEST sur simulateur
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ios-smoke-test.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  smoke-iphone:
+    runs-on: macos-26-intel
+    timeout-minutes: 30
+    steps:
+      - name: Recuperer depot SAMGO
+        uses: actions/checkout@v4
+      - name: Recuperer le programme iOS de test deja compile
+        uses: actions/download-artifact@v4
+        with:
+          name: samgo-ios-test-simulateur
+          repository: samgo-officiel/samgo-v3-demo
+          run-id: 40756907488
+          github-token: ${{ github.token }}
+          path: ios-artifact
+      - name: Extraire l'application de simulateur
+        run: |
+          test -s ios-artifact/samgo-ios-simulator-test.zip
+          mkdir -p ios-unpacked
+          ditto -x -k ios-artifact/samgo-ios-simulator-test.zip ios-unpacked
+          find ios-unpacked -name 'App.app' -type d
+      - name: Demarrer simulateur et ouvrir SAMGO TEST
+        run: |
+          set -euo pipefail
+          DEVICE="$(xcrun simctl list devices available -j | node -e '
+          let raw="";process.stdin.on("data",x=>raw+=x);
+          process.stdin.on("end",()=>{
+            const data=JSON.parse(raw);
+            for(const devices of Object.values(data.devices||{})){
+              const phone=devices.find(d=>d.isAvailable&&d.name.startsWith("iPhone"));
+              if(phone){process.stdout.write(phone.udid);return;}
+            }
+            process.exit(1);
+          });')"
+          test -n "$DEVICE"
+          echo "Simulateur choisi : $DEVICE"
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          APP="$(find ios-unpacked -name App.app -type d | head -n 1)"
+          test -d "$APP"
+          xcrun simctl install "$DEVICE" "$APP"
+          xcrun simctl launch "$DEVICE" com.samgo.prototype
+          sleep 8
+          mkdir -p screenshots
+          xcrun simctl io "$DEVICE" screenshot screenshots/samgo-iphone-test.png
+          test -s screenshots/samgo-iphone-test.png
+      - name: Conserver capture de l'accueil iPhone TEST
+        uses: actions/upload-artifact@v4
+        with:
+          name: samgo-iphone-simulateur-capture
+          path: screenshots/samgo-iphone-test.png
+          retention-days: 7
+          if-no-files-found: error
