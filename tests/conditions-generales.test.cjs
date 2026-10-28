@@ -48,8 +48,7 @@ test('Contrôles effectifs et preuves avant courses réelles, sans prétendre d�
  assert.match(legal,/journalisation horodatée des faits signalés/);
  assert.match(legal,/version des conditions présentées et acceptées/);
  assert.match(legal,/n'est pas une preuve qu'ils ont été exécutés/);
- assert.match(legal,/n'est pas une preuve qu'ils ont été exécutés/);
- assert.match(legal,/n'est pas une preuve qu'ils ont été exécutés/);
+ assert.match(legal,/les procédures devront être réellement déployées/i);
 });
 test('Recours seulement pour fautes prouvées du chauffeur, sans effacer les obligations SAMGO',()=>{
  assert.match(legal,/id="recours"/);
