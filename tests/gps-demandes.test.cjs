@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'..','assets','demandes-geoloc-test.js'),'utf8');
-function boot({approved=true,fetchRequests,createReply}={}){
+function boot({approved=true,fetchRequests,createReply,online=true}={}){
  const nodes=new Map(),prompts=[];
  class Element {
   constructor(id){this.id=id;this.textContent='';this.value=id==='sgRadius'?'30':'';this.checked=false;this.disabled=true;
@@ -18,7 +18,7 @@ function boot({approved=true,fetchRequests,createReply}={}){
  const get=id=>{if(!nodes.has(id))nodes.set(id,new Element(id));return nodes.get(id);};
  const document={getElementById:get,createElement:tag=>new Element(tag),
    addEventListener(){},visibilityState:'visible'};
- const navigator={geolocation:{getCurrentPosition(ok,fail,opts){prompts.push({ok,fail,opts});}}};
+ const navigator={onLine:online,geolocation:{getCurrentPosition(ok,fail,opts){prompts.push({ok,fail,opts});}}};
  const sessionUser={id:'driver-A'};
  let calls=0;
  const client={
@@ -186,4 +186,11 @@ test('changer le tri local ne sollicite ni GPS ni lecture serveur',()=>{
  x.geo.sortChanged();
  assert.equal(x.prompts.length,0);
  assert.equal(x.calls(),0);
+});
+
+test('hors connexion : publication fictive bloquée avant demande GPS',async()=>{
+ const x=boot({online:false});
+ await x.geo.publish();
+ assert.equal(x.prompts.length,0);
+ assert.match(x.get('sgPublishStatus').textContent,/Hors connexion/);
 });
