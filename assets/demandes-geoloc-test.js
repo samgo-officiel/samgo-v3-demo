@@ -367,8 +367,12 @@ function authChanged(){
  else if(state.lastUser&&sessionUser.id!==state.lastUser)stop({clearClient:true});
  else if(!approved())stop();
 }
-function sortChanged(){render();}
+function sortChanged(){
+ window.sgDriverPrefs?.save?.();
+ render();
+}
 function radiusChanged(){
+ window.sgDriverPrefs?.save?.();
  ++state.fetchGeneration;state.fetchKey=null;
  render();
  if(state.pos)fetchRows(false);
