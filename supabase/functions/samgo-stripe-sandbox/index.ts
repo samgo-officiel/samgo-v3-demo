@@ -118,7 +118,7 @@ async function handle(action:string,body:any,user:{id:string;email?:string;token
     if(!account)return output({linked:false,onboarding_complete:false,ready_for_test:false});
     const info=await accountInfo(account);
     return output({linked:true,onboarding_complete:!!info.details_submitted,
-      ready_for_test:!!info.charges_enabled && !!info.payouts_enabled && info.livemode===false});
+      ready_for_test:!!info.charges_enabled && !!info.payouts_enabled && info.livemode!==true});
   }
   if(action==="onboard_driver"){
     await requireApprovedDriver(user);
@@ -170,7 +170,7 @@ async function handle(action:string,body:any,user:{id:string;email?:string;token
     const destination=await mappingFor(choice.chauffeur_id);
     if(!destination)throw new Error("Le chauffeur n'a pas encore ouvert son compte Stripe de test.");
     const connected=await accountInfo(destination);
-    if(!connected.charges_enabled || !connected.payouts_enabled || connected.livemode!==false)
+    if(!connected.charges_enabled || !connected.payouts_enabled || connected.livemode===true)
       throw new Error("Le compte chauffeur Stripe de test doit finir son inscription.");
     const old=await adminGet("samgo_stripe_paiements_test",{
       select:"stripe_session_id,statut,checkout_url",choix_id:"eq."+choiceId,limit:"1"
