@@ -193,3 +193,28 @@ test('réponse tardive après changement de chat ne détruit pas son brouillon',
  app.get('sgChatClientChoices').children[0].listeners.click();
  assert.equal(input.value,'Message du chat X');
 });
+
+
+test('ouvrir une conversation affiche le dernier message sans bloquer la lecture des anciens',async()=>{
+ const app=boot();
+ const box=app.get('sgChatClientMessages');
+ box.scrollHeight=1200;box.clientHeight=300;box.scrollTop=0;
+ await app.chat.refresh('client');
+ assert.equal(box.scrollTop,1200,'un premier affichage doit présenter les messages récents');
+ box.scrollTop=100;
+ await app.chat.refresh('client');
+ assert.equal(box.scrollTop,100,'l actualisation ne déplace pas une personne qui lit de vieux messages');
+ app.get('sgChatClientChoices').children[1].listeners.click();
+ // Le clic charge de façon asynchrone les messages de la deuxième conversation.
+ await Promise.resolve();await Promise.resolve();
+ assert.equal(box.scrollTop,1200,'changer de conversation revient aux messages récents');
+});
+test('une actualisation près du bas reste près du dernier message',async()=>{
+ const app=boot();
+ const box=app.get('sgChatClientMessages');
+ box.scrollHeight=1000;box.clientHeight=300;box.scrollTop=680;
+ await app.chat.refresh('client');
+ box.scrollTop=680;
+ await app.chat.refresh('client');
+ assert.equal(box.scrollTop,1000);
+});
