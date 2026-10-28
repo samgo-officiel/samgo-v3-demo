@@ -1,4 +1,4 @@
-/* SAMGO TEST — administration des signalements anonymes et brouillons fiscaux.
+/* SAMGO TEST — administration des signalements anonymes, paiements et brouillons fiscaux.
    Aucun envoi d'e-mail / aucune sanction sans examen humain. */
 (function(){
 'use strict';
@@ -110,6 +110,34 @@ function drawEscalations(rows){
   root.append(card);
  });
 }
+function drawPayments(rows){
+ const root=$('sgAgentPayments');root.replaceChildren();
+ const count=$('sgAgentPaymentCount');
+ const paid=rows.filter(r=>r.statut==='paye_test');
+ const pending=rows.filter(r=>r.statut==='checkout_ouvert');
+ const failures=rows.filter(r=>r.statut==='echec_test'||r.statut==='expire_test');
+ const sum=paid.reduce((n,r)=>n+Number(r.montant_centimes||0),0);
+ count.textContent=rows.length+' ligne(s) TEST affichée(s) (100 dernières maximum).';
+ const summary=document.createElement('p');
+ summary.textContent=paid.length+' confirmé(s) TEST · '+pending.length+' en attente · '+failures.length+
+  ' échoué(s)/expiré(s). Total fictif confirmé sur les lignes affichées : '+euros(sum)+
+  '. Commission SAMGO : 0 %. Aucun revenu réel.';
+ root.append(summary);
+ const caution=document.createElement('p');caution.className='small';
+ caution.textContent='Les frais Stripe du modèle de démonstration à 0 % de commission peuvent rester à la charge de la plateforme. Ces totaux ne sont ni une comptabilité complète, ni un solde bancaire, ni une preuve de versement au chauffeur.';
+ root.append(caution);
+ if(!rows.length)return empty(root,'Aucun prélèvement ni paiement créé, y compris en TEST.');
+ const statuses={checkout_ouvert:'En attente de confirmation Stripe TEST',paye_test:'Confirmé par webhook Stripe TEST',expire_test:'Session expirée TEST',echec_test:'Paiement non abouti TEST'};
+ for(const item of rows){
+  const card=document.createElement('article');card.className='candidate';
+  const h=document.createElement('h3');h.textContent='Paiement fictif — '+item.choix_id.slice(0,8);card.append(h);
+  label(card,'Date',fmt(item.cree_le));
+  label(card,'État',statuses[item.statut]||'Statut inconnu à vérifier');
+  label(card,'Montant simulé',euros(item.montant_centimes));
+  label(card,'Commission plateforme',euros(item.commission_centimes));
+  root.append(card);
+ }
+}
 function drawInvoices(rows){
  const root=$('sgAgentInvoices');root.replaceChildren();
  $('sgAgentInvoiceCount').textContent=rows.length+' brouillon(s) TEST. Zéro facture fiscale émise.';
@@ -129,18 +157,20 @@ async function load(){
  const revision=++sessionSeq;
  if(!authorized()){clear();return;}
  try{
-  const [urgencies,reports,escalations,invoices]=await Promise.all([
+  const [urgencies,reports,escalations,invoices,payments]=await Promise.all([
    privateRead('samgo_urgences_test','id,signalement_id,cible_id,categorie,statut,cree_le'),
    privateRead('samgo_signalements_test','id,cible_id,categorie,details,statut,cree_le'),
    privateRead('samgo_escalades_test','id,cible_id,nombre_avertissements,statut,cree_le'),
-   privateRead('samgo_factures_brouillons_test','id,choix_id,montant_ttc_centimes,commission_centimes,tva_regime,statut,cree_le')
+   privateRead('samgo_factures_brouillons_test','id,choix_id,montant_ttc_centimes,commission_centimes,tva_regime,statut,cree_le'),
+   privateRead('samgo_stripe_paiements_test','choix_id,montant_centimes,commission_centimes,statut,cree_le')
   ]);
   if(revision!==sessionSeq||!authorized())return;
-  drawUrgencies(urgencies);drawReports(reports);drawEscalations(escalations);drawInvoices(invoices);
+  drawUrgencies(urgencies);drawReports(reports);drawEscalations(escalations);drawInvoices(invoices);drawPayments(payments);
  }catch(error){
   if(revision!==sessionSeq)return;
   $('sgAgentUrgentCount').textContent='Impossible de charger les agents : '+escapeError(error);
   $('sgAgentReportCount').textContent='Chargement incomplet.';
+  $('sgAgentPaymentCount').textContent='Lecture paiements TEST impossible.';
  }
 }
 async function review(item,next){
@@ -159,7 +189,7 @@ async function review(item,next){
  }catch(error){access?.notice(escapeError(error),'error');}
  finally{processing=false;}
 }
-function clear(){++sessionSeq;for(const id of ['sgAgentUrgentCases','sgAgentReports','sgAgentEscalations','sgAgentInvoices'])$(id)?.replaceChildren();}
+function clear(){++sessionSeq;for(const id of ['sgAgentUrgentCases','sgAgentReports','sgAgentEscalations','sgAgentInvoices','sgAgentPayments'])$(id)?.replaceChildren();}
 window.sgAdminAgentsTest={load,clear,init:(api)=>{
  if(!api || typeof api.getToken!=='function' || typeof api.request!=='function' ||
   typeof api.notice!=='function' || typeof api.isAdmin!=='function')throw Error('Accès administrateur non fourni.');
