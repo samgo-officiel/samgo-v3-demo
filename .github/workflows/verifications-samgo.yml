@@ -1,0 +1,42 @@
+name: SAMGO - Tests du prototype
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Recuperer le depot
+        uses: actions/checkout@v4
+      - name: Preparer Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Tester les sessions et le radar GPS
+        run: node --test tests/*.test.cjs
+      - name: Controler les scripts et le manifeste sans connexion externe
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const html=fs.readFileSync('index.html','utf8');
+          for(const [,code] of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)){
+            if(code.trim())new Function(code);
+          }
+          for(const name of fs.readdirSync('assets').filter(n=>n.endsWith('.js'))){
+            new Function(fs.readFileSync('assets/'+name,'utf8'));
+          }
+          const manifest=JSON.parse(fs.readFileSync('manifest.webmanifest','utf8'));
+          if(!manifest.start_url||!manifest.icons?.length)throw Error('Manifest PWA invalide');
+          const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
+          const duplicates=ids.filter((id,i)=>ids.indexOf(id)!==i);
+          if(duplicates.length)throw Error('IDs HTML dupliques: '+duplicates.join(','));
+          console.log('Controle statique SAMGO valide : scripts, manifeste et IDs uniques.');
+          NODE
