@@ -131,8 +131,24 @@ async function handle(action:string,body:any,user:{id:string;email?:string;token
     const account=await mappingFor(user.id);
     if(!account)return output({linked:false,onboarding_complete:false,ready_for_test:false});
     const info=await accountInfo(account);
-    return output({linked:true,onboarding_complete:!!info.details_submitted,
-      ready_for_test:!!info.charges_enabled && !!info.payouts_enabled && info.livemode!==true});
+    const ready=info.charges_enabled===true && info.payouts_enabled===true && info.livemode===false;
+    const requirements=info.requirements && typeof info.requirements==="object" ? info.requirements : {};
+    const errors=Array.isArray(requirements.errors) ? requirements.errors : [];
+    const due=Array.isArray(requirements.currently_due) ? requirements.currently_due : [];
+    const pending=Array.isArray(requirements.pending_verification) ? requirements.pending_verification : [];
+    // Ne renvoyez jamais l'identité, les documents ou les coordonnées bancaires au navigateur.
+    // Exposer seulement un état résumant la vérification du compte de TEST.
+    const identityRejected=errors.some((entry:any)=>entry?.code==="verification_failed_keyed_identity");
+    const needsCorrection=!ready && errors.length>0;
+    const verificationState=ready?"ready":
+      needsCorrection?"correction_required":
+      pending.length>0?"processing":
+      due.length>0?"incomplete":
+      info.details_submitted?"processing":"incomplete";
+    return output({linked:true,onboarding_complete:info.details_submitted===true,
+      ready_for_test:ready,verification_state:verificationState,
+      identity_test_rejected:identityRejected,
+      required_items_count:due.length,test_only:true});
   }
   if(action==="onboard_driver"){
     await requireApprovedDriver(user);
