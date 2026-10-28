@@ -25,7 +25,8 @@ function boot({online=true}={}){
   addEventListener(){},readyState:'loading'};
  const user={id:'A'};
  const rows={
-  A:[{id:'cA',client_id:'A',chauffeur_id:'X',statut:'choisi_test'}],
+  A:[{id:'cA',client_id:'A',chauffeur_id:'X',statut:'choisi_test'},
+     {id:'cA2',client_id:'A',chauffeur_id:'Y',statut:'choisi_test'}],
   B:[{id:'cB',client_id:'B',chauffeur_id:'Y',statut:'choisi_test'}]
  };
  let settle=null;
@@ -147,4 +148,48 @@ test('déconnexion cache et désassocie la notification du compte',async()=>{
  app.chat.stop();
  assert.equal(app.get('sgChatNewToast').hidden,true);
  assert.equal(app.get('sgChatNewToast').getAttribute('data-role'),null);
+});
+
+test('chaque conversation conserve son brouillon local séparé',async()=>{
+ const app=boot();
+ await app.chat.refresh('client');
+ const input=app.get('sgChatClientInput');
+ input.value='Brouillon pour le chauffeur X';
+ const choices=app.get('sgChatClientChoices').children;
+ assert.equal(choices.length,2);
+ choices[1].listeners.click();
+ assert.equal(input.value,'','ne pas réutiliser le texte X dans le chat Y');
+ input.value='Brouillon pour le chauffeur Y';
+ app.get('sgChatClientChoices').children[0].listeners.click();
+ assert.equal(input.value,'Brouillon pour le chauffeur X');
+ app.get('sgChatClientChoices').children[1].listeners.click();
+ assert.equal(input.value,'Brouillon pour le chauffeur Y');
+});
+test('la déconnexion efface les brouillons de chaque conversation',async()=>{
+ const app=boot();
+ await app.chat.refresh('client');
+ const input=app.get('sgChatClientInput');
+ input.value='Texte confidentiel de test';
+ app.get('sgChatClientChoices').children[1].listeners.click();
+ input.value='Autre texte de test';
+ app.chat.stop();
+ assert.equal(input.value,'');
+ await app.chat.refresh('client');
+ assert.equal(input.value,'','aucun brouillon de l ancien utilisateur ne doit revenir');
+ app.get('sgChatClientChoices').children[1].listeners.click();
+ assert.equal(input.value,'');
+});
+test('réponse tardive après changement de chat ne détruit pas son brouillon',async()=>{
+ const app=boot();
+ await app.chat.refresh('client');
+ const input=app.get('sgChatClientInput');
+ input.value='Message du chat X';
+ const pending=app.chat.send('client');
+ app.get('sgChatClientChoices').children[1].listeners.click();
+ input.value='Texte du chat Y encore à envoyer';
+ app.finish({error:null});
+ await pending;
+ assert.equal(input.value,'Texte du chat Y encore à envoyer');
+ app.get('sgChatClientChoices').children[0].listeners.click();
+ assert.equal(input.value,'Message du chat X');
 });
