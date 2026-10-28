@@ -37,9 +37,28 @@ function configureIos(file=ios){
  fs.writeFileSync(file,plist);
  return true;
 }
+function brandAndroidIcons(resources=path.join(mobile,'android/app/src/main/res'),
+ source=path.join(mobile,'www/assets/samgo-app-icon-192.png')){
+ if(!fs.existsSync(resources)||!fs.existsSync(source))return 0;
+ let count=0;
+ for(const dir of fs.readdirSync(resources).filter(x=>x.startsWith('mipmap-'))){
+  const full=path.join(resources,dir);
+  if(!fs.statSync(full).isDirectory())continue;
+  for(const name of ['ic_launcher.png','ic_launcher_round.png','ic_launcher_foreground.png']){
+   const target=path.join(full,name);
+   if(fs.existsSync(target)){
+    fs.copyFileSync(source,target);
+    count++;
+   }
+  }
+ }
+ return count;
+}
 if(require.main===module){
  const done={android:configureAndroid(),ios:configureIos()};
  if(!done.android&&!done.ios)throw Error('Aucun projet natif généré trouvé. Exécuter npx cap add android / ios.');
+ const icons=done.android?brandAndroidIcons():0;
  console.log('Permissions GPS SAMGO TEST configurées :',JSON.stringify(done));
+ console.log('Icônes Android SAMGO TEST actualisées :',icons);
 }
-module.exports={configureAndroid,configureIos,locationExplanation};
+module.exports={configureAndroid,configureIos,brandAndroidIcons,locationExplanation};
