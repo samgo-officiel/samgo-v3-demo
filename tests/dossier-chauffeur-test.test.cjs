@@ -55,28 +55,22 @@ test('pas de candidature ou compte invalide : aucune lecture de stockage',async(
   await f.context.window.sgDriverDocsTest.inspect();
   assert.equal(f.calls.length,0);
 });
-test('changement de compte pendant un appel réseau : résultat ancien ignoré',async()=>{
+test('changement de compte pendant l’authentification : aucun ancien document affiché',async()=>{
   const f=fixture();
-  let finish, markStarted;
-  const started=new Promise(resolve=>{markStarted=resolve;});
-  f.context.fetch=()=>new Promise(resolve=>{
-    finish=()=>resolve({ok:true,json:async()=>[{name:'document'}]});
-    markStarted();
-  });
+  let resolveToken;
+  f.context.client.auth.getAccessToken=()=>new Promise(resolve=>{resolveToken=resolve;});
   f.context.window.sgDriverDocsTest.setCandidate(true);
+  // L'appel getAccessToken est déclenché synchroniquement avant son premier await.
   const request=f.context.window.sgDriverDocsTest.inspect();
-  // Attendre l'appel réseau réel, plutôt que supposer qu'il démarre après
-  // exactement deux microtâches (ordre variable dans Node/vm et GitHub Actions).
-  await Promise.race([
-    started,
-    new Promise((_,reject)=>setTimeout(()=>reject(new Error('Le premier appel n’a pas démarré')),1500))
-  ]);
+  assert.equal(typeof resolveToken,'function','La récupération du jeton doit démarrer.');
+  // Le compte change PENDANT que le jeton de l'ancien compte est en attente.
   f.context.sessionUser={id:B};
   f.context.window.sgDriverDocsTest.reset();
-  assert.equal(typeof finish,'function');
-  finish();
+  resolveToken('test-token-in-memory');
   await request;
+  assert.equal(f.calls.length,0,'Aucun accès au stockage de l’ancien utilisateur');
   assert.equal(f.node('sgDocsPermis').textContent,'Non contrôlé');
+  assert.equal(f.node('sgDocsDomicile').textContent,'Non contrôlé');
   assert.match(f.node('sgDocsStatus').textContent,/Coffre non consulté/);
 });
 test('aucune saisie de pièce réelle ni RIB sur ce parcours',()=>{
