@@ -107,6 +107,10 @@
 .sg-radius-line strong{color:#f2ce84;white-space:nowrap}
 .sg-nearby-controls button{display:block;width:100%;margin:11px 0}
 .sg-nearby-controls button.alt{background:#283842;color:#f7eee2}
+.sg-proximity-panel{margin:15px 0;padding:13px;border:1px solid #3e6270;border-radius:15px;background:#101e26}
+.sg-proximity-panel h4{margin:0 0 10px;color:#f2cf92;font-size:14px}
+.sg-proximity-panel p{font-size:11px;line-height:1.5;color:#b4c8cf;margin:8px 0 0}
+.sg-proximity-radar{width:100%;max-width:350px;margin:0 auto}
 .sg-nearby-card{border:1px solid #4a5960;background:#18272e;border-radius:13px;padding:14px;margin:10px 0}
 .sg-nearby-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .sg-nearby-top b{font-size:13px}
@@ -589,6 +593,11 @@ input,select,textarea{font-size:16px}
   </div>
   <p id="sgInAppAlert" class="sg-alert-new" role="alert" hidden></p>
   <p id="sgNearbyStatus" role="status" aria-live="polite">Autorisez le GPS pour rechercher des annonces.</p>
+  <section class="sg-proximity-panel" aria-label="Repère de proximité des demandes fictives">
+    <h4>🧭 Demandes autour de moi (schéma TEST)</h4>
+    <div id="sgNearbyMap" class="sg-proximity-radar" aria-live="off"></div>
+    <p>Nord en haut, vous au centre ; les numéros correspondent aux annonces ci-dessous. Distance <strong>à vol d’oiseau</strong> : ce n’est pas une vraie carte routière ni un trajet calculé. Les coordonnées exactes du chauffeur restent dans son navigateur.</p>
+  </section>
   <div id="sgNearbyList"></div>
   <div class="sg-driver-ratings"><h3>Mes réponses et simulations (test)</h3>
     <p>Consultez les clients qui ont sélectionné votre réponse en démonstration. Aucune course réelle n'est attribuée.</p>
@@ -1475,7 +1484,8 @@ function sgGo(view){
  const el=document.getElementById(target);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 </script>
-<script src="assets/demandes-geoloc-test.js?v=zone-2810-gps-secure2"></script>
+<script src="assets/carte-proximite-test.js?v=20261028a"></script>
+<script src="assets/demandes-geoloc-test.js?v=20261028-carte1"></script>
 <script src="assets/avis-chauffeurs-test.js"></script>
 <script src="assets/actualisation-test.js?v=fid-2810"></script>
 <script src="assets/stripe-connect-demo.js"></script>
