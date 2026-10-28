@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   smoke-android:
@@ -18,37 +19,16 @@ jobs:
     steps:
       - name: Recuperer SAMGO
         uses: actions/checkout@v4
-      - name: Installer Node 22
-        uses: actions/setup-node@v4
+      - name: Recuperer APK Android TEST 0.1.2 deja compilee
+        uses: actions/download-artifact@v4
         with:
-          node-version: '22'
-      - name: Installer Java 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-      - name: Verifier SDK Android
-        run: test -d "$ANDROID_HOME"
-      - name: Installer Capacitor
-        working-directory: mobile
-        run: npm install --no-audit --no-fund
-      - name: Construire pages TEST
-        working-directory: mobile
-        run: npm run build:web
-      - name: Generer Android
-        working-directory: mobile
-        run: npx cap add android
-      - name: Ajouter permissions et logo
-        working-directory: mobile
-        run: node scripts/configure-native.cjs
-      - name: Synchroniser projet Android
-        working-directory: mobile
-        run: npx cap sync android
-      - name: Generer APK de test
-        working-directory: mobile/android
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          name: samgo-android-test-debug
+          repository: samgo-officiel/samgo-v3-demo
+          run-id: 40766097419
+          github-token: ${{ github.token }}
+          path: mobile/android/app/build/outputs/apk/debug
+      - name: Verifier fichier Android natif
+        run: test -s mobile/android/app/build/outputs/apk/debug/app-debug.apk
       - name: Installer et ouvrir SAMGO sur emulateur Android
         uses: reactivecircus/android-emulator-runner@v2
         with:
