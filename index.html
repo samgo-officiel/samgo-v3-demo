@@ -141,6 +141,14 @@
 .sg-demo-placeholder strong{font-size:15px}.sg-demo-placeholder p{font-size:13px;color:#bbc8ce}
 #driverLocalDemo p{font-size:12px;line-height:1.5}
 </style>
+<style id="sg-device-check-style">
+.sg-device-check{margin-top:18px;border:1px solid #445d66;border-radius:13px;padding:14px;background:#16252d}
+.sg-device-check summary{cursor:pointer;color:#f1cf92;font-weight:700;font-size:14px}
+.sg-device-check p{color:#bdcbd1;font-size:12px;line-height:1.5}
+.sg-device-check button{margin:12px 0;background:#e7bd74;color:#172129}
+.sg-device-check ul{padding-left:18px;line-height:1.55;font-size:12px;color:#d3dde0}
+.sg-device-check li{margin:8px 0;overflow-wrap:anywhere}
+</style>
 <style id="sg-login-polish">#authEmailHelp.sg-email-help{font-size:12px;line-height:1.5;color:#dfc58b;margin:7px 0 12px}#authPanel .switch button{min-width:0}#authPanel input:focus-visible{outline:2px solid #eac577;outline-offset:2px}</style>
 <style id="sg-mission-timeline-style">
 .sg-test-timeline{margin:12px 0 14px;padding:12px 8px;border-radius:12px;border:1px solid #4b6671;background:#192a32}
@@ -700,6 +708,14 @@ input,select,textarea{font-size:16px}
     </div>
     <p id="authStatus" class="status" role="status" aria-live="polite">Tu peux créer un compte de test ou te connecter.</p>
     <p class="subtle"><a href="./aide.html" id="sgSupportLink">🆘 Aide et signalement — version TEST</a></p>
+    <details class="sg-device-check" id="sgDeviceDiagnostics">
+      <summary>📱 Diagnostic de mon téléphone (TEST)</summary>
+      <p>Vérifiez l’installation de SAMGO, la connexion et les autorisations du navigateur. Ce diagnostic ne demande pas votre position.</p>
+      <button type="button" class="alt" id="sgDeviceRun" onclick="window.sgDeviceCheck.run()">Vérifier mon téléphone</button>
+      <div id="sgDeviceReport" role="status" aria-live="polite">
+        <p>Appuyez sur le bouton pour afficher les vérifications locales.</p>
+      </div>
+    </details>
   </section>
   <section class="panel" id="samgoLegacyClosing"><h2>❤️ Prenez soin de vous et de vos amis.</h2><p>Si tu as consommé de l'alcool, ne conduis pas. Prévois une solution sûre pour rentrer.</p><strong class="gold">SAMGO — Ta voiture, notre chauffeur.</strong></section>
   <footer>© SAMGO — Prototype de test. Ne transmets pas de documents sensibles. Les inscriptions ne constituent pas une embauche ni une autorisation de conduire. La mise en service nécessitera des contrats et assurances adaptés ainsi que les informations légales et de confidentialité obligatoires. <a href="./aide.html">Aide et signalements</a></footer>
@@ -1493,6 +1509,7 @@ function sgGo(view){
 <script src="assets/stripe-connect-demo.js"></script>
 <script src="assets/stripe-sandbox-connexion.js?v=20261028-verification"></script>
 <script src="assets/messagerie-test.js?v=20261028"></script>
+<script src="assets/diagnostic-appareil-test.js?v=20261028a"></script>
 <script src="assets/installation-mobile-test.js?v=20261028"></script>
 <script src="assets/recuperation-compte-test.js?v=20261028"></script>
 <script src="assets/fidelite-test.js?v=20261028"></script>
