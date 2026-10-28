@@ -133,11 +133,13 @@ test('une réponse intéressée en retard ne réapparait pas après arrêt GPS e
  assert.doesNotMatch(x.get('sgNearbyStatus').textContent,/Réponse de test enregistrée/);
 });
 test('une ancienne erreur de recherche GPS ne remplace pas la vue du nouveau compte',async()=>{
- let rejectFetch;
+ let rejectFetch,signalStarted;
+ const started=new Promise(resolve=>{signalStarted=resolve;});
  const waiting=new Promise((resolve,reject)=>{rejectFetch=reject;});
- const x=boot({fetchRequests:async()=>waiting});
+ const x=boot({fetchRequests:async()=>{signalStarted();return waiting;}});
  const initial=x.geo.open();x.giveGPS();
- await Promise.resolve();
+ // Attendre que la recherche asynchrone existe vraiment avant de la rejeter.
+ await started;
  x.geo.stop({clearClient:true});
  x.sessionUser.id='driver-B';
  rejectFetch(Error('erreur de l’ancien compte'));
