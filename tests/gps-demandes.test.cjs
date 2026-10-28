@@ -164,3 +164,26 @@ test('le lien carte approximative ne se déclenche pas automatiquement',async()=
  assert.equal(link.rel,'noopener noreferrer');
  assert.equal(link.listeners.click,undefined,'aucun lien programmatique ne doit partir automatiquement');
 });
+
+test('tri chauffeur : proximité, tarif indicatif ou trajet le plus court',()=>{
+ const x=boot();
+ const rows=[
+  {id:'a',approach:2,distance_km:9,tarif_indicatif:15},
+  {id:'b',approach:6,distance_km:4,tarif_indicatif:40},
+  {id:'c',approach:3,distance_km:2,tarif_indicatif:25}
+ ];
+ const ids=mode=>x.geo.sortRequests(rows,mode).map(r=>r.id).join(',');
+ assert.equal(ids('proximite'),'a,c,b');
+ assert.equal(ids('tarif'),'b,c,a');
+ assert.equal(ids('trajet'),'c,b,a');
+ assert.equal(ids('inconnu'),'a,c,b');
+ assert.equal(rows[0].id,'a','le tri ne doit pas modifier les résultats bruts');
+});
+test('changer le tri local ne sollicite ni GPS ni lecture serveur',()=>{
+ const x=boot();
+ const select=x.get('sgDemandSort');
+ select.value='tarif';
+ x.geo.sortChanged();
+ assert.equal(x.prompts.length,0);
+ assert.equal(x.calls(),0);
+});
