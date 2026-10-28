@@ -205,10 +205,15 @@ async function open(){
  state.gpsPending=true;
  const stopButton=$('sgGeoStop');if(stopButton)stopButton.disabled=false;
  try{
-  status('sgGeoStatus','Demande de localisation au navigateur…');
+  status('sgGeoStatus','Demande de localisation sur cet appareil…');
   const position=await requestLocation();
   if(generation!==state.gpsGeneration||!approved()||sessionUser.id!==userId)return;
-   if(position.accuracy>5000)throw new Error('Position GPS trop imprécise (±'+
+  if(document.visibilityState==='hidden'){
+   stop();
+   status('sgGeoStatus','Recherche GPS annulée : SAMGO a été masqué. Réactivez-la depuis Missions.');
+   return;
+  }
+  if(position.accuracy>5000)throw new Error('Position GPS trop imprécise (±'+
     Math.round(position.accuracy)+' m). Activez la localisation précise puis réessayez.');
   ++state.fetchGeneration;state.fetchKey=null;
   state.pos=position;state.lastUser=userId;
@@ -244,7 +249,9 @@ async function publish(){
   status('sgPublishStatus','Autorisez le GPS : SAMGO arrondira votre position avant publication.');
   const p=await requestLocation();
   if(!signedIn()||sessionUser.id!==requestingUserId)throw new Error('Le compte a changé pendant la demande GPS. Recommencez.');
-   if(p.accuracy>5000)throw new Error('Position trop imprécise pour publier une annonce fictive (±'+
+  if(document.visibilityState==='hidden')
+   throw new Error('Publication annulée : SAMGO a été masqué pendant la demande GPS.');
+  if(p.accuracy>5000)throw new Error('Position trop imprécise pour publier une annonce fictive (±'+
     Math.round(p.accuracy)+' m). Activez la localisation précise et réessayez.');
   const req=localDemoRequest;
   if(!req)throw new Error('Créez à nouveau la simulation avant la publication.');
