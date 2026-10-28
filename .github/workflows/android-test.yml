@@ -59,6 +59,8 @@ jobs:
           ./gradlew assembleDebug --no-daemon --stacktrace
       - name: Verifier la presence de l'APK de test
         run: test -s mobile/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Lire le manifeste de l'APK compilée (permissions et identifiant)
+        run: node scripts/verify-android-debug.cjs mobile/android/app/build/outputs/apk/debug/app-debug.apk
       - name: Deposer APK de test en artefact GitHub (7 jours)
         uses: actions/upload-artifact@v4
         with:
