@@ -14,7 +14,7 @@ test('Checkout TEST: jamais de paiement live ni carte/IBAN collecté par SAMGO',
 test('seul un chauffeur Stripe vérifié peut démarrer un Checkout TEST',()=>{
  assert.match(src,/requireApprovedDriver/);
  assert.match(src,/if\(!connected\.charges_enabled \|\| !connected\.payouts_enabled \|\| connected\.livemode===true\)/);
- assert.match(src,/status==="paye_test"/);
+ assert.match(src,/old\[0\]\.statut==="paye_test"/);
  assert.match(src,/samgo_demo_checkout_v1_/);
 });
 test('le client ne fixe pas le montant et SAMGO ne prend aucune commission',()=>{
