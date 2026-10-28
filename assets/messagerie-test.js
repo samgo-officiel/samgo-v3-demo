@@ -63,7 +63,7 @@
      st.current=row.id;
      restoreDraft(role);
     }
-    updateButtons(role);loadMessages(role,{jumpToEnd:true});
+    updateButtons(role);return loadMessages(role,{jumpToEnd:true});
    });
    node.append(button);
   }
