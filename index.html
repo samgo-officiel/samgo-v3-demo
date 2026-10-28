@@ -535,7 +535,7 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   <p class="sg-demand-explain">Choisissez un rayon autour de votre position GPS. Seules les annonces de test, sans adresse réelle ni numéro de téléphone, peuvent apparaître ici.</p>
   <div class="sg-nearby-controls">
    <label for="sgRadius">Distance autour de moi</label>
-   <div class="sg-radius-line"><select id="sgRadius" onchange="window.sgDemand.render()"><option value="5">5 km</option><option value="10">10 km</option><option value="20">20 km</option><option value="30" selected>30 km</option><option value="50">50 km</option></select>
+   <div class="sg-radius-line"><select id="sgRadius" onchange="window.sgDemand.refresh()"><option value="5">5 km</option><option value="10">10 km</option><option value="20">20 km</option><option value="30" selected>30 km</option><option value="50">50 km</option></select>
    <strong id="sgRadiusValue">30 km</strong></div>
    <button type="button" onclick="window.sgDemand.open()">⌖ Activer / actualiser mon GPS</button>
    <p id="sgGeoStatus" role="status" aria-live="polite">GPS non activé. Aucun suivi de position actif.</p>
@@ -1339,7 +1339,7 @@ function sgGo(view){
  const el=document.getElementById(target);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
 </script>
-<script src="assets/demandes-geoloc-test.js"></script>
+<script src="assets/demandes-geoloc-test.js?v=zone-2810"></script>
 <script src="assets/avis-chauffeurs-test.js"></script>
 <script src="assets/actualisation-test.js?v=chat-2810"></script>
 <script src="assets/stripe-connect-demo.js"></script>
