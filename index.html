@@ -1487,7 +1487,27 @@ async function applyDriver(){
   if(driverApplyAttempt===attempt&&driverApplyPendingUser===uid)driverApplyPendingUser=null;
  }
 }
-async function signOut(){if(!client)return;++sgUserRefreshSequence;++driverApplyAttempt;driverApplyPendingUser=null;await client.auth.signOut();if(window.sgLoyaltyTest)window.sgLoyaltyTest.stop();if(window.sgReviews)window.sgReviews.clear();if(window.sgStripeSandbox)window.sgStripeSandbox.reset();if(window.sgDemand)window.sgDemand.stop({clearClient:true});if(window.sgChatTest)window.sgChatTest.stop();localDemoRequest=null;saveLocalDemo();renderLocalDemo();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
+async function signOut(){
+ if(!client)return;
+ ++sgUserRefreshSequence;
+ ++driverApplyAttempt;driverApplyPendingUser=null;
+ // client.auth.signOut() retire immédiatement la session locale ; la requête
+ // de révocation distante peut prendre longtemps ou échouer hors connexion.
+ // Ne pas laisser les informations privées affichées en attendant sa réponse.
+ const revoke=client.auth.signOut();
+ if(window.sgLoyaltyTest)window.sgLoyaltyTest.stop();
+ if(window.sgReviews)window.sgReviews.clear();
+ if(window.sgStripeSandbox)window.sgStripeSandbox.reset();
+ if(window.sgDemand)window.sgDemand.stop({clearClient:true});
+ if(window.sgChatTest)window.sgChatTest.stop();
+ localDemoRequest=null;saveLocalDemo();renderLocalDemo();
+ sessionUser=null;
+ driverSimAllowed=false;driverSimActive=false;updateDriverSimulation();
+ setStatus('authStatus','Déconnecté.','success');
+ // Révocation de best effort, jamais une condition pour vider l'interface.
+ Promise.resolve(revoke).catch(()=>{});
+ await refreshUser();
+}
 calc();restoreLocalDemo();renderLocalDemo();setAuthMode('signup');setSpace('raccompagner');
 if(client){
   setStatus('authStatus','Vérification de la connexion à Supabase…');
