@@ -8,7 +8,7 @@ const path=require('node:path');
 const projectRoot=path.resolve(__dirname,'..','..');
 const mobileRoot=path.resolve(__dirname,'..');
 const output=path.join(mobileRoot,'www');
-const pages=['index.html','aide.html','mes-alertes.html','donnees-test.html','securite.html','hors-ligne.html'];
+const pages=['index.html','aide.html','mes-alertes.html','conditions-generales.html','donnees-test.html','securite.html','hors-ligne.html'];
 for(const name of pages){
  if(!fs.existsSync(path.join(projectRoot,name)))
    throw Error('Page web requise manquante: '+name);
