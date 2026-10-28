@@ -77,3 +77,22 @@ test('lien recovery : session reconnue, jetons retirés de la barre URL',()=>{
   assert.equal(app.callbackUrl,'/samgo-v3-demo/');
   assert.equal(app.entries.has('samgo_v3_test_session'),true);
 });
+
+test('une réponse refresh tardive ne reconnecte pas après déconnexion',async()=>{
+  let release;
+  const suspended = new Promise(resolve=>{release=resolve;});
+  const app=boot(async url=>{
+    if(url.includes('grant_type=refresh_token')){
+      await suspended;
+      return response(200,{access_token:'late',refresh_token:'late-next',expires_in:3600});
+    }
+    return response(200,{});
+  },expired());
+  const renewing=app.client.auth.getAccessToken();
+  await app.client.auth.signOut();
+  assert.equal(app.entries.has('samgo_v3_test_session'),false);
+  release();
+  const token=await renewing;
+  assert.equal(token,null);
+  assert.equal(app.entries.has('samgo_v3_test_session'),false);
+});
