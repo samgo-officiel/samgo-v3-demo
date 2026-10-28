@@ -121,3 +121,14 @@ La réussite du diagnostic est indicative : elle ne remplace pas les tests sur t
 - [ ] Se déconnecter : les annonces privées de l'ancien compte, les conversations et le statut Stripe TEST doivent disparaître de l'écran.
 - [ ] Après une éventuelle inscription Stripe **de test**, vérifier que le bouton et le statut ne restent pas associés à l'ancien compte en cas de déconnexion.
 - [ ] Ouvrir `donnees-test.html` depuis Compte/Aide : comprendre les coordonnées approximatives, la conservation en base et la nature fictive des données. La politique de confidentialité définitive nécessite une révision juridique.
+
+
+## Application mobile (préparation seulement)
+
+- [ ] Sur Android, ouvrir depuis le raccourci PWA **Réserver (TEST)** et vérifier le bon écran, sans déclenchement GPS au démarrage.
+- [ ] Depuis la PWA, ouvrir **Mes courses** et **Chauffeur** si les raccourcis sont proposés par le système.
+- [ ] Sur iPhone et Android, vérifier la bonne installation depuis l'icône d'accueil, le retour après interruption et l'absence de vraie mission.
+- [ ] Quand des builds natifs seront possibles : tester l'interface, les autorisations GPS et les liens e-mail sur APK/iOS séparément de la PWA web.
+- [ ] Documenter les erreurs avec captures sans jetons de session ni données personnelles.
+
+`mobile/` est uniquement préparatoire, sans binaires natifs compilés.
