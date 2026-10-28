@@ -5,6 +5,9 @@
 (function(){
  'use strict';
  const $=id=>document.getElementById(id);
+ const native=()=>window.Capacitor?.isNativePlatform?.()===true;
+ const nativePlatform=()=>window.Capacitor?.getPlatform?.()==='ios'?'iPhone/iPad':
+  window.Capacitor?.getPlatform?.()==='android'?'Android':'mobile';
  const standalone=()=>(
   window.matchMedia?.('(display-mode: standalone)')?.matches===true ||
   navigator.standalone===true
@@ -26,8 +29,10 @@
  async function collect(){
   const results=[
    ['Connexion',navigator.onLine===false?'hors ligne':'réseau potentiellement disponible (à confirmer lors des essais)'],
-   ['Connexion sécurisée',window.isSecureContext?'HTTPS / contexte sécurisé':'contexte non sécurisé — GPS indisponible'],
-   ['Installation',standalone()?'ouverte depuis l’icône de l’application web':'ouverte dans un navigateur'],
+   ['Connexion sécurisée',native()?'application empaquetée localement ; services distants en HTTPS':
+    window.isSecureContext?'HTTPS / contexte sécurisé':'contexte non sécurisé — GPS indisponible'],
+   ['Installation',native()?'application native '+nativePlatform()+' (TEST)':
+    standalone()?'ouverte depuis l’icône de l’application web':'ouverte dans un navigateur'],
    ['GPS du navigateur',navigator.geolocation?'API présente (position non demandée)':'indisponible dans ce navigateur'],
    ['Notifications',typeof Notification==='undefined'?'non prises en charge':(
      Notification.permission==='granted'?'autorisées':Notification.permission==='denied'?'refusées':'pas encore autorisées'
@@ -39,7 +44,9 @@
     results.push(['Autorisation GPS',permissionLabel(permission?.state)]);
    }catch(_){results.push(['Autorisation GPS','état non accessible (aucune autorisation demandée)']);}
   }else results.push(['Autorisation GPS','état non accessible (aucune autorisation demandée)']);
-  if(navigator.serviceWorker?.getRegistration){
+  if(native()){
+   results.push(['Mode hors connexion','pages locales de l’application disponibles, données serveur nécessitant Internet']);
+  }else if(navigator.serviceWorker?.getRegistration){
    try{
     const registration=await navigator.serviceWorker.getRegistration('./');
     results.push(['Mode hors connexion',registration?.active?'service worker installé':'non vérifié ou pas encore activé']);
