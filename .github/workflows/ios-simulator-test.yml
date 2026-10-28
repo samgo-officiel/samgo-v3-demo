@@ -43,6 +43,9 @@ jobs:
       - name: Synchroniser l'application
         working-directory: mobile
         run: npx cap sync ios
+      - name: Appliquer logo SAMGO sur application iPhone TEST
+        working-directory: mobile
+        run: node scripts/configure-ios-icons.cjs
       - name: Compiler SAMGO TEST pour simulateur (pas d'IPA ni distribution)
         working-directory: mobile
         run: |
