@@ -344,7 +344,7 @@ body:not(.sg-home-active) #sg-landing{display:none}
 #sg-landing button:focus-visible,.sg-nav button:focus-visible{outline:3px solid #f8d276;outline-offset:2px}
 .sg-menu-panel{position:absolute;z-index:10;right:17px;top:68px;min-width:200px;background:#141c23;border:1px solid #555459;border-radius:16px;box-shadow:0 16px 30px #000d;padding:8px}
 .sg-menu-panel[hidden]{display:none}
-#sg-landing .sg-menu-panel button{display:block;border:0;background:transparent;text-align:left;color:#fff;font-size:14px;padding:12px;width:100%;min-height:40px;box-shadow:none}
+#sg-landing .sg-menu-panel button,#sg-landing .sg-menu-panel a{display:block;border:0;background:transparent;text-align:left;color:#fff;font-size:14px;padding:12px;width:100%;min-height:44px;box-shadow:none;text-decoration:none}
 .sg-hero-frame{position:relative;isolation:isolate;margin:0 -15px;background:radial-gradient(ellipse at 75% 32%,#253542 0,#071019 55%,#070c11 85%)}
 .sg-hero-photo{position:absolute;z-index:-1;top:0;right:0;width:56%;height:100%;background:url("assets/samgo-chauffeur-nuit.svg") no-repeat center right;background-size:cover;opacity:.95;mask-image:linear-gradient(to right,transparent 0,#000 38%);-webkit-mask-image:linear-gradient(to right,transparent 0,#000 38%)}
 .sg-hero-shade{position:absolute;z-index:-1;inset:0;background:linear-gradient(90deg,#071019 0%,#071019d9 29%,transparent 78%),linear-gradient(0deg,#080d11 0%,transparent 22%)}
@@ -442,7 +442,7 @@ input,select,textarea{font-size:16px}
   <header class="sg-header">
    <div class="sg-identity"><div class="sg-s-mark">S</div><div class="sg-brand"><div class="sg-wordmark">SAMGO</div><div class="sg-tagline">TA VOITURE. NOTRE CHAUFFEUR.</div></div></div>
    <button type="button" class="sg-menu-trigger" onclick="sgToggleMenu()" aria-controls="sg-menu-panel" aria-expanded="false" aria-label="Ouvrir le menu"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-   <div id="sg-menu-panel" class="sg-menu-panel" hidden><button type="button" onclick="sgGo('home')">Accueil</button><button type="button" onclick="sgGo('book')">Réserver</button><button type="button" onclick="sgGo('driver')">Devenir chauffeur</button><button type="button" onclick="sgGo('account')">Mon compte</button></div>
+   <div id="sg-menu-panel" class="sg-menu-panel" hidden><button type="button" onclick="sgGo('home')">Accueil</button><button type="button" onclick="sgGo('book')">Réserver</button><button type="button" onclick="sgGo('driver')">Devenir chauffeur</button><button type="button" onclick="sgGo('account')">Mon compte</button><a href="./securite.html">🚨 Sécurité et urgence</a></div>
   </header>
   <div class="sg-hero-copy">
    <p class="sg-eyebrow">SERVICE DE CHAUFFEUR À LA DEMANDE</p>
@@ -807,6 +807,7 @@ input,select,textarea{font-size:16px}
       <button type="button" class="alt" onclick="signOut()">Me déconnecter</button>
     </div>
     <p id="authStatus" class="status" role="status" aria-live="polite">Tu peux créer un compte de test ou te connecter.</p>
+    <p class="subtle"><a href="./securite.html" id="sgSafetyLink">🚨 Sécurité et numéros d'urgence</a></p>
     <p class="subtle"><a href="./aide.html" id="sgSupportLink">🆘 Aide et signalement — version TEST</a></p>
     <p class="subtle"><a href="./donnees-test.html" id="sgPrivacyLink">🔒 Données et confidentialité — version TEST</a></p>
     <details class="sg-device-check" id="sgDeviceDiagnostics">
