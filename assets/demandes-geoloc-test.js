@@ -99,6 +99,12 @@ function notifyAboutNew(rows){
 }
 async function fetchRows(silent){
  if(!approved()||!state.pos||state.fetchKey||document.visibilityState==='hidden')return;
+ // Ne pas réutiliser indéfiniment une ancienne localisation (aucun suivi GPS de fond).
+ if(Date.now()-state.pos.measuredAt>15*60*1000){
+  stop();
+  status('sgGeoStatus','Votre dernière position GPS date de plus de 15 minutes. Appuyez sur « Activer / actualiser mon GPS » pour relancer la recherche.');
+  return;
+ }
  const currentId=sessionUser.id,currentGeneration=state.fetchGeneration;
  const position=state.pos,fetchKey={};
  state.fetchKey=fetchKey;
