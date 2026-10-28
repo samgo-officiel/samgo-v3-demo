@@ -7,7 +7,7 @@ const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../mobile/native-navigation.js'),'utf8');
 function boot(native,menuOpen=false,inHome=false,browserFails=false){
  const calls={listeners:0,home:0,minimize:0,opened:[],stripeRefresh:0,clientRefresh:0};
- let back=null,resume=null;
+ let back=null,resume=null,browserFinished=null;
  const linkStatus={textContent:''};
  const menu={
   hidden:!menuOpen,
@@ -22,10 +22,17 @@ function boot(native,menuOpen=false,inHome=false,browserFails=false){
   else resume=callback;
   return Promise.resolve({remove(){}});
  },minimizeApp(){calls.minimize++;}};
- const browser={open:({url})=>{
-  calls.opened.push(url);
-  return browserFails?Promise.reject(new Error('browser unavailable')):Promise.resolve();
- }};
+ const browser={
+  open:({url})=>{
+   calls.opened.push(url);
+   return browserFails?Promise.reject(new Error('browser unavailable')):Promise.resolve();
+  },
+  addListener:(event,callback)=>{
+   assert.equal(event,'browserFinished');
+   browserFinished=callback;
+   return Promise.resolve({remove(){}});
+  }
+ };
  const window={Capacitor:{isNativePlatform:()=>native,Plugins:{App:plugin,Browser:browser}},
   location:{href:'http://localhost/index.html',origin:'http://localhost'},
   sgGo:page=>{assert.equal(page,'home');calls.home++;},
@@ -39,7 +46,8 @@ function boot(native,menuOpen=false,inHome=false,browserFails=false){
  };
  vm.runInNewContext(source,{window,document:doc,Promise,URL});
  return {calls,menu,linkStatus,open:window.sgNativeOpenExternal,
-  back:()=>{if(back)back();},resume:()=>{if(resume)resume();}};
+  back:()=>{if(back)back();},resume:()=>{if(resume)resume();},
+  browserFinished:()=>{if(browserFinished)browserFinished();}};
 }
 test('le site web classique n installe pas de listener Android',()=>{
  const x=boot(false);assert.equal(x.calls.listeners,0);
@@ -118,4 +126,15 @@ test('une erreur d ouverture du navigateur externe affiche un message sans navig
  await Promise.resolve();await Promise.resolve();
  assert.match(app.linkStatus.textContent,/Impossible d’ouvrir ce lien HTTPS/);
  assert.equal(app.calls.home,0);
+});
+
+test('fermer navigateur iOS actualise les statuts sans attendre App.resume',()=>{
+ const x=boot(true);
+ x.browserFinished();
+ assert.equal(x.calls.stripeRefresh,1);
+ assert.equal(x.calls.clientRefresh,1);
+ // resume survient parfois presque simultanement : pas de requete en double.
+ x.resume();
+ assert.equal(x.calls.stripeRefresh,1);
+ assert.equal(x.calls.clientRefresh,1);
 });
