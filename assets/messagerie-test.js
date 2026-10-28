@@ -1,0 +1,129 @@
+/* SAMGO — Messagerie entre participants d'une simulation, jamais une vraie course.
+   Aucun GPS, numéro, document ou carte bancaire collecté ici. */
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ const view={
+  client:{selector:'sgChatClientChoices',messages:'sgChatClientMessages',input:'sgChatClientInput',send:'sgChatClientSend',status:'sgChatClientStatus'},
+  driver:{selector:'sgChatDriverChoices',messages:'sgChatDriverMessages',input:'sgChatDriverInput',send:'sgChatDriverSend',status:'sgChatDriverStatus'}
+ };
+ const state={client:{current:null,choices:[],seq:0,sending:false},driver:{current:null,choices:[],seq:0,sending:false},user:null};
+ function signed(){return typeof sessionUser!=='undefined'&&!!sessionUser&&typeof client!=='undefined'&&!!client?.testMessages&&!!client?.testChoices;}
+ function say(role,text){const el=$(view[role].status);if(el)el.textContent=text;}
+ function note(role,text){
+  const a=document.createElement('p');a.className='sg-chat-test-entry';a.textContent=text;
+  const box=$(view[role].messages);if(box){box.replaceChildren(a);}
+ }
+ function choiceLabel(row,role,i){return 'Simulation n°'+(i+1)+' — '+(row.statut==='choisi_test'?'en cours':row.statut==='termine_test'?'terminée':'annulée');}
+ function updateButtons(role){
+  const cfg=view[role],st=state[role],node=$(cfg.selector);
+  if(!node)return;
+  node.replaceChildren();
+  for(let i=0;i<st.choices.length;i++){
+   const row=st.choices[i],button=document.createElement('button');
+   button.type='button';button.className='alt sg-chat-test-choice';
+   button.textContent=choiceLabel(row,role,i);
+   button.setAttribute('aria-pressed',String(st.current===row.id));
+   button.addEventListener('click',()=>{st.current=row.id;updateButtons(role);loadMessages(role);});
+   node.append(button);
+  }
+  const current=st.choices.find(c=>c.id===st.current);
+  const allowed=!!current&&current.statut==='choisi_test';
+  const input=$(cfg.input),send=$(cfg.send);
+  if(input){input.disabled=!allowed;input.placeholder=allowed?'Écrire un message de TEST (500 caractères max)':'Choisissez une simulation en cours pour écrire';}
+  if(send)send.disabled=!allowed||st.sending;
+ }
+ async function refresh(role){
+  if(!view[role])return;
+  const st=state[role],my=++st.seq;
+  if(!signed()){
+   st.current=null;st.choices=[];state.user=null;
+   updateButtons(role);note(role,'Connectez-vous pour consulter votre messagerie de test.');
+   say(role,'Aucune conversation ouverte.');return;
+  }
+  const uid=sessionUser.id;
+  if(state.user!==uid){
+   state.user=uid;
+   for(const side of ['client','driver']){
+    state[side].current=null;state[side].choices=[];state[side].seq++;
+    const input=$(view[side].input);if(input)input.value='';
+   }
+  }
+  try{
+   const data=await client.testChoices.list();
+   if(data.error)throw data.error;
+   if(my!==st.seq||!signed()||sessionUser.id!==uid)return;
+   const rows=(Array.isArray(data.data)?data.data:[])
+    .filter(c=>(role==='client'?c.client_id:c.chauffeur_id)===uid)
+    .filter(c=>['choisi_test','termine_test','annule_test'].includes(c.statut)).slice(0,20);
+   st.choices=rows;
+   if(!rows.some(c=>c.id===st.current))st.current=rows.length?rows[0].id:null;
+   updateButtons(role);
+   if(!rows.length){
+    note(role,'Aucune conversation : le client doit d’abord choisir un chauffeur pour une simulation.');
+    say(role,'Messagerie de TEST : aucune vraie mission.');return;
+   }
+   await loadMessages(role);
+  }catch(e){say(role,'Messages TEST indisponibles : '+(e.message||'Réessayez.'));}
+ }
+ async function loadMessages(role){
+  const st=state[role],choice=st.current,cfg=view[role];
+  if(!choice){note(role,'Choisissez une simulation de test.');return;}
+  const currentUser=state.user,seq=++st.seq;
+  say(role,'Chargement des messages fictifs…');
+  try{
+   const result=await client.testMessages.list(choice);
+   if(result.error)throw result.error;
+   if(st.current!==choice||seq!==st.seq||state.user!==currentUser)return;
+   const box=$(cfg.messages);if(!box)return;
+   box.replaceChildren();
+   const rows=Array.isArray(result.data)?result.data:[];
+   if(!rows.length)note(role,'Aucun message pour cette simulation.');
+   for(const row of rows){
+    const article=document.createElement('div');
+    article.className='sg-chat-test-entry '+(row.auteur_id===currentUser?'sg-chat-test-mine':'sg-chat-test-theirs');
+    const who=document.createElement('strong');
+    who.textContent=row.auteur_id===currentUser?'Moi (TEST)':'Autre participant (TEST)';
+    const p=document.createElement('p');p.textContent=row.contenu;
+    const small=document.createElement('small');
+    const d=new Date(row.cree_le);
+    small.textContent=Number.isFinite(d.getTime())?new Intl.DateTimeFormat('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(d):'TEST';
+    article.append(who,p,small);box.append(article);
+   }
+   say(role,rows.length+' message(s) de TEST. Actualisation quand SAMGO est ouvert.');
+  }catch(e){say(role,'Impossible de lire cette conversation : '+(e.message||'Réessayez.'));}
+ }
+ async function send(role){
+  if(!signed()||!view[role])return;
+  const st=state[role],cfg=view[role],row=st.choices.find(c=>c.id===st.current);
+  const input=$(cfg.input),text=(input?.value||'').trim();
+  if(!row||row.statut!=='choisi_test'){say(role,'La messagerie est réservée aux simulations en cours.');return;}
+  if(!text||text.length>500){say(role,'Entrez entre 1 et 500 caractères.');return;}
+  if(st.sending)return;
+  st.sending=true;updateButtons(role);say(role,'Envoi du message fictif…');
+  try{
+   const result=await client.testMessages.create(row.id,sessionUser.id,text);
+   if(result.error)throw result.error;
+   if(input)input.value='';
+   await loadMessages(role);
+  }catch(e){say(role,'Envoi refusé : '+(e.message||'Réessayez.'));}
+  finally{st.sending=false;updateButtons(role);}
+ }
+ function stop(){
+  state.user=null;
+  for(const role of ['client','driver']){
+   const st=state[role];st.current=null;st.choices=[];st.seq++;st.sending=false;
+   const input=$(view[role].input);if(input)input.value='';
+   updateButtons(role);note(role,'Connectez-vous pour consulter vos messages fictifs.');say(role,'Messagerie de TEST.');
+  }
+ }
+ for(const role of ['client','driver']){
+  const cfg=view[role];
+  const bind=()=>{
+   const input=$(cfg.input);
+   if(input)input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send(role);}});
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
+ }
+ window.sgChatTest={refresh,send,stop};
+})();
