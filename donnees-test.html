@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10171b">
+<meta name="robots" content="noindex">
+<meta name="description" content="Informations sur les données personnelles traitées dans le prototype SAMGO TEST.">
+<title>SAMGO — Données et confidentialité (TEST)</title>
+<style>
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at top,#2a2e2b,#10171b 55%);color:#f4f4f3}
+main{max-width:800px;margin:auto;padding:24px 17px 70px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+a{color:#f1c778}a:focus-visible{outline:3px solid #f1c778;outline-offset:4px}
+.brand{font-weight:900;font-size:27px}.brand b{color:#f1c778}
+h1{font-size:clamp(25px,6vw,37px);line-height:1.15;margin:25px 0 12px}
+h2{color:#f1c778;font-size:19px}
+p,li{line-height:1.65}li{margin:6px 0}
+.notice{background:#342d1b;color:#ffeac0;border:1px solid #97794b;padding:15px;border-radius:14px}
+section{background:#172730;border:1px solid #405460;border-radius:17px;padding:18px;margin:16px 0}
+.small{color:#b9c6cc;font-size:13px}
+footer{padding:18px 0;color:#c6c6c6;font-size:13px}
+</style>
+</head>
+<body><main>
+<header><div class="brand">SAM<b>GO</b></div><a href="./index.html">← Retour au site</a></header>
+<h1>Vos données sur <span style="color:#f1c778">SAMGO TEST</span></h1>
+<div class="notice"><strong>Information sur le prototype — 28 octobre 2026.</strong>
+Cette page décrit le fonctionnement technique actuel et ne constitue pas encore une politique de confidentialité juridique complète. Le responsable légal, les coordonnées de contact définitives, les bases légales, les durées de conservation et les procédures d'exercice des droits restent à formaliser avant un lancement réel.</div>
+<section>
+<h2>Quelles données sont traitées ?</h2>
+<ul>
+<li><strong>Comptes :</strong> adresse e-mail et identifiant de compte ; le mot de passe est transmis à Supabase Auth par connexion sécurisée, sans être publié dans le dépôt GitHub.</li>
+<li><strong>Candidatures chauffeur :</strong> nom d'affichage, statut et date de candidature de TEST. Ne transmettez pas de permis, carte d'identité, selfie ni justificatif sensible sur cette démonstration.</li>
+<li><strong>Annonces fictives :</strong> lieux textuels fictifs, distance et prix indicatifs, ainsi qu'une position client approximative (arrondie à deux décimales) en cas de publication volontaire avec accord GPS.</li>
+<li><strong>Conversations et avis :</strong> messages, notes, commentaires, choix et étapes de courses de simulation enregistrés pour les comptes concernés. Ne saisissez aucune vraie adresse, pièce d'identité, téléphone ou information bancaire.</li>
+<li><strong>Signalements :</strong> catégorie et description saisies volontairement depuis la page Aide et signalement.</li>
+</ul>
+</section>
+<section>
+<h2>Comment fonctionne la localisation ?</h2>
+<p>Le chauffeur demande lui-même sa position depuis l'écran Missions. Le navigateur l'utilise localement pour calculer les distances approximatives aux annonces. Une zone arrondie à environ 0,1 degré sert au filtrage côté serveur : le GPS précis du chauffeur n'est pas enregistré dans la table des annonces.</p>
+<p>Après 15 minutes sans nouvelle autorisation ou mise à jour volontaire, la recherche cesse de réutiliser cette position. Le bouton « Arrêter la recherche GPS » efface la position locale dans ce module. Il ne supprime pas les permissions accordées dans les réglages du navigateur.</p>
+<p>Attention : quand un client publie une annonce fictive, des coordonnées <strong>arrondies à deux décimales</strong> sont enregistrées dans le service de test. L'annonce cesse normalement d'être proposée à la recherche après environ deux heures, mais cela ne veut <strong>pas</strong> dire que l'enregistrement est automatiquement supprimé de la base.</p>
+</section>
+<section>
+<h2>Où sont les données ?</h2>
+<p>Le prototype s'appuie sur GitHub Pages pour le site et Supabase pour les comptes et enregistrements de test. Les règles d'accès à la base (RLS) sont activées, mais le prototype n'a pas encore subi un audit de sécurité complet.</p>
+<p>Les jetons de session du navigateur sont conservés dans <code>sessionStorage</code> lorsque ce stockage est disponible. Le service worker de SAMGO ne conserve que la page neutre « hors connexion », pas les messages, comptes ou réponses API. Les parcours Stripe sont exclusivement des simulations ou un environnement de test, sans paiement réel activé.</p>
+</section>
+<section>
+<h2>Contrôler ses données de test</h2>
+<p>Vous pouvez retirer une annonce de test sans choix de chauffeur depuis votre espace. Vous pouvez aussi vous déconnecter, effacer la simulation locale et révoquer la localisation depuis les paramètres du téléphone. Cela ne supprime pas forcément les informations déjà stockées chez le prestataire.</p>
+<p>Le mécanisme complet d'export, de rectification et de suppression des données de compte reste à concevoir et à vérifier. Pour le moment, évitez d'utiliser cette démonstration avec de vraies données sensibles. Consultez <a href="./aide.html">Aide et signalement</a> pour remonter un problème de test ; ce support n'est pas surveillé en permanence.</p>
+</section>
+<footer>SAMGO — prototype sans courses réelles. Ce texte sera remplacé ou complété après validation juridique et technique de la protection des données.</footer>
+</main></body></html>
