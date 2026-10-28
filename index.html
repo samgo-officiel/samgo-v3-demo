@@ -68,6 +68,9 @@
 .sg-chat-test textarea{width:100%;padding:12px;font:16px system-ui;color:white;background:#0d151a;border:1px solid #596d77;border-radius:11px;resize:vertical;min-height:72px}
 .sg-chat-test textarea:disabled{opacity:.5}
 .sg-chat-test button{width:100%;margin-top:8px}
+.sg-test-filter[hidden]{display:none!important}
+#sgTripsFilter{width:100%;max-width:480px;min-height:44px;margin:6px 0 9px;padding:10px 12px;border-radius:11px;background:#122733;color:#f5f6f8;border:1px solid #637b84}
+.sg-reply-card[hidden]{display:none!important}
 .sg-chat-test-choices button{width:auto;margin-top:0}
 .sg-safety-help{padding:10px 12px;border-radius:11px;background:#332f25;border:1px solid #8c7240;
  font-size:13px!important;line-height:1.6!important}
@@ -501,6 +504,16 @@ input,select,textarea{font-size:16px}
    <h3>⭐ Choisir et noter un chauffeur (TEST)</h3>
    <p>Après qu'un chauffeur s'est déclaré intéressé, choisissez-le pour cette simulation. Marquez ensuite le trajet fictif comme terminé pour laisser 1 à 5 étoiles et un commentaire.</p>
    <button type="button" class="alt" onclick="window.sgReviews.refreshClient()">↻ Voir les avis et les réponses</button>
+   <label for="sgTripsFilter">Afficher mes simulations</label>
+   <select id="sgTripsFilter" onchange="window.sgReviews.filterClient()" aria-label="Filtrer mes simulations de courses">
+    <option value="all">Toutes mes simulations</option>
+    <option value="waiting">En attente de chauffeur</option>
+    <option value="active">Avec un chauffeur choisi</option>
+    <option value="finished">Terminées</option>
+    <option value="cancelled">Annulées</option>
+    <option value="expired">Annonces expirées</option>
+   </select>
+   <p id="sgTripsFilterStatus" class="sg-demo-small" role="status" aria-live="polite">Toutes les simulations fictives.</p>
    <p id="sgReviewClientStatus" role="status" aria-live="polite">Aucun avis de test affiché.</p>
    <div id="sgReviewClientList"></div>
   </div>
