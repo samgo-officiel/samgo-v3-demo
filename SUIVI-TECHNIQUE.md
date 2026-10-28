@@ -154,3 +154,15 @@ Les changements ci-dessous sont des améliorations de **démonstration**. Ce ne 
 - Sans mesure récente, l'application arrête la recherche après **15 minutes** plutôt que d'employer indéfiniment une ancienne position.
 - Pour la publication côté client, une permission GPS reçue après changement de compte est rejetée avant tout envoi.
 - **4 essais fonctionnels simulés** via faux navigateur/GPS ont passé, plus contrôle syntaxique JS et intégration HTML. Les essais sur vrai Android/iPhone, réseau physique, carte routière et itinéraires restent à faire.
+
+
+## Développements autonomes — site et application web — 28 octobre 2026 (fin de journée)
+
+- **Carte schématique GPS de proximité** : nouveau module `assets/carte-proximite-test.js` intégré au tableau de bord chauffeur du site et de la PWA. Le chauffeur reste au centre, des repères numérotés matérialisent les demandes proches selon leur direction et une distance approximative à vol d'oiseau ; aucun appel à un fournisseur cartographique, aucun itinéraire routier ni transmission additionnelle de la position exacte. Jusqu'à 24 repères affichés ; les annonces conservent leur liste complète en dessous.
+- **Tests du radar** : `tests/carte-proximite.test.cjs` (5 scénarios : directions, effacement, données invalides/hors rayon, absence d'affichage des coordonnées, rayon invalide).
+- **Tests du module GPS** : `tests/gps-demandes.test.cjs` (7 scénarios : autorisation, arrêt pendant permission, précision, rayon, changement de compte, expiration 15 min, coordonnées invalides).
+- **Automatisation des vérifications** : `.github/workflows/verifications-samgo.yml` lance les tests Node natifs du dépôt et contrôle syntaxe JavaScript, manifeste PWA et unicité des identifiants HTML à chaque mise à jour de `main`. Premier run observé **réussi** ; vérifier les nouveaux runs sur https://github.com/samgo-officiel/samgo-v3-demo/actions .
+- **Sécurité connexion** : les fragments d'URL contenant un `access_token` ou `refresh_token` sont retirés immédiatement, y compris si le fragment est malformé, et un test de régression est ajouté à `tests/auth-session.test.cjs`. Ne jamais partager une URL contenant un jeton.
+- **Audit read-only Supabase** : RLS activée sur les tables publiques déjà contrôlées. Alerte persistante **Leaked Password Protection Disabled** ; trois tables anciennes avec RLS sans policy (accès refusé par défaut) ; avertissements de performance (index de FK manquants et multiples policies permissives). Aucun changement de DB, de configuration Auth, ni de flux financier n'a été effectué ici.
+- **Limites réelles** : accès au site public en navigateur non confirmé depuis cet environnement ; tests mobiles avec un véritable GPS, e-mails de confirmation/récupération, itinéraire routier/ETA, notification hors site, assurance, KYC et paiement live encore manquants. Ne pas présenter le schéma comme une véritable carte routière et ne pas lancer de courses.
+
