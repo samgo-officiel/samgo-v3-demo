@@ -28,6 +28,19 @@ async function mutateOnce(key,uid,revision,role,request,onSuccess,onError,status
  }
 }
 function status(id,value){const el=$(id);if(el)el.textContent=value;}
+function filterClient(){
+ const list=$('sgReviewClientList'),select=$('sgTripsFilter');
+ if(!list)return;
+ const mode=['all','waiting','active','finished','cancelled','expired'].includes(select?.value)?select.value:'all';
+ let total=0,visible=0;
+ for(const card of list.children){
+  if(!card.sgRideStatus)continue;
+  total++;card.hidden=mode!=='all'&&card.sgRideStatus!==mode;
+  if(!card.hidden)visible++;
+ }
+ status('sgTripsFilterStatus',visible+' simulation'+(visible>1?'s':'')+
+  ' affichée'+(visible>1?'s':'')+' sur '+total+' (TEST).');
+}
 function addText(box,tag,value,cls){
  const e=document.createElement(tag);e.textContent=value;if(cls)e.className=cls;box.append(e);return e;
 }
@@ -163,6 +176,7 @@ async function refreshClient(){
  const list=$('sgReviewClientList');if(!list)return;
  if(!signed()){
   list.replaceChildren();
+   filterClient();
   status('sgReviewClientStatus','Connectez-vous pour choisir et noter un chauffeur de test.');return;
  }
  const uid=sessionUser.id,seq=++clientSequence;
@@ -186,6 +200,9 @@ async function refreshClient(){
    const relevant=replies.filter(x=>x.annonce_id===ad.id);
    const selected=choices.find(x=>x.annonce_id===ad.id&&x.client_id===uid);
    const active=ad.statut==='test_en_attente'&&Date.parse(ad.expire_le)>Date.now();
+    card.sgRideStatus=selected?
+      (selected.statut==='termine_test'?'finished':selected.statut==='annule_test'?'cancelled':'active'):
+      (active?'waiting':'expired');
    addText(card,'p',relevant.length+' chauffeur(s) intéressé(s) (test).');
    if(selected){
     addText(card,'p',selected.statut==='termine_test'?'✓ Course fictive terminée':selected.statut==='annule_test'?'× Simulation annulée':'✓ Un chauffeur a été choisi pour cette simulation.');
@@ -221,7 +238,8 @@ async function refreshClient(){
    }else addText(card,'p',active?'En attente de réponses des chauffeurs de test.':'Annonce expirée : aucun nouveau choix possible.');
    list.append(card);
   }
- }catch(e){
+ filterClient();
+  }catch(e){
   if(seq===clientSequence&&signed()&&sessionUser.id===uid)
    status('sgReviewClientStatus','Chargement impossible : '+(e.message||'Veuillez réessayer.'));
  }
@@ -291,5 +309,5 @@ if(window.sgDemand){
  const old=window.sgDemand.refreshClient;
  window.sgDemand.refreshClient=async function(){if(old)await old();await refreshClient();};
 }
-window.sgReviews={refreshClient,refreshDriver,clear};
+window.sgReviews={refreshClient,refreshDriver,filterClient,clear};
 })();
