@@ -88,6 +88,7 @@
   <div id="feedback" class="notice" role="status" aria-live="polite">Préparation de l'espace administrateur…</div>
   <p class="small">SAMGO — Prototype non commercial. Les autorisations de lecture et de modification sont également contrôlées côté serveur par Supabase.</p>
 </main>
+<script src="assets/admin-agents-test.js?v=20261028-agent2"></script>
 <script>
 (function(){
 'use strict';
@@ -262,9 +263,9 @@ $('loginForm').addEventListener('submit',signIn);
 $('reloadBtn').addEventListener('click',loadApplications);
 $('logoutBtn').addEventListener('click',logout);
 $('filter').addEventListener('change',renderApplications);$('reloadTicketsBtn').addEventListener('click',loadTickets);$('ticketsFilter').addEventListener('change',renderTickets);
+window.sgAdminAgentsTest.init({getToken,request,notice,isAdmin:()=>isAdmin});
 initialize();
 })();
 </script>
-<script src="assets/admin-agents-test.js?v=20261028-agent1"></script>
 </body>
 </html>
