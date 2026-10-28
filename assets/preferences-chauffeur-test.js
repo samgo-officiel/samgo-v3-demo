@@ -34,8 +34,7 @@
   if(r)r.value='30';if(s)s.value='proximite';if(q)q.value='';
   const summary=get('sgRadiusValue');if(summary)summary.textContent='30 km';
   // Un changement volontaire de rayon peut relancer la recherche déjà active.
-  window.sgDemand?.radiusChanged?.();
-  window.sgDemand?.sortChanged?.();
+  window.sgDemand?.radiusChanged?.({savePreference:false});
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',restore,{once:true});
  else restore();
