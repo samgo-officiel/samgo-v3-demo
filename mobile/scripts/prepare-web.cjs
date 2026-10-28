@@ -42,6 +42,14 @@ html=replaceOnce(html,
 html=replaceOnce(html,'</head>',
  '<style id="sg-native-only">#sgMobileInstall{display:none!important}</style></head>',
  'masquer installation PWA native');
+html=replaceOnce(html,'<h2 id="accountTitle">Créer mon compte</h2>',
+ '<h2 id="accountTitle">Créer mon compte</h2><p class="notice" id="sgNativeAuthNotice">Dans SAMGO TEST sur téléphone, les e-mails de confirmation et de récupération ouvrent le site SAMGO sécurisé. Terminez la validation sur le site, puis revenez vous connecter ici.</p>',
+ 'aide au compte sur application native');
+html=replaceOnce(html,'</body>',
+ '<script src="assets/native-navigation.js"></script></body>',
+ 'navigation native Android');
+fs.copyFileSync(path.join(mobileRoot,'native-navigation.js'),
+ path.join(output,'assets/native-navigation.js'));
 if(html.includes('navigator.serviceWorker.register'))throw Error('Worker web non retiré du bundle natif');
 if(!html.includes('window.samgoCreateClient'))throw Error('Application client absente');
 fs.writeFileSync(path.join(output,'index.html'),html,'utf8');
