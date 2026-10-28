@@ -14,7 +14,8 @@ const modules={
  sgInstallTest:'assets/installation-mobile-test.js',
  sgLoyaltyTest:'assets/fidelite-test.js',
  sgDeviceCheck:'assets/diagnostic-appareil-test.js',
- sgDriverPrefs:'assets/preferences-chauffeur-test.js'
+ sgDriverPrefs:'assets/preferences-chauffeur-test.js',
+ sgPasswordPreview:'assets/afficher-mot-de-passe-test.js'
 };
 function exportsFor(global,file){
  const source=fs.readFileSync(path.join(root,file),'utf8');
