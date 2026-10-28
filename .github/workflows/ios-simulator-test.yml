@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: samgo-ios-simulator-test
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-ios-simulator:
