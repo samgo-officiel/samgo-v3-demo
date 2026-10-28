@@ -51,7 +51,24 @@
     .agree label{margin:0;font-size:13px;line-height:1.45}
     a{color:#ffd22b}
     footer{margin-top:26px;font-size:12px;color:#aaa;line-height:1.6}
-  </style>
+  
+/* SAMGO — messagerie privee de test uniquement */
+.sg-chat-test{margin:18px 0;padding:18px;border:1px solid #48596a;border-radius:19px;background:#14242e}
+.sg-chat-test h3{margin:0 0 8px;color:#f5c875}
+.sg-chat-test p{font-size:14px;line-height:1.5}
+.sg-chat-test-choices{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.sg-chat-test-choice{min-height:44px;font-size:13px!important;flex:1 1 150px}
+.sg-chat-test-choice[aria-pressed="true"]{outline:2px solid #f5c875}
+.sg-chat-test-messages{max-height:290px;overflow-y:auto;overscroll-behavior:contain;background:#0e171d;border-radius:13px;padding:10px;margin:10px 0;min-height:60px}
+.sg-chat-test-entry{background:#23323d;border-radius:10px;padding:9px 12px;margin:8px 0;font-size:14px;overflow-wrap:anywhere;white-space:pre-wrap}
+.sg-chat-test-entry p{margin:5px 0;font-size:14px}
+.sg-chat-test-entry small{color:#aabac3}
+.sg-chat-test-mine{background:#3d392c}
+.sg-chat-test textarea{width:100%;padding:12px;font:16px system-ui;color:white;background:#0d151a;border:1px solid #596d77;border-radius:11px;resize:vertical;min-height:72px}
+.sg-chat-test textarea:disabled{opacity:.5}
+.sg-chat-test button{width:100%;margin-top:8px}
+.sg-chat-test-choices button{width:auto;margin-top:0}
+</style>
 
 <style id="sg-request-toast-style">
 .sg-request-toast{position:fixed;z-index:110;bottom:calc(90px + env(safe-area-inset-bottom));left:12px;right:12px;max-width:640px;margin:0 auto;padding:13px;border:1px solid #c59b57;border-radius:13px;background:#1d2931f7;color:#ffe1a1;box-shadow:0 12px 38px #000c;font-size:13px}
@@ -403,6 +420,17 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
    <p id="sgReviewClientStatus" role="status" aria-live="polite">Aucun avis de test affiché.</p>
    <div id="sgReviewClientList"></div>
   </div>
+  <section class="sg-chat-test" aria-label="Messagerie fictive — client">
+  <h3>💬 Messagerie client–chauffeur (TEST)</h3>
+  <p>Aucune vraie course : discussion réservée aux deux participants d’une simulation après sélection du chauffeur. N'échangez pas de vraie adresse, téléphone, document ou donnée bancaire. Uniquement quand SAMGO est ouvert.</p>
+  <button class="alt" type="button" onclick="window.sgChatTest.refresh('client')">↻ Actualiser les conversations TEST</button>
+  <div id="sgChatClientChoices" class="sg-chat-test-choices" role="group" aria-label="Choisir une conversation de test"></div>
+  <div id="sgChatClientMessages" class="sg-chat-test-messages" role="log" aria-label="Messages de simulation" aria-live="polite"><p>Choisissez une simulation de test.</p></div>
+  <label for="sgChatClientInput">Message fictif (500 caractères max.)</label>
+  <textarea id="sgChatClientInput" maxlength="500" rows="2" disabled placeholder="Sélectionnez une simulation en cours"></textarea>
+  <button type="button" id="sgChatClientSend" onclick="window.sgChatTest.send('client')" disabled>Envoyer mon message TEST</button>
+  <p id="sgChatClientStatus" role="status" aria-live="polite">Messagerie de démonstration uniquement.</p>
+ </section>
  </div>
 </section>
   <header><div class="logo">SAM<b>GO</b> <span style="font-size:13px;letter-spacing:0;color:#aaa">V3</span></div><span aria-hidden="true" style="font-size:31px">🚗</span></header>
@@ -526,6 +554,17 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
     <p id="sgDriverSelectionsStatus" role="status" aria-live="polite">Actualisez pour consulter vos réponses.</p>
     <div id="sgDriverSelectionsList"></div>
   </div>
+  <section class="sg-chat-test" aria-label="Messagerie fictive — chauffeur">
+  <h3>💬 Messagerie client–chauffeur (TEST)</h3>
+  <p>Aucune vraie course : discussion réservée aux deux participants d’une simulation après sélection du chauffeur. N'échangez pas de vraie adresse, téléphone, document ou donnée bancaire. Uniquement quand SAMGO est ouvert.</p>
+  <button class="alt" type="button" onclick="window.sgChatTest.refresh('driver')">↻ Actualiser les conversations TEST</button>
+  <div id="sgChatDriverChoices" class="sg-chat-test-choices" role="group" aria-label="Choisir une conversation de test"></div>
+  <div id="sgChatDriverMessages" class="sg-chat-test-messages" role="log" aria-label="Messages de simulation" aria-live="polite"><p>Choisissez une simulation de test.</p></div>
+  <label for="sgChatDriverInput">Message fictif (500 caractères max.)</label>
+  <textarea id="sgChatDriverInput" maxlength="500" rows="2" disabled placeholder="Sélectionnez une simulation en cours"></textarea>
+  <button type="button" id="sgChatDriverSend" onclick="window.sgChatTest.send('driver')" disabled>Envoyer mon message TEST</button>
+  <p id="sgChatDriverStatus" role="status" aria-live="polite">Messagerie de démonstration uniquement.</p>
+ </section>
   <button type="button" class="alt" onclick="window.sgDemand.refresh()">↻ Actualiser les demandes</button>
   <div class="sg-demand-warning">🔒 Aucune annonce ne peut être acceptée en vrai : assurances, vérifications et lancement restent à finaliser.</div>
   <details id="sgLocalTestHistory" class="sg-local-test-history">
