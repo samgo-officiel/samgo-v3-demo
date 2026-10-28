@@ -30,8 +30,8 @@
  }
  function reset(){
   safeDelete(RADIUS);safeDelete(SORT);
-  const r=get('sgRadius'),s=get('sgDemandSort');
-  if(r)r.value='30';if(s)s.value='proximite';
+  const r=get('sgRadius'),s=get('sgDemandSort'),q=get('sgDemandTextFilter');
+  if(r)r.value='30';if(s)s.value='proximite';if(q)q.value='';
   const summary=get('sgRadiusValue');if(summary)summary.textContent='30 km';
   // Un changement volontaire de rayon peut relancer la recherche déjà active.
   window.sgDemand?.radiusChanged?.();
