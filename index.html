@@ -88,6 +88,10 @@
 .sg-my-data-panel p{font-size:12px;line-height:1.55;color:#cbd7d5}
 .sg-my-data-panel button{width:100%;min-height:48px}
 .sg-my-data-panel p[role="status"]{overflow-wrap:anywhere}
+#sgMyDataManual[hidden]{display:none!important}
+#sgMyDataManualJson{display:block;width:100%;box-sizing:border-box;padding:12px;
+ border-radius:9px;border:1px solid #a5b2ba;background:#0d1c22;color:#f1f4f4;
+ font:12px/1.45 ui-monospace,Menlo,monospace;resize:vertical;min-height:145px}
 
 /* Installation mobile facultative de la PWA de TEST ; accessible au clavier. */
 #sgMobileInstall{margin:21px 15px 17px;padding:18px;border:1px solid #766038;border-radius:18px;background:linear-gradient(145deg,#15242d,#292414);color:#f7e6c3;overflow-wrap:anywhere}
@@ -788,6 +792,11 @@ input,select,textarea{font-size:16px}
         <p>Récupérer une copie <strong>partielle</strong> de vos annonces, simulations, conversations et avis fictifs. Aucun mot de passe ni jeton de connexion n'est inclus. Cet export ne remplace pas une demande complète d'accès aux données.</p>
         <button type="button" class="alt" id="sgMyDataExport" onclick="window.sgMyDataTest.exportFile()">Exporter mes données TEST</button>
         <p id="sgMyDataStatus" role="status" aria-live="polite">Appuyez pour exporter votre copie privée.</p>
+        <div id="sgMyDataManual" hidden>
+          <label for="sgMyDataManualJson">Copie manuelle des données de test (privées)</label>
+          <textarea id="sgMyDataManualJson" rows="8" readonly aria-label="Données privées de test à sélectionner et copier"></textarea>
+          <p>Appuyez longuement pour sélectionner et copier le texte. Il sera effacé lorsque vous vous déconnecterez.</p>
+        </div>
       </section>
       <button type="button" class="alt" onclick="signOut()">Me déconnecter</button>
     </div>
