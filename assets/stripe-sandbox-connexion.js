@@ -57,6 +57,9 @@ async function refreshDriver(){
  if(!connected()||typeof driverSimAllowed==='undefined'||!driverSimAllowed)return;
  try{
   const data=await call('driver_status');
+  message('sgStripeConnectBadge',!data.linked?'💳 STRIPE CONNECT — NON LIÉ (TEST)':
+    data.ready_for_test?'💳 STRIPE CONNECT — COMPTE TEST ACTIF':
+    '💳 STRIPE CONNECT — COMPTE TEST LIÉ, VÉRIFICATION EN ATTENTE');
   message('sgStripeSandboxDriverStatus',
    !data.linked?'Aucun compte chauffeur Stripe de test encore associé. Vous pouvez commencer l’inscription ci-dessous.':
    data.ready_for_test?'Compte chauffeur de test actif. Les paiements restent simulés.':
