@@ -5,6 +5,8 @@ const $=id=>document.getElementById(id);
 let clientSequence=0,driverSequence=0,accountRevision=0;
 const pendingActions=new Map();
 const reviewDrafts=new Map(); // Brouillons conservés uniquement dans cette page, jamais en base.
+const clientReplyCounts=new Map();
+let replyBaselineUser=null;
 function signed(){return typeof sessionUser!=='undefined'&&!!sessionUser&&typeof client!=='undefined'&&!!client&&!!client.testChoices&&!!client.testReviews;}
 function driverOk(){return signed()&&typeof driverSimAllowed!=='undefined'&&driverSimAllowed;}
 function ownerIs(uid,revision,role='client'){
@@ -40,6 +42,31 @@ function filterClient(){
  }
  status('sgTripsFilterStatus',visible+' simulation'+(visible>1?'s':'')+
   ' affichée'+(visible>1?'s':'')+' sur '+total+' (TEST).');
+}
+function dismissReplies(){
+ const banner=$('sgClientReplyAlert');if(banner)banner.hidden=true;
+ const label=$('sgClientReplyAlertText');if(label)label.textContent='';
+}
+function updateReplyAlerts(ads,replies,uid){
+ if(replyBaselineUser!==uid){
+  replyBaselineUser=uid;clientReplyCounts.clear();dismissReplies();
+ }
+ let additions=0;
+ const known=new Set();
+ for(const ad of ads){
+  known.add(ad.id);
+  const count=replies.filter(x=>x.annonce_id===ad.id).length;
+  if(clientReplyCounts.has(ad.id))
+   additions+=Math.max(0,count-clientReplyCounts.get(ad.id));
+  clientReplyCounts.set(ad.id,count);
+ }
+ for(const key of clientReplyCounts.keys())if(!known.has(key))clientReplyCounts.delete(key);
+ if(additions>0){
+  const label=$('sgClientReplyAlertText');
+  if(label)label.textContent='🔔 '+additions+' nouvelle'+(additions>1?'s':'')+
+   ' réponse'+(additions>1?'s':'')+' de chauffeur(s) pour vos annonces fictives. Aucun trajet réel confirmé.';
+  const banner=$('sgClientReplyAlert');if(banner)banner.hidden=false;
+ }
 }
 function addText(box,tag,value,cls){
  const e=document.createElement(tag);e.textContent=value;if(cls)e.className=cls;box.append(e);return e;
@@ -191,6 +218,7 @@ async function refreshClient(){
   const ads=Array.isArray(a.data)?a.data:[],replies=Array.isArray(r.data)?r.data:[],
         choices=Array.isArray(c.data)?c.data:[],reviews=Array.isArray(v.data)?v.data:[],
         tracking=Array.isArray(t.data)?t.data:[],payments=Array.isArray(p.data)?p.data:[];
+  updateReplyAlerts(ads,replies,uid);
   // Garder les annonces à l'écran jusqu'au succès d'une lecture.
   list.replaceChildren();
   status('sgReviewClientStatus',ads.length?ads.length+' annonce(s) consultée(s) en version de test.':'Aucune annonce publiée pour ce compte.');
@@ -300,6 +328,7 @@ async function refreshDriver(){
 function clear(){
  accountRevision++;clientSequence++;driverSequence++;
  pendingActions.clear();reviewDrafts.clear();
+ replyBaselineUser=null;clientReplyCounts.clear();dismissReplies();
  for(const id of ['sgReviewClientList','sgDriverReviewsList','sgDriverSelectionsList']){
   const el=$(id);if(el)el.replaceChildren();
  }
@@ -309,5 +338,5 @@ if(window.sgDemand){
  const old=window.sgDemand.refreshClient;
  window.sgDemand.refreshClient=async function(){if(old)await old();await refreshClient();};
 }
-window.sgReviews={refreshClient,refreshDriver,filterClient,clear};
+window.sgReviews={refreshClient,refreshDriver,filterClient,dismissReplies,clear};
 })();
