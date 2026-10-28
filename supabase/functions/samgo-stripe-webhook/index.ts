@@ -70,7 +70,7 @@ Deno.serve(async(req:Request)=>{
   }).toString());
   const record=Array.isArray(rows)?rows[0]:null;
   if(!record || record.stripe_session_id!==session.id)return reply(200,"Unknown sandbox session ignored.");
-  if(record.statut==="paye_test")return reply(200,"Already recorded.");
+  if(record.statut!=="checkout_ouvert")return reply(200,"Already finalized.");
   if(record.commission_centimes!==0 || session.metadata?.client_id!==record.client_id ||
      session.metadata?.chauffeur_id!==record.chauffeur_id ||
      session.metadata?.choix_id!==choice ||
@@ -82,8 +82,11 @@ Deno.serve(async(req:Request)=>{
    next="paye_test";
   }else if(type==="checkout.session.expired")next="expire_test";
   else next="echec_test";
-  await query("samgo_stripe_paiements_test?choix_id=eq."+encodeURIComponent(choice)+"&stripe_session_id=eq."+encodeURIComponent(session.id),
+  // Cette condition atomique bloque les webhooks en double ou arrivés en retard.
+  const updated=await query("samgo_stripe_paiements_test?choix_id=eq."+encodeURIComponent(choice)+"&stripe_session_id=eq."+encodeURIComponent(session.id)+"&statut=eq.checkout_ouvert",
     "PATCH",{statut:next,modifie_le:new Date().toISOString()});
+  if(!Array.isArray(updated) || updated.length===0)
+    return reply(200,"Already finalized by another event.");
   return reply(200,"Stripe sandbox event recorded.");
  }catch{
   return reply(500,"Temporary server problem. Stripe may retry.");
