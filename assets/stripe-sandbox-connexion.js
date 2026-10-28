@@ -7,11 +7,12 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const ENDPOINT='https://tgwdycgwgfisuskxwkvk.supabase.co/functions/v1/samgo-stripe-sandbox';
-let lastStatus=null,checking=false;
+let lastStatus=null,checking=false,revision=0;
 function connected(){
  return typeof sessionUser!=='undefined'&&!!sessionUser&&typeof client!=='undefined'&&!!client
    &&client.auth&&typeof client.auth.getAccessToken==='function';
 }
+function sameUser(uid){return connected()&&sessionUser.id===uid;}
 function message(id,value){const node=$(id);if(node)node.textContent=value;}
 function shared(text){
  message('sgStripeSandboxClientStatus',text);
@@ -37,12 +38,14 @@ async function call(action,extra={}){
 async function refresh(){
  if(checking)return;
  checking=true;
+ const userId=connected()?sessionUser.id:null,my=++revision;
  if(!connected()){
   lastStatus=null;shared('Connectez-vous pour consulter la connexion Stripe de test.');
   checking=false;return;
  }
  try{
   const data=await call('status');
+  if(my!==revision||!sameUser(userId))return;
   lastStatus=data;
   if(!data.configured)shared('Stripe TEST : la connexion du compte est confirmée, mais la clé Stripe de test et son activation côté Supabase restent à configurer. Aucun paiement possible.');
   else {
@@ -50,13 +53,18 @@ async function refresh(){
    message('sgStripeSandboxDriverStatus','Stripe SANDBOX disponible. Le chauffeur doit terminer son inscription Stripe Connect de test avant un paiement fictif.');
    if(typeof driverSimAllowed!=='undefined'&&driverSimAllowed)await refreshDriver();
   }
- }catch(e){shared('État Stripe indisponible : '+(e.message||'réessayez.'));}
- finally{checking=false;}
+ }catch(e){
+  if(my===revision&&(userId===null||sameUser(userId)))
+    shared('État Stripe indisponible : '+(e.message||'réessayez.'));
+ }
+ finally{if(my===revision)checking=false;}
 }
 async function refreshDriver(){
  if(!connected()||typeof driverSimAllowed==='undefined'||!driverSimAllowed)return;
+ const userId=sessionUser.id,my=revision;
  try{
   const data=await call('driver_status');
+  if(my!==revision||!sameUser(userId))return;
   const linked=data.linked===true;
   const ready=linked && data.ready_for_test===true;
   const correction=linked && data.verification_state==='correction_required';
@@ -81,11 +89,14 @@ async function refreshDriver(){
    'Inscription Stripe de TEST incomplète. Utilisez le bouton ci-dessus pour reprendre les étapes.';
   message('sgStripeSandboxDriverStatus',status);
  }catch(e){
-  message('sgStripeConnectBadge','💳 STRIPE CONNECT — STATUT TEST INDISPONIBLE');
-  message('sgStripeSandboxDriverStatus','Statut chauffeur Stripe : '+(e.message||'réessayez.'));
+  if(my===revision&&sameUser(userId)){
+   message('sgStripeConnectBadge','💳 STRIPE CONNECT — STATUT TEST INDISPONIBLE');
+   message('sgStripeSandboxDriverStatus','Statut chauffeur Stripe : '+(e.message||'réessayez.'));
+  }
  }
 }
 async function onboardDriver(){
+ const userId=connected()?sessionUser.id:null,my=revision;
  const btn=$('sgStripeSandboxDriverButton');
  if(btn)btn.disabled=true;
  message('sgStripeSandboxDriverStatus','Préparation de l’inscription chauffeur Stripe Connect en TEST…');
@@ -93,24 +104,31 @@ async function onboardDriver(){
   if(typeof driverSimAllowed==='undefined'||!driverSimAllowed)
    throw new Error('Votre compte chauffeur doit d’abord être approuvé dans SAMGO en démo.');
   const data=await call('onboard_driver');
+  if(my!==revision||!sameUser(userId))return;
   if(!data.sandbox||typeof data.url!=='string'||!data.url.startsWith('https://connect.stripe.com/'))
    throw new Error('Lien Stripe sécurisé non reçu.');
   window.location.assign(data.url);
  }catch(e){
-  message('sgStripeSandboxDriverStatus','Impossible de démarrer : '+(e.message||'réessayez.'));
+  if(my===revision&&(userId===null||sameUser(userId)))
+   message('sgStripeSandboxDriverStatus','Impossible de démarrer : '+(e.message||'réessayez.'));
  }finally{if(btn)btn.disabled=false;}
 }
 async function checkout(choiceId){
+ const userId=connected()?sessionUser.id:null,my=revision;
  const id=String(choiceId||'');
  if(!/^[a-f0-9-]{36}$/i.test(id)){message('sgStripeSandboxClientStatus','Réservation de test invalide.');return;}
  if(!window.confirm('Ouvrir Stripe en environnement TEST pour une course fictive ? Aucun vrai paiement et aucune vraie course.'))return;
  message('sgStripeSandboxClientStatus','Vérification du chauffeur et préparation du paiement Stripe TEST…');
  try{
   const data=await call('checkout',{choix_id:id});
+  if(my!==revision||!sameUser(userId))return;
   if(!data.sandbox||typeof data.url!=='string'||!data.url.startsWith('https://checkout.stripe.com/'))
    throw new Error('Lien de paiement Stripe de test non vérifié.');
   window.location.assign(data.url);
- }catch(e){message('sgStripeSandboxClientStatus','Paiement de test indisponible : '+(e.message||'réessayez.'));}
+ }catch(e){
+  if(my===revision&&(userId===null||sameUser(userId)))
+   message('sgStripeSandboxClientStatus','Paiement de test indisponible : '+(e.message||'réessayez.'));
+ }
 }
 function showReturnStatus(){
  const banner=$('sgStripeReturnStatus');
@@ -129,8 +147,17 @@ function showReturnStatus(){
   banner.hidden=false;
  }
 }
+function reset(){
+ // Sur déconnexion ou changement d'utilisateur : aucun statut de l'ancien
+ // compte ni lien Stripe tardif ne doit s'afficher / ouvrir une page.
+ revision++;checking=false;lastStatus=null;
+ message('sgStripeConnectBadge','💳 STRIPE CONNECT — STATUT TEST À VÉRIFIER');
+ shared('Connectez-vous pour consulter le statut Stripe TEST.');
+ const btn=$('sgStripeSandboxDriverButton');
+ if(btn)btn.disabled=false;
+}
 showReturnStatus();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>refresh(),{once:true});
 else refresh();
-window.sgStripeSandbox={refresh,refreshDriver,onboardDriver,checkout};
+window.sgStripeSandbox={refresh,refreshDriver,onboardDriver,checkout,reset};
 })();
