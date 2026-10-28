@@ -202,3 +202,16 @@ Les changements ci-dessous sont des améliorations de **démonstration**. Ce ne 
 - Android : APK DEBUG compilée et manifeste inspecté sur GitHub ; essai d'émulateur encore à suivre après correction du mode de capture d'écran.
 - iOS : compilation sur simulateur et lancement du programme dans un simulateur iPhone réussis ; capture d'écran archivée. **Aucune IPA distribuable** ni installation sur iPhone réel.
 - Le GPS réel sur appareils, les confirmations e-mail et le comportement en conditions réseau réelles restent à tester.
+
+
+## Suite application SAMGO TEST — 28 octobre 2026 (parcours mobile et GPS natif)
+
+- **Mes courses :** filtre local de simulations selon état (attente, chauffeur choisi, terminée, annulée, expirée), sans requête réseau supplémentaire et avec compteur des cartes affichées.
+- **Réponses chauffeurs :** bannière discrète si de nouveaux chauffeurs répondent après la première consultation ; uniquement lors des actualisations visibles, sans notification push ni GPS, réinitialisée au changement de compte ou à la déconnexion.
+- **Connexion :** bouton afficher/masquer le mot de passe, masqué par défaut et après changement de mode de connexion, sans stocker la valeur.
+- **GPS :** une mesure annoncée comme imprécise de plus de 5 000 mètres empêche la recherche chauffeur et la publication client ; message de correction clair. Le client voit la durée indicative restant avant l'expiration d'une annonce fictive.
+- **Application native TEST v0.1.2 :** intégration de `@capacitor/geolocation@8.2.4` pour Android et iPhone. Le GPS natif n'est appelé que depuis un clic volontaire dans Missions ou Publier ; le GPS web reste disponible pour la PWA. Aucun suivi ni permission GPS en arrière-plan.
+- **iOS :** libellés Info.plist attendus par Capacitor Geolocation 8, y compris `NSLocationAlwaysAndWhenInUseUsageDescription` exigé par le plugin ; SAMGO ne lance ni demande d'accès permanent ni `watchPosition`. Ces libellés ne prouvent pas que les permissions fonctionnent sur un appareil réel.
+- **Diagnostic appareil :** distingue module GPS natif et navigateur sans demander de permission ni position, montre un message si la compilation ne fournit pas le plugin.
+- **Automatisation :** 154 tests Node réussis sur 154 pour la dernière validation `40766577326` ; compilations Android/iOS 0.1.2 demandées, succès natif et essais GPS sur téléphones réels **non encore confirmés** lors de ce suivi.
+- **Blocages conservés :** deux vrais téléphones, parcours e-mail, habilitations et assurances, tests de courses en conditions réelles, signatures de distribution et validation juridique/paiements. Aucun de ces éléments n'est considéré comme terminé.
