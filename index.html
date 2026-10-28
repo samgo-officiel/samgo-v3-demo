@@ -1070,11 +1070,11 @@ input,select,textarea{font-size:16px}
 <script>
 'use strict';
 // Clé publishable : publique et prévue pour être placée côté navigateur. Ne jamais insérer service_role / secret ici.
-const URL='https://tgwdycgwgfisuskxwkvk.supabase.co';
+const SUPABASE_URL='https://tgwdycgwgfisuskxwkvk.supabase.co';
 const PUBLISHABLE_KEY='sb_publishable__7iZjXTqZLuuNQje8HF5wA_B6gKLoI0';
 const $=id=>document.getElementById(id);
 let space='raccompagner',authMode='signup',sessionUser=null,client=null,busy=false;
-try { if(window.samgoCreateClient) client=window.samgoCreateClient(URL,PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}); }
+try { if(window.samgoCreateClient) client=window.samgoCreateClient(SUPABASE_URL,PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}}); }
 catch(err){ console.error('Connexion Supabase indisponible',err); }
 function setStatus(id,text,type='') { const e=$(id);e.textContent=text;e.className='status'+(type?' '+type:''); }
 
