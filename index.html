@@ -68,6 +68,17 @@
 .sg-chat-test textarea:disabled{opacity:.5}
 .sg-chat-test button{width:100%;margin-top:8px}
 .sg-chat-test-choices button{width:auto;margin-top:0}
+
+/* Installation mobile facultative de la PWA de TEST ; accessible au clavier. */
+#sgMobileInstall{margin:21px 15px 17px;padding:18px;border:1px solid #766038;border-radius:18px;background:linear-gradient(145deg,#15242d,#292414);color:#f7e6c3;overflow-wrap:anywhere}
+#sgMobileInstall[hidden],#sgMobileInstallInstructions[hidden]{display:none!important}
+#sgMobileInstall h2{margin:0 0 8px;font-size:19px}
+#sgMobileInstall p{font-size:13px;line-height:1.5;margin:8px 0}
+#sgMobileInstall button{margin:6px 0 0;min-height:48px;width:100%;background:#e9bc58;color:#1c1811;font-size:15px}
+#sgMobileInstallInstructions{margin:11px 0 0;background:#121d25;border-radius:12px;padding:10px 12px}
+#sgMobileInstallInstructions ol{margin:7px 0 7px;padding-left:22px;font-size:13px;line-height:1.6}
+#sgMobileInstallStatus{color:#efcc83}
+@media(prefers-reduced-motion:reduce){#sgMobileInstall *{scroll-behavior:auto!important;transition:none!important}}
 </style>
 
 <style id="sg-request-toast-style">
@@ -380,6 +391,13 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   <div class="sg-step"><div class="sg-step-top"><span class="sg-step-n">2</span><span class="sg-step-icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" ><path d="m5 10 2-5h10l2 5M4 17v3M20 17v3M3 10h18v8H3z"/><circle cx="7" cy="15" r="1"/><circle cx="17" cy="15" r="1"/></svg></span></div><strong>Un chauffeur arrive</strong><p>Un chauffeur SAMGO vous rejoint sur place.</p></div>
   <div class="sg-step"><div class="sg-step-top"><span class="sg-step-n">3</span><span class="sg-step-icon"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" ><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span></div><strong>Rentrez sereinement</strong><p>Le chauffeur conduit votre propre voiture.</p></div>
  </div>
+<section id="sgMobileInstall" aria-label="Installer la version application web de SAMGO" hidden>
+  <h2>📲 SAMGO sur votre téléphone — TEST</h2>
+  <p>Ajoutez la version de démonstration à votre écran d’accueil pour l’ouvrir comme une application. <strong>Ce n’est pas encore une application native ni un service disponible.</strong></p>
+  <button type="button" onclick="window.sgInstallTest.install()">Installer SAMGO (version TEST)</button>
+  <div id="sgMobileInstallInstructions" hidden></div>
+  <p id="sgMobileInstallStatus" role="status" aria-live="polite">Aucune course réelle disponible.</p>
+</section>
  <p class="sg-bottom-info">SAMGO est un prototype. Service non disponible. Avant son lancement, le cadre juridique, les assurances et les chauffeurs devront être validés.</p>
 </section>
 <main class="app"><div class="sg-back"><button type="button" onclick="sgGo('home')">← Retour à l'accueil</button></div><section id="sg-trips-note" class="panel sg-trip-note sg-demo-panel">
@@ -1349,6 +1367,7 @@ function sgGo(view){
 <script src="assets/stripe-connect-demo.js"></script>
 <script src="assets/stripe-sandbox-connexion.js?v=20261028-verification"></script>
 <script src="assets/messagerie-test.js?v=20261028"></script>
+<script src="assets/installation-mobile-test.js?v=20261028"></script>
 <script>
 /* Installation optionnelle de l'app web. Aucun abonnement push n'est lancé ici. */
 window.addEventListener('load',function(){
