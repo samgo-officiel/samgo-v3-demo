@@ -154,16 +154,22 @@ async function handle(action:string,body:any,user:{id:string;email?:string;token
     await requireApprovedDriver(user);
     let account=await mappingFor(user.id);
     if(!account){
+      // Comptes Connect nouvelle configuration : contrôleur explicite et onboarding hébergé.
+      // Identique au compte Express sandbox déjà relié, sans utiliser l'ancien "type: express".
       const created=await stripe("accounts","POST",{
-        type:"express",
         country:"FR",
+        "controller[stripe_dashboard][type]":"express",
+        "controller[fees][payer]":"application",
+        "controller[losses][payments]":"application",
+        "controller[requirement_collection]":"stripe",
         "capabilities[card_payments][requested]":"true",
         "capabilities[transfers][requested]":"true",
         "metadata[samgo_utilisateur_test]":user.id,
         "business_profile[product_description]":"SAMGO : chauffeur indépendant, parcours fictif de test."
-      },"samgo_driver_sandbox_v1_"+user.id);
-      if(!created.id || !/^acct_[A-Za-z0-9]+$/.test(created.id))
-        throw new Error("Création du compte de test Stripe non confirmée.");
+      },"samgo_driver_sandbox_controller_v2_"+user.id);
+      if(!created.id || !/^acct_[A-Za-z0-9]+$/.test(created.id) ||
+         created.country!=="FR" || created.controller?.stripe_dashboard?.type!=="express")
+        throw new Error("Création du compte de test Stripe Express non confirmée.");
       account=created.id;
       await apiCall("samgo_stripe_chauffeurs_test","POST",serviceKey,serviceKey,
         {utilisateur_id:user.id,stripe_compte_id:account},
