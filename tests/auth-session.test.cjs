@@ -96,3 +96,10 @@ test('une réponse refresh tardive ne reconnecte pas après déconnexion',async(
   assert.equal(token,null);
   assert.equal(app.entries.has('samgo_v3_test_session'),false);
 });
+
+test('un fragment de jeton incomplet est efface sans creer de session',()=>{
+ const app=boot(async()=>response(200,{}),null,
+   '#access_token=fake-access&refresh_token=fake-refresh&token_type=inconnu');
+ assert.equal(app.entries.has('samgo_v3_test_session'),false);
+ assert.equal(app.callbackUrl,'/samgo-v3-demo/');
+});
