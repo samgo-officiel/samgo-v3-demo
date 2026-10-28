@@ -32,6 +32,7 @@
   const input=$(cfg.input),send=$(cfg.send);
   if(input){input.disabled=!allowed;input.placeholder=allowed?'Écrire un message de TEST (500 caractères max)':'Choisissez une simulation en cours pour écrire';}
   if(send)send.disabled=!allowed||st.sending;
+  window.sgQuickReplyTest?.setEnabled?.(role,allowed&&!st.sending);
  }
  async function refresh(role){
   if(!view[role])return;
