@@ -70,6 +70,21 @@
     <select id="ticketsFilter"><option value="all">Toutes les demandes</option><option value="critique">🚨 Critiques</option><option value="important">⚠️ Importantes</option><option value="nouveau">Nouvelles</option><option value="en_cours">En cours</option><option value="resolu">Résolues</option></select>
     <div id="tickets" aria-live="polite"></div>
   </section>
+  <section id="sgAgentEscalationsPanel" class="panel hidden">
+    <div class="row space"><div><h2>🚨 Agent — 3e avertissement</h2><p class="small" id="sgAgentEscCount">Aucun dossier chargé.</p></div><button type="button" class="alt" onclick="window.sgAdminAgentsTest.load()">↻ Actualiser</button></div>
+    <p class="notice">Uniquement des signalements examinés et validés. Aucun compte n’est suspendu automatiquement. Une accusation grave doit être examinée immédiatement.</p>
+    <div id="sgAgentEscalations"></div>
+  </section>
+  <section id="sgAgentReportsPanel" class="panel hidden">
+    <div class="row space"><div><h2>🔒 Signalements confidentiels</h2><p class="small" id="sgAgentReportCount">Aucun dossier chargé.</p></div><button type="button" class="alt" onclick="window.sgAdminAgentsTest.load()">↻ Actualiser</button></div>
+    <p class="notice">Un signalement ne vaut pas preuve. Le plaignant n’est jamais identifié dans les notifications envoyées à la personne concernée.</p>
+    <div id="sgAgentReports"></div>
+  </section>
+  <section id="sgAgentInvoicesPanel" class="panel hidden">
+    <div class="row space"><div><h2>🧾 Agent facturation — brouillons TEST</h2><p class="small" id="sgAgentInvoiceCount">Aucun brouillon chargé.</p></div><button type="button" class="alt" onclick="window.sgAdminAgentsTest.load()">↻ Actualiser</button></div>
+    <div class="notice">TVA, facture définitive et envoi e-mail bloqués tant que le statut fiscal, l'émetteur, la numérotation, le mandat et la procédure de facturation ne sont pas validés.</div>
+    <div id="sgAgentInvoices"></div>
+  </section>
   <div id="feedback" class="notice" role="status" aria-live="polite">Préparation de l'espace administrateur…</div>
   <p class="small">SAMGO — Prototype non commercial. Les autorisations de lecture et de modification sont également contrôlées côté serveur par Supabase.</p>
 </main>
@@ -111,6 +126,8 @@ function renderAccess(){
   $('loginPanel').classList.toggle('hidden',!!user);
   $('loggedPanel').classList.toggle('hidden',!user);
   $('adminPanel').classList.toggle('hidden',!isAdmin);$('ticketsPanel').classList.toggle('hidden',!isAdmin);
+  for(const id of ['sgAgentEscalationsPanel','sgAgentReportsPanel','sgAgentInvoicesPanel'])$(id).classList.toggle('hidden',!isAdmin);
+  if(!isAdmin)window.sgAdminAgentsTest?.clear();
   $('identity').textContent=user?(user.email||'Compte connecté'):'';
   $('permissionInfo').textContent=user?(isAdmin?'Accès administrateur confirmé.':'Ce compte n’a pas le rôle administrateur. Utilise un compte autorisé.') : '';
 }
@@ -124,7 +141,7 @@ async function initialize(){
    isAdmin=Array.isArray(rows)&&rows.length===1&&rows[0].role==='admin';
    renderAccess();
    if(!isAdmin){notice('Accès refusé : seules les personnes ayant le rôle administrateur peuvent consulter les candidatures.','error');return}
-   await Promise.all([loadApplications(),loadTickets()]);
+   await Promise.all([loadApplications(),loadTickets(),window.sgAdminAgentsTest?.load()]);
  }catch(error){if(error.status===401||error.status===403){saveSession(null);user=null;isAdmin=false}renderAccess();notice('Impossible de vérifier cet accès : '+error.message,'error')}
  finally{busyUI(false)}
 }
@@ -248,5 +265,6 @@ $('filter').addEventListener('change',renderApplications);$('reloadTicketsBtn').
 initialize();
 })();
 </script>
+<script src="assets/admin-agents-test.js?v=20261028-agent1"></script>
 </body>
 </html>
