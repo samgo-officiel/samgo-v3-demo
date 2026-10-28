@@ -70,3 +70,21 @@ Cette recette ne certifie **ni l'assurance, ni la vérification réelle des perm
 - [ ] Tester le rafraîchissement du suivi client après une étape du chauffeur sur un second appareil (maximum 45 secondes, application visible).
 - [ ] Installer l'application web sur écran d'accueil iOS/Android et contrôler la nouvelle icône PNG.
 - [ ] Avec Node.js 22 ou version compatible sur un clone de ce dépôt, exécuter `node --test tests/auth-session.test.cjs`. La présence du script ne vaut pas exécution.
+
+
+## GPS — vérifications téléphone (préparées pour ce soir)
+
+Les fonctions de localisation ci-dessous utilisent le GPS seulement après appui volontaire et sur la **démonstration**, jamais pour une mission réelle.
+
+1. Sur le compte chauffeur de test approuvé : **Chauffeur → Missions → Activer / actualiser mon GPS**. Accorder la position au navigateur et vérifier le message « GPS actif » et la précision annoncée (si elle est fournie).
+2. Passer le rayon **5 → 10 → 30 → 50 km**. Le libellé et la recherche doivent suivre le changement sans redemander l'autorisation GPS.
+3. Appuyer sur **Arrêter la recherche GPS**. Vérifier que les demandes et alertes de proximité sont effacées de cette vue et que les vérifications automatiques s'arrêtent. L'autorisation déjà accordée dans les paramètres du téléphone n'est pas révoquée par ce bouton.
+4. Réessayer avec le **GPS refusé** : le site doit expliquer comment autoriser la localisation via les paramètres du navigateur/téléphone, sans planter.
+5. Réessayer avec **Internet désactivé** : la recherche doit montrer un message d'erreur et ne pas annoncer de nouvelles demandes comme si elles avaient été chargées.
+6. Tester **déconnexion puis changement de compte** et éventuellement désactivation juste après le clic GPS : une ancienne réponse GPS ou serveur ne doit jamais réafficher les données de l'ancien compte.
+7. Après plus de **15 minutes** sans nouvelle demande GPS volontaire, la recherche arrête l'utilisation de la position précédente et demande d'actualiser volontairement.
+8. Depuis le compte client de test, publier une annonce avec **noms de lieux fictifs** seulement et confirmer que le chauffeur proche ne voit qu'une position approximative, jamais l'adresse exacte.
+
+**Limite actuelle :** recherche géographique et distance à vol d'oiseau sur des annonces fictives ; **pas encore de carte routière, géocodage d'adresse, itinéraire voiture, temps d'arrivée (ETA) ni distance routière**. Aucun fournisseur cartographique tiers ou abonnement payant n'a été ajouté.
+
+**Régression JavaScript simulée (contrôle de code du 28 octobre 2026)** : 4 scénarios réussis — résultat de GPS après arrêt ignoré, précision de mesure affichée, rayon changé déclenche une nouvelle requête, changement de compte pendant la permission GPS ignoré. Ces tests ne remplacent pas un navigateur et un vrai téléphone.
