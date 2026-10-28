@@ -958,7 +958,32 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
         }catch(error){return {data:[],error};}
       }
     };
-    return {auth,from,testRequests,testReplies,testChoices,testReviews,testTracking,testPayments,async ping(){return api('/auth/v1/settings','GET');}};
+
+    const testMessages={
+      async list(choixId){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Reconnectez-vous pour consulter le chat de test.');
+          if(!/^[a-f0-9-]{36}$/i.test(choixId))throw new Error('Conversation fictive invalide.');
+          const params=new URLSearchParams({select:'id,choix_id,auteur_id,contenu,cree_le',
+            choix_id:'eq.'+choixId,order:'cree_le.desc',limit:'40'});
+          const rows=await api('/rest/v1/messages_course_test?'+params,'GET',undefined,token);
+          return {data:Array.isArray(rows)?rows.reverse():[],error:null};
+        }catch(error){return {data:[],error};}
+      },
+      async create(choixId,auteurId,contenu){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Reconnectez-vous pour envoyer ce message de test.');
+          const text=String(contenu||'').trim();
+          if(text.length<1||text.length>500)throw new Error('Un message fictif doit avoir entre 1 et 500 caractères.');
+          await api('/rest/v1/messages_course_test','POST',
+           {choix_id:choixId,auteur_id:auteurId,contenu:text},token,{'Prefer':'return=minimal'});
+          return {error:null};
+        }catch(error){return {error};}
+      }
+    };
+    return {auth,from,testRequests,testReplies,testChoices,testReviews,testTracking,testPayments,testMessages,async ping(){return api('/auth/v1/settings','GET');}};
   }
   window.samgoCreateClient = makeClient;
 })();
@@ -1150,6 +1175,7 @@ function driverTab(tab){
  if(tab==='missions'&&window.sgDemand)window.sgDemand.render();
  if(!['overview','missions','gains','profil'].includes(tab))return;
  if((tab==='profil'||tab==='missions')&&window.sgReviews)window.sgReviews.refreshDriver();
+ if(tab==='missions'&&window.sgChatTest)window.sgChatTest.refresh('driver');
  if(tab==='gains'&&window.sgStripeSandbox)window.sgStripeSandbox.refresh();
  sgMarkCurrentNav('driver');
  document.querySelectorAll('[data-dpane]').forEach(el=>el.classList.toggle('hidden',el.dataset.dpane!==tab));
@@ -1300,9 +1326,10 @@ function sgGo(view){
 </script>
 <script src="assets/demandes-geoloc-test.js"></script>
 <script src="assets/avis-chauffeurs-test.js"></script>
-<script src="assets/actualisation-test.js"></script>
+<script src="assets/actualisation-test.js?v=chat-2810"></script>
 <script src="assets/stripe-connect-demo.js"></script>
 <script src="assets/stripe-sandbox-connexion.js?v=20261028-verification"></script>
+<script src="assets/messagerie-test.js?v=20261028"></script>
 <script>
 /* Installation optionnelle de l'app web. Aucun abonnement push n'est lancé ici. */
 window.addEventListener('load',function(){
