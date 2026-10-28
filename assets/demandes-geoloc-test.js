@@ -41,10 +41,12 @@ function render(){
  const radius=Number($('sgRadius').value)||30;
  status('sgRadiusValue',radius+' km');
  if(!state.pos){
+  window.sgProximityMap?.clear();
   status('sgNearbyStatus','Activez votre localisation pour chercher des demandes de test.');
   return;
  }
  if(!approved()){
+  window.sgProximityMap?.clear();
   status('sgNearbyStatus','Connectez-vous avec un compte chauffeur approuvé (test).');
   return;
  }
@@ -53,6 +55,7 @@ function render(){
   return r.client_id!==sessionUser.id&&Number.isFinite(lat)&&Number.isFinite(lon)&&nearKm(state.pos.lat,state.pos.lng,lat,lon)<=radius;
  }).map(r=>({...r,approach:nearKm(state.pos.lat,state.pos.lng,Number(r.latitude_approx),Number(r.longitude_approx))})).sort((a,b)=>a.approach-b.approach);
  status('sgNearbyStatus',filtered.length+' demande'+(filtered.length===1?'':'s')+' de test dans un rayon de '+radius+' km. Distance approximative.');
+ window.sgProximityMap?.render({center:state.pos,requests:filtered,radius});
  for(const req of filtered){
   const card=document.createElement('article');card.className='sg-nearby-card';
   const head=document.createElement('div');head.className='sg-nearby-top';
@@ -280,6 +283,7 @@ function stop(){
  state.fetchKey=null;state.gpsPending=false;state.lastUser=null;
  if(state.poll){clearInterval(state.poll);state.poll=null;}
  state.pos=null;state.rows=[];state.replies=[];state.notify=false;state.firstLoad=true;state.seen.clear();state.clientLoad++;
+ window.sgProximityMap?.clear();
  const b=$('sgNotifyToggle');if(b){b.textContent='Activer les alertes pendant la visite';b.setAttribute('aria-pressed','false');}
  const clientAds=$('sgMyAdsList');if(clientAds)clientAds.replaceChildren();
  status('sgMyAdsStatus','Connectez-vous pour voir les annonces publiées.');
