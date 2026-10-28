@@ -71,11 +71,25 @@ async function stripe(path: string, method: "GET"|"POST", data?: Record<string,s
   });
   const json = await response.json().catch(()=>({}));
   if(!response.ok) {
-    const code=String(json?.error?.code||"");
-    // Pas de détail sensible du fournisseur dans le navigateur.
-    if(code === "account_invalid" || code === "platform_account_required")
-      throw new Error("Connect doit être activé dans le compte Stripe de test.");
-    throw new Error("Stripe sandbox a refusé l'opération (" + response.status + "). Vérifiez la configuration dans Stripe.");
+    // Diagnostic SANS clés API, sans données bancaires et sans corps brut Stripe.
+    // Important : afficher le message de validation précis plutôt que "erreur 400".
+    const err=json && typeof json.error==="object" ? json.error : {};
+    const code=typeof err.code==="string" && /^[a-z0-9_]{1,80}$/i.test(err.code) ? err.code : "non_precise";
+    const param=typeof err.param==="string" && /^[a-z0-9_.\[\]]{1,100}$/i.test(err.param) ? err.param : "";
+    const requestId=String(response.headers.get("request-id")||"").slice(0,100);
+    const reason=typeof err.message==="string" ? err.message
+      .replace(/(?:sk|rk)_(?:test|live)_[a-zA-Z0-9]+|whsec_[a-zA-Z0-9]+/g,"[secret masque]")
+      .replace(/[\w.+-]+@[\w.-]+\.[a-zA-Z]{2,}/g,"[email masque]")
+      .replace(/(?:https?:\/\/)[^\s]+/gi,"[lien masque]").slice(0,260) : "";
+    console.warn("SAMGO Stripe SANDBOX refusal",JSON.stringify({
+      operation:path==="accounts"?"creation_compte":path==="account_links"?"lien_inscription":"autre",
+      http_status:response.status,code,param,request_id:requestId
+    }));
+    if(code==="account_invalid"||code==="platform_account_required")
+      throw new Error("Stripe TEST : activez Connect sur le compte Stripe de test ("+code+").");
+    const details=[code!=="non_precise"?"code "+code:"",param?"champ "+param:"",reason].filter(Boolean).join(" — ");
+    throw new Error("Stripe TEST : refus "+response.status+(details?" — "+details:"")+
+      ". Aucune operation financiere reelle.");
   }
   if(json?.livemode === true)throw new Error("Compte Stripe réel détecté : opération bloquée.");
   return json;
