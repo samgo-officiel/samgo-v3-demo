@@ -40,8 +40,11 @@ html=replaceOnce(html,
  'if (destination && destination.href !== '+JSON.stringify(WEB_ACCOUNT_CALLBACK)+')',
  'liste blanche d\'URL de confirmation native');
 html=replaceOnce(html,'</head>',
- '<style id="sg-native-only">#sgMobileInstall{display:none!important}</style></head>',
+ '<style id="sg-native-only">#sgMobileInstall{display:none!important}#sgNativeLinkStatus:empty{display:none!important}#sgNativeLinkStatus{position:fixed;z-index:52000;left:12px;right:12px;top:calc(16px + env(safe-area-inset-top));padding:12px;border:1px solid #a9874a;border-radius:12px;background:#302717;color:#ffdf9b;font-size:13px;text-align:center}</style></head>',
  'masquer installation PWA native');
+html=replaceOnce(html,'<body class="sg-home-active">',
+ '<body class="sg-home-active"><p id="sgNativeLinkStatus" role="status" aria-live="polite"></p>',
+ 'afficher erreurs navigateur externe sur native');
 html=replaceOnce(html,'<h2 id="accountTitle">Créer mon compte</h2>',
  '<h2 id="accountTitle">Créer mon compte</h2><p class="notice" id="sgNativeAuthNotice">Dans SAMGO TEST sur téléphone, les e-mails de confirmation et de récupération ouvrent le site SAMGO sécurisé. Terminez la validation sur le site, puis revenez vous connecter ici.</p>',
  'aide au compte sur application native');
