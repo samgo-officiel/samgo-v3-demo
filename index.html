@@ -792,7 +792,7 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
     }
 
     const testRequests={
-      async list(){
+      async list(position,radiusKm=30){
         try{
           const token=await accessToken();
           if(!token)throw new Error('Connectez-vous pour consulter les annonces.');
@@ -801,6 +801,21 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
             statut:'eq.test_en_attente',expire_le:'gt.'+new Date().toISOString(),
             order:'cree_le.desc',limit:'100'
           });
+          // Filtrer côté base une zone géographique bornée avant le calcul exact côté navigateur.
+          // Marges car les positions CLIENT sont arrondies à 0,01°.
+          if(position&&Number.isFinite(position.lat)&&Number.isFinite(position.lng)){
+            const lat=Math.max(-90,Math.min(90,Number(position.lat)));
+            const lng=Number(position.lng);
+            const radius=Math.max(5,Math.min(50,Number(radiusKm)||30));
+            const latDelta=radius/110.574+0.025;
+            const lonDelta=radius/(111.32*Math.max(0.08,Math.abs(Math.cos(lat*Math.PI/180))))+0.025;
+            query.set('latitude_approx','gte.'+Math.max(-90,lat-latDelta).toFixed(3));
+            query.append('latitude_approx','lte.'+Math.min(90,lat+latDelta).toFixed(3));
+            if(lng-lonDelta>=-180&&lng+lonDelta<=180){
+              query.set('longitude_approx','gte.'+(lng-lonDelta).toFixed(3));
+              query.append('longitude_approx','lte.'+(lng+lonDelta).toFixed(3));
+            }
+          }
           const data=await api('/rest/v1/annonces_raccompagnement_test?'+query.toString(),'GET',undefined,token);
           return {data:Array.isArray(data)?data:[],error:null};
         }catch(error){return {data:[],error};}
@@ -1258,7 +1273,7 @@ async function refreshCandidate(){
  }
 }
 async function applyDriver(){if(!client||!sessionUser)return setStatus('applyStatus','Connecte-toi pour envoyer une candidature.','error');const name=$('nomAffiche').value.trim();if(name.length<2||name.length>100)return setStatus('applyStatus','Entre un nom d’affichage de 2 à 100 caractères.','error');if(!$('permisDeclare').checked)return setStatus('applyStatus','Confirme que tu as compris les conditions de validation.','error');$('applyBtn').disabled=true;setStatus('applyStatus','Envoi en cours…');try{const {error}=await client.from('candidatures_chauffeur').insert({utilisateur_id:sessionUser.id,nom_affiche:name});if(error)throw error;setStatus('applyStatus','Candidature de test enregistrée ! Statut : en attente. Tu ne peux pas encore effectuer de courses.','success');await refreshCandidate();}catch(err){setStatus('applyStatus',err?.code==='23505'?'Une candidature existe déjà pour ce compte.':errText(err),'error');$('applyBtn').disabled=false;}}
-async function signOut(){if(!client)return;await client.auth.signOut();if(window.sgReviews)window.sgReviews.clear();if(window.sgDemand)window.sgDemand.stop();localDemoRequest=null;saveLocalDemo();renderLocalDemo();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
+async function signOut(){if(!client)return;await client.auth.signOut();if(window.sgReviews)window.sgReviews.clear();if(window.sgDemand)window.sgDemand.stop();if(window.sgChatTest)window.sgChatTest.stop();localDemoRequest=null;saveLocalDemo();renderLocalDemo();setStatus('authStatus','Déconnecté.','success');await refreshUser();}
 calc();restoreLocalDemo();renderLocalDemo();setAuthMode('signup');setSpace('raccompagner');
 if(client){
   setStatus('authStatus','Vérification de la connexion à Supabase…');
