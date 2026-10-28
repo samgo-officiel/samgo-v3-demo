@@ -26,11 +26,12 @@ function boot({approved=true,fetchRequests,createReply}={}){
     fetchRequests(position,radius):{data:[],error:null};}},
   testReplies:{list:async()=>({data:[],error:null}),create:(adId,uid)=>createReply?createReply(adId,uid):Promise.resolve({error:null})}
  };
- const window={isSecureContext:true};
+ const window={isSecureContext:true,
+  sgMapsZoneTest:{mapsUrl:(lat,lng)=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(lat+','+lng)}};
  vm.runInNewContext(source,{
   window,document,navigator,sessionUser,client,driverSimAllowed:approved,
   driverTab(){},setInterval(){return 1;},clearInterval(){},Date,Math,Number,
-  Intl,Set,Promise,Error
+  Intl,Set,Promise,Error,encodeURIComponent
  },{filename:'SAMGO-GPS'});
  return {geo:window.sgDemand,prompts,sessionUser,get,calls:()=>calls,
   giveGPS:(accuracy=30,measuredAt=Date.now())=>{
@@ -145,4 +146,21 @@ test('une ancienne erreur de recherche GPS ne remplace pas la vue du nouveau com
  rejectFetch(Error('erreur de l’ancien compte'));
  await initial;
  assert.doesNotMatch(x.get('sgNearbyStatus').textContent,/erreur de l’ancien compte/);
+});
+
+test('le lien carte approximative ne se déclenche pas automatiquement',async()=>{
+ const req={
+  id:'map-test',client_id:'client-X',latitude_approx:48.85,longitude_approx:2.35,
+  depart_test:'Lieu fictif',destination_test:'Maison fictive',distance_km:4,tarif_indicatif:4
+ };
+ const x=boot({fetchRequests:async()=>({data:[req],error:null})});
+ const pending=x.geo.open();x.giveGPS();await pending;
+ const card=x.get('sgNearbyList').children[0];
+ assert.ok(card,'Annonce avec zone fictive attendue');
+ const link=card.children.find(n=>n.id==='a');
+ assert.ok(link,'lien carte externe absent');
+ assert.match(link.href,/google\.com\/maps\/search/);
+ assert.equal(link.target,'_blank');
+ assert.equal(link.rel,'noopener noreferrer');
+ assert.equal(link.listeners.click,undefined,'aucun lien programmatique ne doit partir automatiquement');
 });
