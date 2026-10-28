@@ -2,14 +2,26 @@
 
 Mise à jour : 28 octobre 2026.
 
+
+## Avancement Stripe Connect SANDBOX — 28 octobre 2026
+
+- **Compte Stripe de test SAMGO connecté à ChatGPT** (sans comptes chauffeurs Stripe Connect créés).
+- **Deux fonctions Supabase déployées** : `samgo-stripe-sandbox` (onboarding chauffeur et Checkout test, JWT obligatoire) et `samgo-stripe-webhook` (signature Stripe vérifiée).
+- **Webhook créé chez Stripe en sandbox** pour les événements Checkout. Il ne peut pas encore confirmer de paiement avant la configuration du secret de signature côté Supabase.
+- **Deux tables RLS** ajoutées : comptes chauffeurs Stripe test et sessions de paiements sandbox. Modification de paiement interdite côté utilisateur.
+- **Interface Stripe test** accessible dans l'espace client et dans l'onglet Gains du chauffeur.
+- **Aucun paiement n'est disponible à ce stade** : il reste trois secrets sandbox à saisir via le Dashboard Supabase et un chauffeur Stripe test à enregistrer. Voir `PARAMETRAGE-STRIPE-TEST.md`.
+- **Aucune transaction Stripe de test confirmée de bout en bout**, aucun paiement réel, aucune clé live enregistrée.
+- Le modèle 100 % chauffeur / 0 % SAMGO est conservé. En destination charge, **les frais Stripe sont supportés par SAMGO**, un coût à anticiper avant tout lancement.
+
 ## Statut exact
 - [x] Interface de simulation dans « Réserver » et « Chauffeur > Gains ».
 - [x] Phase de lancement : 100 % du tarif théorique chauffeur / 0 % de commission SAMGO, avec contrôle des montants en centimes. Le 90 % / 10 % reste une évolution future, pas automatique.
 - [x] Calcul protégé contre les montants négatifs ou déraisonnables, testé sans requêtes au réseau.
-- [ ] Compte Stripe SAMGO créé et connecté par le propriétaire.
+- [x] Compte Stripe **environnement de test SAMGO** connecté à ChatGPT. **Aucune clé secrète test configurée sur Supabase pour le moment**.
 - [ ] Intégration du système d'inscription/validation des comptes Stripe Connect chauffeur.
 - [ ] Création de sessions Stripe Checkout en environnement sandbox (serveur uniquement).
-- [ ] Réception et validation cryptographique des événements de paiement par webhook.
+- [x] Code de webhook de paiement Stripe **sandbox** déployé et endpoint test créé chez Stripe ; clé de signature toujours à ajouter côté Supabase pour permettre sa vérification effective.
 - [ ] Vérification des tarifs, statuts de mission et destinataires côté serveur.
 - [ ] Remboursements, annulations, incidents, justificatifs, journal comptable et rapprochement bancaire.
 - [ ] Contrats, assurances, fiscalité et conformité avant le mode réel.
