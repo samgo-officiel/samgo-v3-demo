@@ -64,3 +64,9 @@ Références :
 - https://docs.stripe.com/connect/testing
 - https://docs.stripe.com/connect/destination-charges
 - https://supabase.com/docs/guides/functions
+
+## État confirmé de Stripe Connect TEST — 28 octobre 2026
+
+Le compte chauffeur Stripe Connect fictif est bien associé à SAMGO et sa déclaration a été soumise. Mais la vérification d'identité fictive a échoué ; le compte ne peut pas encaisser ou recevoir de virements (`charges_enabled=false`, `payouts_enabled=false`). Le backend Supabase (version 9) et le frontend indiquent maintenant explicitement lorsqu'une correction des données de test est requise. La création des futurs comptes de test utilise les propriétés `controller` de Stripe v1 pour le mode Express.
+
+**Politique actuelle : 0 % de commission SAMGO, 100 % du prix théorique pour le chauffeur avant taxes**, avec frais Stripe de traitement supportés par la plateforme dans le flux prévu. **Aucun paiement, transfert ni versement réel n'est opérationnel.** La phase de production nécessite assurance, conformité et validation indépendante.
