@@ -1,14 +1,18 @@
 /* SAMGO V3 — service worker de TEST.
- * Seule la page neutre hors connexion est mise en cache :
+ * Seules les pages statiques hors connexion et sécurité sont mises en cache :
  * JAMAIS les sessions, annonces, messages, documents ou réponses API.
  * Les push restent désactivées tant qu'aucune configuration d'envoi n'existe.
  */
-const OFFLINE_CACHE='samgo-offline-test-v1';
+const OFFLINE_CACHE='samgo-offline-test-v2';
 const OFFLINE_URL=new URL('./hors-ligne.html',self.registration.scope).toString();
+const SAFETY_URL=new URL('./securite.html',self.registration.scope).toString();
 self.addEventListener('install',event=>{
  event.waitUntil(
   caches.open(OFFLINE_CACHE)
-   .then(cache=>cache.add(new Request(OFFLINE_URL,{cache:'reload'})))
+   .then(cache=>Promise.allSettled([
+    cache.add(new Request(OFFLINE_URL,{cache:'reload'})),
+    cache.add(new Request(SAFETY_URL,{cache:'reload'}))
+   ]))
    .catch(()=>{}) // La première installation ne doit pas échouer si le réseau tombe.
    .then(()=>self.skipWaiting())
  );
@@ -31,6 +35,10 @@ self.addEventListener('fetch',event=>{
  event.respondWith(
   fetch(event.request).catch(async()=>{
    const cache=await caches.open(OFFLINE_CACHE);
+   if(target.pathname===new URL(SAFETY_URL).pathname){
+    const safety=await cache.match(SAFETY_URL);
+    if(safety)return safety;
+   }
    return (await cache.match(OFFLINE_URL)) ||
     new Response('SAMGO TEST : connexion Internet indisponible.',{
       status:503,headers:{'Content-Type':'text/plain; charset=utf-8','Cache-Control':'no-store'}
