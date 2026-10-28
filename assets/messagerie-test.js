@@ -7,8 +7,8 @@
   client:{selector:'sgChatClientChoices',messages:'sgChatClientMessages',input:'sgChatClientInput',send:'sgChatClientSend',status:'sgChatClientStatus'},
   driver:{selector:'sgChatDriverChoices',messages:'sgChatDriverMessages',input:'sgChatDriverInput',send:'sgChatDriverSend',status:'sgChatDriverStatus'}
  };
- const state={client:{current:null,choices:[],seq:0,sending:false,sendKey:null,lastIncoming:new Map()},
- driver:{current:null,choices:[],seq:0,sending:false,sendKey:null,lastIncoming:new Map()},user:null};
+ const state={client:{current:null,choices:[],seq:0,sending:false,sendKey:null,lastIncoming:new Map(),drafts:new Map()},
+ driver:{current:null,choices:[],seq:0,sending:false,sendKey:null,lastIncoming:new Map(),drafts:new Map()},user:null};
  function signed(){return typeof sessionUser!=='undefined'&&!!sessionUser&&typeof client!=='undefined'&&!!client?.testMessages&&!!client?.testChoices;}
  function say(role,text){const el=$(view[role].status);if(el)el.textContent=text;}
  function note(role,text){
@@ -40,6 +40,14 @@
   dismissNotice();
  }
  function choiceLabel(row,role,i){return 'Simulation n°'+(i+1)+' — '+(row.statut==='choisi_test'?'en cours':row.statut==='termine_test'?'terminée':'annulée');}
+ function captureDraft(role){
+  const st=state[role],input=$(view[role].input);
+  if(st.current&&input)st.drafts.set(st.current,input.value.slice(0,500));
+ }
+ function restoreDraft(role){
+  const st=state[role],input=$(view[role].input);
+  if(input)input.value=st.current?(st.drafts.get(st.current)||''):'';
+ }
  function updateButtons(role){
   const cfg=view[role],st=state[role],node=$(cfg.selector);
   if(!node)return;
@@ -49,7 +57,14 @@
    button.type='button';button.className='alt sg-chat-test-choice';
    button.textContent=choiceLabel(row,role,i);
    button.setAttribute('aria-pressed',String(st.current===row.id));
-   button.addEventListener('click',()=>{st.current=row.id;updateButtons(role);loadMessages(role);});
+   button.addEventListener('click',()=>{
+    if(st.current!==row.id){
+     captureDraft(role);
+     st.current=row.id;
+     restoreDraft(role);
+    }
+    updateButtons(role);loadMessages(role);
+   });
    node.append(button);
   }
   const current=st.choices.find(c=>c.id===st.current);
@@ -63,9 +78,8 @@
   if(!view[role])return;
   const st=state[role];
   if(!signed()){
-   st.current=null;st.choices=[];state.user=null;
-   updateButtons(role);note(role,'Connectez-vous pour consulter votre messagerie de test.');
-   say(role,'Aucune conversation ouverte.');return;
+   stop();
+   return;
   }
   const uid=sessionUser.id;
   if(state.user!==uid){
@@ -74,6 +88,7 @@
    for(const side of ['client','driver']){
     state[side].current=null;state[side].choices=[];state[side].seq++;
     state[side].sending=false;state[side].sendKey=null;state[side].lastIncoming.clear();
+    state[side].drafts.clear();
     const input=$(view[side].input);if(input)input.value='';
    }
   }
@@ -87,7 +102,11 @@
     .filter(c=>['choisi_test','termine_test','annule_test'].includes(c.statut)).slice(0,20);
    st.choices=rows;
    for(const id of st.lastIncoming.keys())if(!rows.some(c=>c.id===id))st.lastIncoming.delete(id);
-   if(!rows.some(c=>c.id===st.current))st.current=rows.length?rows[0].id:null;
+   for(const id of st.drafts.keys())if(!rows.some(c=>c.id===id))st.drafts.delete(id);
+   if(!rows.some(c=>c.id===st.current)){
+    st.current=rows.length?rows[0].id:null;
+    restoreDraft(role);
+   }
    updateButtons(role);
    if(!rows.length){
     note(role,'Aucune conversation : le client doit d’abord choisir un chauffeur pour une simulation.');
@@ -157,7 +176,10 @@
    if(!stillCurrent())return;
    if(result.error)throw result.error;
    // Ne pas effacer une nouvelle rédaction saisie pendant la requête.
-   if(input&&input.value.trim()===text)input.value='';
+   if(input&&input.value.trim()===text){
+    input.value='';
+    st.drafts.delete(choiceId);
+   }
    await loadMessages(role);
   }catch(e){
    if(stillCurrent())say(role,'Envoi refusé : '+(e.message||'Réessayez.'));
@@ -169,7 +191,7 @@
   dismissNotice();
   state.user=null;
   for(const role of ['client','driver']){
-   const st=state[role];st.current=null;st.choices=[];st.seq++;st.sending=false;st.sendKey=null;st.lastIncoming.clear();
+   const st=state[role];st.current=null;st.choices=[];st.seq++;st.sending=false;st.sendKey=null;st.lastIncoming.clear();st.drafts.clear();
    const input=$(view[role].input);if(input)input.value='';
    updateButtons(role);note(role,'Connectez-vous pour consulter vos messages fictifs.');say(role,'Messagerie de TEST.');
   }
@@ -178,7 +200,10 @@
   const cfg=view[role];
   const bind=()=>{
    const input=$(cfg.input);
-   if(input)input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send(role);}});
+   if(input){
+    input.addEventListener('input',()=>captureDraft(role));
+    input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send(role);}});
+   }
   };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
  }
