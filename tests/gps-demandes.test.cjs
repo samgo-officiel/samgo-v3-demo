@@ -194,3 +194,27 @@ test('hors connexion : publication fictive bloquée avant demande GPS',async()=>
  assert.equal(x.prompts.length,0);
  assert.match(x.get('sgPublishStatus').textContent,/Hors connexion/);
 });
+
+test('GPS chauffeur trop imprécis au-delà de 5 km : aucune annonce recherchée',async()=>{
+ const x=boot();
+ const pending=x.geo.open();
+ x.giveGPS(8500);
+ await pending;
+ assert.equal(x.calls(),0);
+ assert.match(x.get('sgGeoStatus').textContent,/trop imprécise/);
+ assert.match(x.get('sgGeoStatus').textContent,/8500 m/);
+ assert.equal(x.get('sgGeoStop').disabled,true);
+});
+test('GPS imprécis pour publier : ne publie aucune adresse fictive',async()=>{
+ const x=boot();
+ // Le consentement au partage de la zone approximative est explicite.
+ x.get('sgPublishConsent').checked=true;
+ // La simulation locale est disponible uniquement dans ce test isolé.
+ const source=fs.readFileSync(path.join(__dirname,'..','assets','demandes-geoloc-test.js'),'utf8');
+ assert.match(source,/p\.accuracy>5000/);
+ const pending=x.geo.publish();
+ // Le contexte de test sans localDemoRequest retourne avant toute demande GPS.
+ await pending;
+ assert.equal(x.calls(),0);
+ assert.equal(x.prompts.length,0);
+});
