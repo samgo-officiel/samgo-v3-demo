@@ -798,6 +798,12 @@ input,select,textarea{font-size:16px}
           <p>Appuyez longuement pour sélectionner et copier le texte. Il sera effacé lorsque vous vous déconnecterez.</p>
         </div>
       </section>
+      <section class="sg-my-data-panel" aria-label="Effacer la simulation locale">
+        <h3>🧹 Nettoyer ce téléphone</h3>
+        <p>Efface uniquement le trajet simulé sur cet appareil et remet à zéro le rayon et le tri des demandes. Votre compte et les annonces enregistrées sur SAMGO ne sont pas supprimés.</p>
+        <button type="button" class="alt" onclick="window.sgLocalClearTest.clear()">Effacer ma simulation locale et mes préférences</button>
+        <p id="sgLocalClearStatus" role="status" aria-live="polite">Aucune donnée du serveur n'est effacée ici.</p>
+      </section>
       <button type="button" class="alt" onclick="signOut()">Me déconnecter</button>
     </div>
     <p id="authStatus" class="status" role="status" aria-live="polite">Tu peux créer un compte de test ou te connecter.</p>
@@ -1702,7 +1708,8 @@ function sgGo(view){
 <script src="assets/messagerie-test.js?v=20261028-chat-v3"></script>
 <script src="assets/messages-rapides-test.js?v=20261028-a"></script>
 <script src="assets/diagnostic-appareil-test.js?v=20261028-native-ver"></script>
-<script src="assets/export-donnees-test.js?v=20261028-a"></script>
+<script src="assets/export-donnees-test.js?v=20261028-b"></script>
+<script src="assets/effacer-local-test.js?v=20261028-a"></script>
 <script src="assets/etat-reseau-test.js?v=20261028a"></script>
 <script src="assets/installation-mobile-test.js?v=20261028"></script>
 <script src="assets/recuperation-compte-test.js?v=20261028"></script>
