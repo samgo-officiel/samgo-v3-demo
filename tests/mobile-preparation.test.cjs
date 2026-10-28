@@ -25,6 +25,14 @@ test('preparer le bundle natif sans installation ni publication',()=>{
   for(const file of ['aide.html','donnees-test.html','assets/demandes-geoloc-test.js','assets/messagerie-test.js'])
    assert.equal(fs.existsSync(path.join(output,file)),true,'ressource manquante: '+file);
   assert.equal(fs.existsSync(path.join(output,'sw.js')),false);
+  const redirect='https://samgo-officiel.github.io/samgo-v3-demo/';
+  const reset=fs.readFileSync(path.join(output,'assets/recuperation-compte-test.js'),'utf8');
+  assert.ok(index.includes('emailRedirectTo:'+JSON.stringify(redirect)));
+  assert.ok(index.includes('destination.href !== '+JSON.stringify(redirect)));
+  assert.ok(reset.includes('const redirect='+JSON.stringify(redirect)));
+  assert.ok(index.includes('id="sg-native-only"'),'native should hide PWA installer');
+  assert.ok(!fs.readFileSync(path.join(root,'index.html'),'utf8').includes('id="sg-native-only"'),
+   'native-only adjustments must not leak into public web site');
  }finally{
   fs.rmSync(output,{recursive:true,force:true});
  }
