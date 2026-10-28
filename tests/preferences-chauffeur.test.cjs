@@ -8,7 +8,7 @@ const source=fs.readFileSync(path.join(__dirname,'../assets/preferences-chauffeu
 const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 function boot(saved={},blocked=false){
  const memory=new Map(Object.entries(saved));
- const controls={sgRadius:{value:'30'},sgDemandSort:{value:'proximite'},sgRadiusValue:{textContent:''}};
+ const controls={sgRadius:{value:'30'},sgDemandSort:{value:'proximite'},sgDemandTextFilter:{value:''},sgRadiusValue:{textContent:''}};
  const counts={gps:0,render:0};
  const document={getElementById:id=>controls[id]||null,readyState:'complete',addEventListener(){}};
  const storage={
@@ -60,4 +60,18 @@ test('réinitialiser les filtres ne collecte pas de données et remet les choix 
 test('version mobile inclut le module et un contrôle de remise à zéro',()=>{
  assert.match(html,/assets\/preferences-chauffeur-test\.js/);
  assert.match(html,/window\.sgDriverPrefs\.reset\(\)/);
+});
+
+test('la réinitialisation supprime aussi le filtre textuel sans le mémoriser',()=>{
+ const x=boot();
+ x.controls.sgDemandTextFilter.value='Bordeaux gare';
+ x.controls.sgRadius.value='10';
+ x.controls.sgDemandSort.value='trajet';
+ x.api.save();
+ assert.equal(x.memory.size,2);
+ x.api.reset();
+ assert.equal(x.controls.sgDemandTextFilter.value,'');
+ assert.equal(x.controls.sgRadius.value,'30');
+ assert.equal(x.controls.sgDemandSort.value,'proximite');
+ assert.equal(x.memory.size,0);
 });
