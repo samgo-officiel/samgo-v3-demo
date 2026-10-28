@@ -731,6 +731,7 @@ input,select,textarea{font-size:16px}
   function makeClient(baseUrl, publishableKey) {
     const base = baseUrl.replace(/\/+$/, '');
     let session = null;
+    let sessionRevision = 0;
     const subscribers = [];
     try { session = JSON.parse(sessionStorage.getItem(storageName) || 'null'); }
     catch (_) { session = null; }
@@ -739,6 +740,7 @@ input,select,textarea{font-size:16px}
     }
     function saveSession(value, event) {
       session = value;
+      sessionRevision++;
       try {
         if (session) sessionStorage.setItem(storageName, JSON.stringify(session));
         else sessionStorage.removeItem(storageName);
@@ -815,7 +817,7 @@ input,select,textarea{font-size:16px}
             {refresh_token: originalRefreshToken});
           // Ne jamais ressusciter une session déconnectée ou un autre utilisateur.
           if (!session || session.refresh_token !== originalRefreshToken)
-            return session?.access_token || null;
+            return null;
           const updated = setTokens(refreshed, 'TOKEN_REFRESHED');
           if (!updated) throw new Error('Renouvellement de session incomplet.');
           return updated.access_token;
@@ -832,6 +834,7 @@ input,select,textarea{font-size:16px}
     const auth = {
       async getAccessToken(){return await accessToken();},
       async signUp({email,password,options={}}) {
+        const revisionBeforeRequest = sessionRevision;
         try {
           // Le client REST léger doit relayer emailRedirectTo explicitement à GoTrue.
           const redirect = options.emailRedirectTo;
@@ -841,26 +844,42 @@ input,select,textarea{font-size:16px}
           const path = '/auth/v1/signup' +
             (destination ? '?redirect_to=' + encodeURIComponent(destination.href) : '');
           const data = await api(path, 'POST', {email,password});
+          if (sessionRevision !== revisionBeforeRequest)
+            throw new Error('Compte changé pendant l’inscription. Recommencez.');
           const active = setTokens(data);
           return { data:{ user: data.user || (data.id ? data : null), session:active }, error:null };
         } catch(error) { return {data:{user:null,session:null},error}; }
       },
       async signInWithPassword({email,password}) {
+        const revisionBeforeRequest = sessionRevision;
         try {
           const data = await api('/auth/v1/token?grant_type=password','POST',{email,password});
+          if (sessionRevision !== revisionBeforeRequest)
+            throw new Error('Compte changé pendant la connexion. Recommencez.');
           const active = setTokens(data);
           if (!active) throw new Error('Réponse de connexion sans session.');
           return {data:{user:data.user || null,session:active},error:null};
         } catch(error) { return {data:{user:null,session:null},error}; }
       },
       async getUser() {
+        let token = null,revisionAtRequest = null;
         try {
-          const token = await accessToken();
+          token = await accessToken();
           if (!token) return {data:{user:null},error:null};
+          revisionAtRequest = sessionRevision;
           const user = await api('/auth/v1/user', 'GET', undefined, token);
+          // Une réponse réseau de l'ancien compte ne doit ni restaurer ce compte
+          // ni être affichée comme si elle appartenait au compte courant.
+          if (sessionRevision !== revisionAtRequest || session?.access_token !== token)
+            return {data:{user:null},error:new Error('Compte changé pendant la vérification.')};
           return {data:{user},error:null};
         } catch(error) {
-          if (error.status === 401 || error.status === 403) saveSession(null, 'SIGNED_OUT');
+          // Un ancien 401 ne peut pas déconnecter la personne qui vient d'ouvrir
+          // une nouvelle session pendant que la requête précédente terminait.
+          if ([401,403].includes(error?.status) &&
+              revisionAtRequest !== null &&
+              sessionRevision === revisionAtRequest &&
+              session?.access_token === token) saveSession(null,'SIGNED_OUT');
           return {data:{user:null},error};
         }
       },
