@@ -5,12 +5,12 @@ Mise à jour : 28 octobre 2026.
 
 ## Avancement Stripe Connect SANDBOX — 28 octobre 2026
 
-- **Compte Stripe de test SAMGO connecté à ChatGPT** (sans comptes chauffeurs Stripe Connect créés).
+- **Compte Stripe de test SAMGO connecté à ChatGPT** (compte Express TEST existant associé à un chauffeur approuvé ; onboarding à terminer).
 - **Deux fonctions Supabase déployées** : `samgo-stripe-sandbox` (onboarding chauffeur et Checkout test, JWT obligatoire) et `samgo-stripe-webhook` (signature Stripe vérifiée).
 - **Webhook créé chez Stripe en sandbox** pour les événements Checkout. Il ne peut pas encore confirmer de paiement avant la configuration du secret de signature côté Supabase.
 - **Deux tables RLS** ajoutées : comptes chauffeurs Stripe test et sessions de paiements sandbox. Modification de paiement interdite côté utilisateur.
 - **Interface Stripe test** accessible dans l'espace client et dans l'onglet Gains du chauffeur.
-- **Aucun paiement n'est disponible à ce stade** : il reste trois secrets sandbox à saisir via le Dashboard Supabase et un chauffeur Stripe test à enregistrer. Voir `PARAMETRAGE-STRIPE-TEST.md`.
+- Les paramètres Stripe TEST sont présents dans Supabase ; un compte Express TEST est associé au chauffeur, mais non encore validé pour les encaissements et virements. Voir `PARAMETRAGE-STRIPE-TEST.md`.
 - **Aucune transaction Stripe de test confirmée de bout en bout**, aucun paiement réel, aucune clé live enregistrée.
 - Le modèle 100 % chauffeur / 0 % SAMGO est conservé. En destination charge, **les frais Stripe sont supportés par SAMGO**, un coût à anticiper avant tout lancement.
 
@@ -18,7 +18,7 @@ Mise à jour : 28 octobre 2026.
 - [x] Interface de simulation dans « Réserver » et « Chauffeur > Gains ».
 - [x] Phase de lancement : 100 % du tarif théorique chauffeur / 0 % de commission SAMGO, avec contrôle des montants en centimes. Le 90 % / 10 % reste une évolution future, pas automatique.
 - [x] Calcul protégé contre les montants négatifs ou déraisonnables, testé sans requêtes au réseau.
-- [x] Compte Stripe **environnement de test SAMGO** connecté à ChatGPT. **Aucune clé secrète test configurée sur Supabase pour le moment**.
+- [x] Compte Stripe **environnement de test SAMGO** connecté à ChatGPT. **Les trois paramètres secrets TEST apparaissent maintenant dans Supabase ; valeurs non consultables depuis ChatGPT**.
 - [ ] Intégration du système d'inscription/validation des comptes Stripe Connect chauffeur.
 - [ ] Création de sessions Stripe Checkout en environnement sandbox (serveur uniquement).
 - [x] Code de webhook de paiement Stripe **sandbox** déployé et endpoint test créé chez Stripe ; clé de signature toujours à ajouter côté Supabase pour permettre sa vérification effective.
@@ -57,7 +57,7 @@ Pour un prix fictif de 20,00 € :
 
 ## Mise en garde
 
-Les écrans développés n'appellent pas Stripe. Ils ne créent aucune transaction, n'associent aucun compte bancaire et ne versent rien. Le projet reste une **démonstration** : aucune course réelle ne peut être proposée avant les assurances, les vérifications des chauffeurs, les conditions contractuelles et les obligations légales.
+Les écrans de démonstration appellent désormais la fonction serveur Supabase Stripe SANDBOX. Aucun paiement n'a encore été confirmé ; aucune clé live ni aucun virement réel n'a été activé. Le projet reste une **démonstration** : aucune course réelle ne peut être proposée avant les assurances, les vérifications des chauffeurs, les conditions contractuelles et les obligations légales.
 
 Références :
 - https://docs.stripe.com/connect/accounts-v2
