@@ -8,10 +8,12 @@ const source=fs.readFileSync(path.join(__dirname,'..','assets','messagerie-test.
 
 class Node{
  constructor(id){this.id=id;this.value='';this.disabled=false;this.textContent='';this.className='';
-  this.children=[];this.attrs={};this.listeners={};}
+  this.children=[];this.attrs={};this.listeners={};this.hidden=true;}
  replaceChildren(...values){this.children=values;}
  append(...nodes){this.children.push(...nodes);}
  setAttribute(name,value){this.attrs[name]=String(value);}
+ getAttribute(name){return this.attrs[name]||null;}
+ removeAttribute(name){delete this.attrs[name];}
  addEventListener(name,fn){this.listeners[name]=fn;}
 }
 function boot({online=true}={}){
@@ -123,4 +125,26 @@ test('hors connexion : envoyer garde le brouillon et ne crée pas de message dis
  assert.equal(app.created.length,0);
  assert.equal(app.get('sgChatClientInput').value,'Brouillon non envoyé');
  assert.match(app.get('sgChatClientStatus').textContent,/Hors connexion/);
+});
+
+test('une arrivée affiche une alerte discrète sans contenu du message',async()=>{
+ const app=boot();
+ await app.chat.refresh('client');
+ app.messages.push({id:'m1',auteur_id:'X',contenu:'Message privé fictif',cree_le:'2026-10-28T12:00:00Z'});
+ await app.chat.refresh('client');
+ assert.equal(app.get('sgChatNewToast').hidden,false);
+ assert.equal(app.get('sgChatNewToast').getAttribute('data-role'),'client');
+ assert.doesNotMatch(app.get('sgChatNewText').textContent,/Message privé fictif/);
+ app.chat.dismissNotice();
+ assert.equal(app.get('sgChatNewToast').hidden,true);
+});
+test('déconnexion cache et désassocie la notification du compte',async()=>{
+ const app=boot();
+ await app.chat.refresh('client');
+ app.messages.push({id:'m1',auteur_id:'X',contenu:'TEST',cree_le:'2026-10-28T12:00:00Z'});
+ await app.chat.refresh('client');
+ assert.equal(app.get('sgChatNewToast').hidden,false);
+ app.chat.stop();
+ assert.equal(app.get('sgChatNewToast').hidden,true);
+ assert.equal(app.get('sgChatNewToast').getAttribute('data-role'),null);
 });
