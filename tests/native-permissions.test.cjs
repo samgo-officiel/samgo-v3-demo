@@ -30,7 +30,10 @@ test('iOS contient explication GPS lorsque application utilisée seulement',()=>
   const result=fs.readFileSync(file,'utf8');
   assert.equal(result.split('<key>NSLocationWhenInUseUsageDescription</key>').length-1,1);
   assert.match(result,/SAMGO TEST utilise votre position uniquement/);
-  assert.doesNotMatch(result,/NSLocationAlways/);
+  // Libellé exigé par Capacitor Geolocation 8, même sans suivi permanent.
+  assert.equal(result.split('<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>').length-1,1);
+  assert.doesNotMatch(result,/<key>NSLocationAlwaysUsageDescription<\/key>/);
+  assert.doesNotMatch(result,/<key>UIBackgroundModes<\/key>/);
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 test('refuser les permissions GPS de suivi en arrière-plan',()=>{
