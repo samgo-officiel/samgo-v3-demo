@@ -1522,6 +1522,12 @@ function sgGo(view){
  const target=view==='account'?'authPanel':view==='trips'?'sg-trips-note':view==='driver'?'spaceChauffeur':'spaceRaccompagner';
  const el=document.getElementById(target);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
+// Raccourcis de la PWA sur Android : ouvrir directement le bon écran.
+// Liste fermée de vues, jamais d'action sensible ou de demande GPS automatique.
+(function sgOpenShortcut(){
+ const requested=new URLSearchParams(window.location.search).get('app');
+ if(['book','trips','driver','account'].includes(requested))sgGo(requested);
+})();
 </script>
 <script src="assets/carte-proximite-test.js?v=20261028a"></script>
 <script src="assets/demandes-geoloc-test.js?v=20261028-gps-stop3"></script>
