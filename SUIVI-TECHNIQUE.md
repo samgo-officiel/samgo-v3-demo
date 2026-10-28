@@ -143,3 +143,14 @@ Les changements ci-dessous sont des améliorations de **démonstration**. Ce ne 
 - **Contrôles non faits** : expérience réelle navigateur, deux appareils, e-mails Auth, notification quand fermé, couverture assureur, conformité juridique, Stripe Checkout et webhook de bout en bout. Ne pas proposer de vraie course.
 
 **Attention :** le dépôt GitHub `samgo-officiel/samgo-v3-demo` est PUBLIC. Il ne doit pas contenir de données d'identité, secrets Stripe/Supabase, mots de passe ou instructions internes sensibles. Une éventuelle privatisation du dépôt doit être décidée avec un plan de déploiement compatible GitHub Pages.
+
+
+## Sécurisation GPS autonome — 28 octobre 2026
+
+- Le module `assets/demandes-geoloc-test.js` valide désormais les coordonnées renvoyées par le navigateur, indique une précision GPS estimée si disponible et refuse une réponse provenant d'une ancienne demande après arrêt ou changement d'utilisateur.
+- Les recherches d'annonces devenues obsolètes après un changement de rayon, une nouvelle mesure GPS ou une déconnexion sont ignorées. Une panne de la requête des réponses de chauffeurs n'est plus traitée comme s'il n'y avait aucune réponse.
+- Le choix du rayon 5–50 km déclenche une nouvelle recherche et actualise immédiatement la distance affichée.
+- Nouveau bouton **Arrêter la recherche GPS**. L'application efface les coordonnées exactes en mémoire de son module, arrête sa boucle de recherche et retire la liste visible. Il ne révoque pas les permissions du navigateur.
+- Sans mesure récente, l'application arrête la recherche après **15 minutes** plutôt que d'employer indéfiniment une ancienne position.
+- Pour la publication côté client, une permission GPS reçue après changement de compte est rejetée avant tout envoi.
+- **4 essais fonctionnels simulés** via faux navigateur/GPS ont passé, plus contrôle syntaxique JS et intégration HTML. Les essais sur vrai Android/iPhone, réseau physique, carte routière et itinéraires restent à faire.
