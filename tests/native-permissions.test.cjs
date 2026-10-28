@@ -58,3 +58,11 @@ test('l icone Android par defaut est remplacee par le vrai logo SAMGO',()=>{
   assert.deepEqual(fs.readFileSync(icon),fs.readFileSync(source));
  }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+test('aucun suivi GPS continu ni demande de localisation permanente dans SAMGO',()=>{
+ const source=fs.readFileSync(path.join(__dirname,'../assets/demandes-geoloc-test.js'),'utf8');
+ assert.match(source,/Capacitor\.Plugins\?\.Geolocation/);
+ assert.match(source,/getCurrentPosition/);
+ assert.doesNotMatch(source,/\.watchPosition\s*\(/);
+ assert.doesNotMatch(source,/requestAlwaysAuthorization|ACCESS_BACKGROUND_LOCATION/);
+});
