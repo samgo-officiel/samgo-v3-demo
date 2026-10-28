@@ -107,7 +107,7 @@ async function onboardDriver(){
   if(my!==revision||!sameUser(userId))return;
   if(!data.sandbox||typeof data.url!=='string'||!data.url.startsWith('https://connect.stripe.com/'))
    throw new Error('Lien Stripe sécurisé non reçu.');
-  window.location.assign(data.url);
+  if(!window.sgNativeOpenExternal?.(data.url))window.location.assign(data.url);
  }catch(e){
   if(my===revision&&(userId===null||sameUser(userId)))
    message('sgStripeSandboxDriverStatus','Impossible de démarrer : '+(e.message||'réessayez.'));
@@ -124,7 +124,7 @@ async function checkout(choiceId){
   if(my!==revision||!sameUser(userId))return;
   if(!data.sandbox||typeof data.url!=='string'||!data.url.startsWith('https://checkout.stripe.com/'))
    throw new Error('Lien de paiement Stripe de test non vérifié.');
-  window.location.assign(data.url);
+  if(!window.sgNativeOpenExternal?.(data.url))window.location.assign(data.url);
  }catch(e){
   if(my===revision&&(userId===null||sameUser(userId)))
    message('sgStripeSandboxClientStatus','Paiement de test indisponible : '+(e.message||'réessayez.'));
