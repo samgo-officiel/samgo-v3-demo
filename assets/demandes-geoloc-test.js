@@ -282,12 +282,13 @@ function stop({clearClient=false}={}){
  ++state.gpsGeneration;++state.fetchGeneration;
  state.fetchKey=null;state.gpsPending=false;state.lastUser=null;
  if(state.poll){clearInterval(state.poll);state.poll=null;}
- state.pos=null;state.rows=[];state.replies=[];state.notify=false;state.firstLoad=true;state.seen.clear();state.clientLoad++;
+ state.pos=null;state.rows=[];state.replies=[];state.notify=false;state.firstLoad=true;state.seen.clear();
  window.sgProximityMap?.clear();
  const b=$('sgNotifyToggle');if(b){b.textContent='Activer les alertes pendant la visite';b.setAttribute('aria-pressed','false');}
  // Arrêter le GPS chauffeur ne doit pas effacer l'historique client.
  // Seul un changement de compte / une déconnexion purge la vue privée.
  if(clearClient){
+  state.clientLoad++;
   const clientAds=$('sgMyAdsList');if(clientAds)clientAds.replaceChildren();
   status('sgMyAdsStatus','Connectez-vous pour voir les annonces publiées.');
  }
