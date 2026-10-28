@@ -90,6 +90,24 @@ async function checkout(choiceId){
   window.location.assign(data.url);
  }catch(e){message('sgStripeSandboxClientStatus','Paiement de test indisponible : '+(e.message||'réessayez.'));}
 }
+function showReturnStatus(){
+ const banner=$('sgStripeReturnStatus');
+ if(!banner)return;
+ const query=new URLSearchParams(window.location.search||'');
+ const checkout=query.get('stripe_test_checkout');
+ const onboard=query.get('stripe_test_onboarding');
+ if(checkout==='success'){
+  banner.textContent='💳 Retour depuis Stripe SANDBOX. Ce retour ne prouve pas le paiement : seul l’événement Stripe signé pourra le confirmer. Consultez « Mes courses » et actualisez le statut.';
+  banner.hidden=false;
+ }else if(checkout==='cancel'){
+  banner.textContent='💳 Session Stripe de test annulée. Aucun paiement confirmé. Vous pouvez réessayer depuis « Mes courses ».';
+  banner.hidden=false;
+ }else if(onboard==='return'||onboard==='retry'){
+  banner.textContent='💳 Retour depuis Stripe Connect en mode TEST. L’inscription chauffeur doit être vérifiée dans « Mes gains » ; le retour seul ne prouve pas sa validation.';
+  banner.hidden=false;
+ }
+}
+showReturnStatus();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>refresh(),{once:true});
 else refresh();
 window.sgStripeSandbox={refresh,refreshDriver,onboardDriver,checkout};
