@@ -387,7 +387,14 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
   <button type="button" class="alt" onclick="window.sgDemand.refreshClient()">↻ Voir mes annonces et réponses</button>
   <p id="sgMyAdsStatus" role="status" aria-live="polite">Connectez-vous pour voir vos annonces de test.</p>
   <div id="sgMyAdsList"></div>
-  <div class="sg-driver-ratings" id="sgReviewClientArea">
+  <section class="sg-stripe-preview" aria-label="Paiements Stripe uniquement en mode test">
+   <span class="sg-stripe-label">💳 STRIPE SANDBOX · AUCUN ARGENT RÉEL</span>
+   <h3>Essayer le paiement sur une course fictive</h3>
+   <p class="sg-stripe-help">La connexion bancaire ne se fait pas ici. Un bouton de paiement TEST apparaîtra sur une simulation lorsque vous aurez choisi un chauffeur. Les frais de paiement restent à la charge de la plateforme dans le flux Stripe envisagé.</p>
+   <button type="button" class="alt" onclick="window.sgStripeSandbox.refresh()">↻ Vérifier la connexion Stripe TEST</button>
+   <p id="sgStripeSandboxClientStatus" class="sg-stripe-status" role="status" aria-live="polite">Connexion Stripe de test en cours de vérification…</p>
+ </section>
+ <div class="sg-driver-ratings" id="sgReviewClientArea">
    <h3>⭐ Choisir et noter un chauffeur (TEST)</h3>
    <p>Après qu'un chauffeur s'est déclaré intéressé, choisissez-le pour cette simulation. Marquez ensuite le trajet fictif comme terminé pour laisser 1 à 5 étoiles et un commentaire.</p>
    <button type="button" class="alt" onclick="window.sgReviews.refreshClient()">↻ Voir les avis et les réponses</button>
@@ -545,7 +552,13 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
       <h3>Futurs versements chauffeur</h3>
       <p class="sg-stripe-help">Lorsque le service pourra légalement démarrer, chaque chauffeur devra passer par une procédure sécurisée Stripe Connect pour recevoir des virements. Ne transmettez jamais votre IBAN ni vos documents ici.</p>
       <p class="sg-stripe-help">Exemple basé sur la distance de démonstration choisie : part théorique chauffeur <strong id="sgStripeGainsDriver">10,00 €</strong> avant frais et taxes. Ce n'est pas votre solde.</p>
-      <p class="sg-stripe-status">Aucun compte bancaire lié. Aucune transaction activée.</p>
+      <p class="sg-stripe-status">Aucun vrai compte bancaire lié par SAMGO. Aucun virement réel activé.</p>
+      <div class="sg-stripe-sandbox-onboard">
+       <p class="sg-stripe-help">Inscription chauffeur Stripe Connect <strong>uniquement dans l’environnement de test</strong>. Aucune demande de RIB sur SAMGO.</p>
+       <button type="button" class="alt" id="sgStripeSandboxDriverButton" onclick="window.sgStripeSandbox.onboardDriver()">Configurer mon compte chauffeur Stripe TEST</button>
+       <button type="button" class="alt" onclick="window.sgStripeSandbox.refresh()">↻ Voir mon statut Stripe TEST</button>
+       <p id="sgStripeSandboxDriverStatus" class="sg-stripe-status" role="status" aria-live="polite">Vérification du compte chauffeur Stripe de test…</p>
+      </div>
     </section>
   </div>
   <div class="sg-driver-pane hidden" data-dpane="profil"><h3>Mon profil chauffeur</h3>
@@ -669,6 +682,7 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
       } catch (_) { saveSession(null, 'SIGNED_OUT'); return null; }
     }
     const auth = {
+      async getAccessToken(){return await accessToken();},
       async signUp({email,password}) {
         try {
           const data = await api('/auth/v1/signup', 'POST', {email,password});
@@ -891,7 +905,18 @@ body:not(.sg-home-active) main.app{padding-bottom:110px}
         }catch(error){return {data:null,error};}
       }
     };
-    return {auth,from,testRequests,testReplies,testChoices,testReviews,testTracking,async ping(){return api('/auth/v1/settings','GET');}};
+    const testPayments={
+      async list(){
+        try{
+          const token=await accessToken();
+          if(!token)throw new Error('Reconnectez-vous pour voir les paiements de test.');
+          const params=new URLSearchParams({select:'choix_id,client_id,chauffeur_id,montant_centimes,commission_centimes,statut,modifie_le',order:'modifie_le.desc',limit:'100'});
+          const data=await api('/rest/v1/samgo_stripe_paiements_test?'+params,'GET',undefined,token);
+          return {data:Array.isArray(data)?data:[],error:null};
+        }catch(error){return {data:[],error};}
+      }
+    };
+    return {auth,from,testRequests,testReplies,testChoices,testReviews,testTracking,testPayments,async ping(){return api('/auth/v1/settings','GET');}};
   }
   window.samgoCreateClient = makeClient;
 })();
@@ -1083,6 +1108,7 @@ function driverTab(tab){
  if(tab==='missions'&&window.sgDemand)window.sgDemand.render();
  if(!['overview','missions','gains','profil'].includes(tab))return;
  if((tab==='profil'||tab==='missions')&&window.sgReviews)window.sgReviews.refreshDriver();
+ if(tab==='gains'&&window.sgStripeSandbox)window.sgStripeSandbox.refresh();
  sgMarkCurrentNav('driver');
  document.querySelectorAll('[data-dpane]').forEach(el=>el.classList.toggle('hidden',el.dataset.dpane!==tab));
  document.querySelectorAll('[data-dtab]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.dtab===tab)));
@@ -1225,6 +1251,7 @@ function sgGo(view){
  if(view==='driver')setSpace('chauffeur');
  if(view==='book')setSpace('raccompagner');
  if(view==='trips'&&window.sgDemand&&typeof window.sgDemand.refreshClient==='function')window.sgDemand.refreshClient();
+ if(view==='trips'&&window.sgStripeSandbox)window.sgStripeSandbox.refresh();
  const target=view==='account'?'authPanel':view==='trips'?'sg-trips-note':view==='driver'?'spaceChauffeur':'spaceRaccompagner';
  const el=document.getElementById(target);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
@@ -1233,6 +1260,7 @@ function sgGo(view){
 <script src="assets/avis-chauffeurs-test.js"></script>
 <script src="assets/actualisation-test.js"></script>
 <script src="assets/stripe-connect-demo.js"></script>
+<script src="assets/stripe-sandbox-connexion.js"></script>
 <script>
 /* Installation optionnelle de l'app web. Aucun abonnement push n'est lancé ici. */
 window.addEventListener('load',function(){
