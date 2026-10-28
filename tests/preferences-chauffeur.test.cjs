@@ -55,7 +55,7 @@ test('réinitialiser les filtres ne collecte pas de données et remet les choix 
  assert.equal(s.controls.sgDemandSort.value,'proximite');
  assert.equal(s.memory.size,0);
  assert.equal(s.counts.gps,1);
- assert.equal(s.counts.render,1);
+ assert.equal(s.counts.render,0,'la remise à zéro ne déclenche pas de second affichage');
 });
 test('version mobile inclut le module et un contrôle de remise à zéro',()=>{
  assert.match(html,/assets\/preferences-chauffeur-test\.js/);
