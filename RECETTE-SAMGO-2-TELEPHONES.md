@@ -51,3 +51,13 @@ Noter la page (client/chauffeur), l'action, la date et l'erreur visible ; joindr
 ## Consigne de lancement
 
 Cette recette ne certifie **ni l'assurance, ni la vérification réelle des permis et identités, ni le paiement live**. Aucune vraie prestation autorisée sur la base de tests fictifs.
+
+## Vérification du nouveau parcours Compte (à faire avec le propriétaire ce soir)
+
+- [ ] Ouvrir la page SAMGO depuis l'icône/application et vérifier la présence de « Mot de passe oublié ? » dans Compte.
+- [ ] À partir de « Déjà inscrit », demander un e-mail de récupération à l'adresse d'un **compte de test contrôlé**. Vérifier le dossier spams et l'absence d'erreur de limitation d'e-mails.
+- [ ] Ouvrir le lien depuis ce téléphone, vérifier que SAMGO propose « Choisir un nouveau mot de passe », puis définir un mot de passe neuf et reconnecter le compte.
+- [ ] Vérifier que le lien de confirmation d'inscription aboutit bien à la page SAMGO (l'URL doit être présente dans les redirections autorisées du projet Supabase).
+- [ ] Ouvrir « Aide et signalement » depuis Compte, sans envoyer de données confidentielles.
+- [ ] Tester le GPS sur Chrome Android (autorisé puis refusé) et Safari iPhone, si disponible.
+- [ ] Puis suivre le parcours client/chauffeur ci-dessus sur deux comptes et deux appareils, **uniquement avec des données et trajets fictifs**.
