@@ -768,18 +768,20 @@ input,select,textarea{font-size:16px}
     // retirer immédiatement le fragment de la barre d'adresse (jamais en logs).
     (function restoreEmailVerification(){
       const fragment = window.location.hash;
-      if (!fragment || !fragment.includes('access_token=')) return;
+      if (!fragment || (!fragment.includes('access_token=') && !fragment.includes('refresh_token='))) return;
       const params = new URLSearchParams(fragment.slice(1));
-      if (params.get('token_type') !== 'bearer') return;
       const token = params.get('access_token'), refresh = params.get('refresh_token');
       const lifespan = Number(params.get('expires_in') || 3600);
-      if (!token || !refresh || !Number.isFinite(lifespan) || lifespan <= 0) return;
+      // Ne jamais conserver des jetons dans la barre d'adresse, même si
+      // le lien est incomplet, expiré ou non reconnu par notre prototype.
+      try { window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search); }
+      catch (_) { /* Certains navigateurs privés limitent replaceState. */ }
+      if(params.get('token_type') !== 'bearer' || !token || !refresh ||
+         !Number.isFinite(lifespan) || lifespan <= 0) return;
       setTokens({access_token:token, refresh_token:refresh, expires_in:lifespan}, 'SIGNED_IN');
       if(params.get('type')==='recovery'){
         try{sessionStorage.setItem('samgo_v3_recovery_pending','1');}catch(_){}
       }
-      try { window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search); }
-      catch (_) { /* Certains navigateurs privés limitent replaceState. */ }
     })();
     // Une seule requête de renouvellement à la fois : les refresh tokens sont
     // susceptibles d'être à usage unique. Les appels simultanés partagent sa promesse.
