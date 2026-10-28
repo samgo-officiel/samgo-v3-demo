@@ -14,6 +14,15 @@
   const query=encodeURIComponent(roundedA.toFixed(2)+','+roundedB.toFixed(2));
   return 'https://www.google.com/maps/search/?api=1&query='+query;
  }
+ function walkingRouteUrl(lat,lng){
+  const pin=mapsUrl(lat,lng);
+  if(!pin)return null;
+  const coords=new URL(pin).searchParams.get('query');
+  // Le point d'origine n'est pas transmis par SAMGO : Maps peut le choisir
+  // via les permissions propres à son application, seulement après le clic.
+  return 'https://www.google.com/maps/dir/?api=1&destination='+
+   encodeURIComponent(coords)+'&travelmode=walking';
+ }
  function open(lat,lng){
   const url=mapsUrl(lat,lng);
   const status=$('sgNearbyStatus');
@@ -31,5 +40,5 @@
    return false;
   }
  }
- window.sgMapsZoneTest={open,mapsUrl};
+ window.sgMapsZoneTest={open,mapsUrl,walkingRouteUrl};
 })();
