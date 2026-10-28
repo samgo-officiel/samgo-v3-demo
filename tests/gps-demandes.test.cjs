@@ -44,6 +44,7 @@ function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=n
   Intl,Set,Promise,Error,encodeURIComponent
  },{filename:'SAMGO-GPS'});
  return {geo:window.sgDemand,prompts,sessionUser,get,calls:()=>calls,published:()=>publishCalls,nativeCalls:()=>nativeCalls,
+  setVisibility:state=>{document.visibilityState=state;},
   giveGPS:(accuracy=30,measuredAt=Date.now())=>{
    const prompt=prompts.shift();
    assert.ok(prompt,'une demande GPS doit exister');
@@ -254,4 +255,25 @@ test('publier une demande fictive utilise le GPS natif une seule fois',async()=>
  assert.equal(x.prompts.length,0);
  assert.equal(x.published(),1);
  assert.match(x.get('sgPublishStatus').textContent,/publiée/);
+});
+
+test('si SAMGO est masqué pendant demande GPS, résultat ignoré',async()=>{
+ const x=boot();
+ const pending=x.geo.open();
+ x.setVisibility('hidden');
+ x.giveGPS();
+ await pending;
+ assert.equal(x.calls(),0);
+ assert.equal(x.get('sgGeoStop').disabled,true);
+ assert.match(x.get('sgGeoStatus').textContent,/Recherche GPS annulée/);
+});
+test('aucune annonce n est publiée quand SAMGO passe en arrière-plan',async()=>{
+ const x=boot({demoRequest:{from:'Quartier fictif',to:'Centre fictif',km:10}});
+ x.get('sgPublishConsent').checked=true;
+ const pending=x.geo.publish();
+ x.setVisibility('hidden');
+ x.giveGPS();
+ await pending;
+ assert.equal(x.published(),0);
+ assert.match(x.get('sgPublishStatus').textContent,/Publication annulée/);
 });
