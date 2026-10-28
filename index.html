@@ -762,20 +762,34 @@ input,select,textarea{font-size:16px}
       try { window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search); }
       catch (_) { /* Certains navigateurs privés limitent replaceState. */ }
     })();
+    // Une seule requête de renouvellement à la fois : les refresh tokens sont
+    // susceptibles d'être à usage unique. Les appels simultanés partagent sa promesse.
+    let refreshPromise = null;
     async function accessToken() {
       if (!session || !session.access_token) return null;
       if (Date.now() < session.expires_at - 60000) return session.access_token;
       if (!session.refresh_token) { saveSession(null,'SIGNED_OUT'); return null; }
-      try {
-        const refreshed = await api('/auth/v1/token?grant_type=refresh_token', 'POST',
-          {refresh_token: session.refresh_token});
-        const updated = setTokens(refreshed, 'TOKEN_REFRESHED');
-        return updated ? updated.access_token : null;
-      } catch (error) {
-        // Les pertes de réseau temporaires ne doivent pas effacer une session valide.
-        if([400,401,403].includes(error?.status))saveSession(null,'SIGNED_OUT');
-        throw error;
-      }
+      if (refreshPromise) return refreshPromise;
+      const originalRefreshToken = session.refresh_token;
+      refreshPromise = (async () => {
+        try {
+          const refreshed = await api('/auth/v1/token?grant_type=refresh_token', 'POST',
+            {refresh_token: originalRefreshToken});
+          // Ne jamais ressusciter une session déconnectée ou un autre utilisateur.
+          if (!session || session.refresh_token !== originalRefreshToken)
+            return session?.access_token || null;
+          const updated = setTokens(refreshed, 'TOKEN_REFRESHED');
+          if (!updated) throw new Error('Renouvellement de session incomplet.');
+          return updated.access_token;
+        } catch (error) {
+          // Une panne réseau ne supprime pas la session. Un refus Auth explicite oui,
+          // mais seulement si cette session utilise toujours le même refresh token.
+          if (session?.refresh_token === originalRefreshToken &&
+              [400,401,403].includes(error?.status)) saveSession(null,'SIGNED_OUT');
+          throw error;
+        }
+      })().finally(() => { refreshPromise = null; });
+      return refreshPromise;
     }
     const auth = {
       async getAccessToken(){return await accessToken();},
@@ -802,9 +816,9 @@ input,select,textarea{font-size:16px}
         } catch(error) { return {data:{user:null,session:null},error}; }
       },
       async getUser() {
-        const token = await accessToken();
-        if (!token) return {data:{user:null},error:null};
         try {
+          const token = await accessToken();
+          if (!token) return {data:{user:null},error:null};
           const user = await api('/auth/v1/user', 'GET', undefined, token);
           return {data:{user},error:null};
         } catch(error) {
@@ -813,7 +827,10 @@ input,select,textarea{font-size:16px}
         }
       },
       async signOut() {
-        const token = await accessToken();
+        // Même hors connexion, l'utilisateur doit pouvoir vider sa session locale.
+        let token = null;
+        try { token = await accessToken(); } catch (_) {}
+
         saveSession(null, 'SIGNED_OUT');
         try{sessionStorage.removeItem('samgo_v3_recovery_pending');}catch(_){}
         if (token) { try {await api('/auth/v1/logout', 'POST', {}, token);} catch(_) {} }
