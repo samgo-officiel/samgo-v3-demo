@@ -13,7 +13,8 @@ const modules={
  sgStripeSandbox:'assets/stripe-sandbox-connexion.js',
  sgInstallTest:'assets/installation-mobile-test.js',
  sgLoyaltyTest:'assets/fidelite-test.js',
- sgDeviceCheck:'assets/diagnostic-appareil-test.js'
+ sgDeviceCheck:'assets/diagnostic-appareil-test.js',
+ sgDriverPrefs:'assets/preferences-chauffeur-test.js'
 };
 function exportsFor(global,file){
  const source=fs.readFileSync(path.join(root,file),'utf8');
