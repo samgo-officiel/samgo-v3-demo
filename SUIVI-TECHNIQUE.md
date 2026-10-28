@@ -72,11 +72,21 @@ La validation « chauffeur approuvé » actuelle est uniquement une validation d
 
 ## Avancement Stripe Connect SANDBOX — 28 octobre 2026
 
-- **Compte Stripe de test SAMGO connecté à ChatGPT** (sans comptes chauffeurs Stripe Connect créés).
+- **Compte Stripe de test SAMGO connecté à ChatGPT** (un compte Stripe Express de test désormais associé au chauffeur SAMGO approuvé, inscription encore incomplète).
 - **Deux fonctions Supabase déployées** : `samgo-stripe-sandbox` (onboarding chauffeur et Checkout test, JWT obligatoire) et `samgo-stripe-webhook` (signature Stripe vérifiée).
 - **Webhook créé chez Stripe en sandbox** pour les événements Checkout. Il ne peut pas encore confirmer de paiement avant la configuration du secret de signature côté Supabase.
 - **Deux tables RLS** ajoutées : comptes chauffeurs Stripe test et sessions de paiements sandbox. Modification de paiement interdite côté utilisateur.
 - **Interface Stripe test** accessible dans l'espace client et dans l'onglet Gains du chauffeur.
-- **Aucun paiement n'est disponible à ce stade** : il reste trois secrets sandbox à saisir via le Dashboard Supabase et un chauffeur Stripe test à enregistrer. Voir `PARAMETRAGE-STRIPE-TEST.md`.
+- Les trois noms de secrets Stripe TEST apparaissent dans Supabase, mais leurs valeurs ne sont pas inspectables. Un compte Stripe Express de test est associé au chauffeur approuvé ; son onboarding reste incomplet. Voir `PARAMETRAGE-STRIPE-TEST.md`.
 - **Aucune transaction Stripe de test confirmée de bout en bout**, aucun paiement réel, aucune clé live enregistrée.
 - Le modèle 100 % chauffeur / 0 % SAMGO est conservé. En destination charge, **les frais Stripe sont supportés par SAMGO**, un coût à anticiper avant tout lancement.
+
+## Stripe Connect — diagnostic et correction du 28 octobre 2026
+
+- Après une erreur HTTP 400 pendant « Configurer mon compte chauffeur Stripe TEST », les journaux Supabase montrent que l'authentification et la lecture du dossier chauffeur réussissent.
+- Deux comptes connectés TEST sont visibles dans le Dashboard Stripe, dont un de type contrôlé avec tableau de bord Express. Les comptes n'étaient pas associés aux utilisateurs SAMGO.
+- Vérification du statut approuvé du compte chauffeur, puis association administrative de l'unique compte Express de test disponible avec ce chauffeur dans `samgo_stripe_chauffeurs_test`. Un contrôle SQL a confirmé **une seule association**. Aucun compte supplémentaire, paiement ou virement n'a été créé.
+- La fonction `samgo-stripe-sandbox` a été mise à jour pour conserver, masquer les données sensibles et afficher le **code d'erreur Stripe détaillé** plutôt qu'un simple « 400 ». La version publiée est **7**, contrôle JWT maintenu. Les tentatives enregistrées peuvent être diagnostiquées sans exposer de clés.
+- L'interface chauffeur affiche dorénavant « compte TEST lié, vérification en attente » lorsque le statut serveur confirme l'association.
+- Le compte connecté est de type Express, avec `charges_enabled=false`, `payouts_enabled=false`, `details_submitted=false`. Le prochain test consiste à ouvrir la procédure d'onboarding hébergée par Stripe **depuis le bouton SAMGO**, et à suivre les seules étapes TEST.
+- **Non encore vérifié :** création effective du lien d'onboarding via la clé de test Supabase, finalisation de l'onboarding, Checkout de test complet, puis réception d'un webhook Stripe signé.
