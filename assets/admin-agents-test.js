@@ -6,7 +6,9 @@ const $=id=>document.getElementById(id);
 const escapeError=e=>e?.message||'Erreur réseau.';
 const fmt=date=>date?new Date(date).toLocaleString('fr-FR'):'—';
 const euros=cents=>(Number(cents)/100).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
-let processing=false,sessionSeq=0;
+let processing=false,sessionSeq=0,access=null;
+function authorized(){return !!access && access.isAdmin()===true;}
+function requireAccess(){if(!authorized())throw Error('Accès administrateur requis.');return access;}
 function label(el,name,value){
   const p=document.createElement('p');
   const strong=document.createElement('strong');
@@ -19,10 +21,10 @@ function btn(labelText,handler){
   el.textContent=labelText;el.addEventListener('click',handler);return el;
 }
 async function privateRead(table,fields){
- const t=await getToken();
- if(!t||!isAdmin)throw Error('Accès administrateur requis.');
+ const api=requireAccess(),t=await api.getToken();
+ if(!t)throw Error('Session expirée.');
  const query=new URLSearchParams({select:fields,order:'cree_le.desc',limit:'100'});
- const rows=await request('/rest/v1/'+table+'?'+query,'GET',undefined,t);
+ const rows=await api.request('/rest/v1/'+table+'?'+query,'GET',undefined,t);
  if(!Array.isArray(rows))throw Error('Réponse serveur inattendue.');
  return rows;
 }
@@ -86,14 +88,14 @@ function drawInvoices(rows){
 }
 async function load(){
  const revision=++sessionSeq;
- if(!isAdmin){clear();return;}
+ if(!authorized()){clear();return;}
  try{
   const [reports,escalations,invoices]=await Promise.all([
    privateRead('samgo_signalements_test','id,cible_id,categorie,details,statut,cree_le'),
    privateRead('samgo_escalades_test','id,cible_id,nombre_avertissements,statut,cree_le'),
    privateRead('samgo_factures_brouillons_test','id,choix_id,montant_ttc_centimes,commission_centimes,tva_regime,statut,cree_le')
   ]);
-  if(revision!==sessionSeq||!isAdmin)return;
+  if(revision!==sessionSeq||!authorized())return;
   drawReports(reports);drawEscalations(escalations);drawInvoices(invoices);
  }catch(error){
   if(revision!==sessionSeq)return;
@@ -101,21 +103,25 @@ async function load(){
  }
 }
 async function review(item,next){
- if(!isAdmin||processing||item.statut!=='en_attente')return;
+ if(!authorized()||processing||item.statut!=='en_attente')return;
  if(!confirm(next==='avertissement_valide'?
   'Confirmer que les faits ont été examinés et valider UN avertissement TEST ? L’identité du déclarant ne sera jamais transmise.':
   'Rejeter ce signalement TEST sans avertissement ?'))return;
  processing=true;
  try{
-  const t=await getToken();if(!t||!isAdmin)throw Error('Session expirée.');
+  const api=requireAccess(),t=await api.getToken();if(!t)throw Error('Session expirée.');
   const query=new URLSearchParams({id:'eq.'+item.id,statut:'eq.en_attente'});
-  const data=await request('/rest/v1/samgo_signalements_test?'+query,'PATCH',{statut:next,traite_le:new Date().toISOString()},t);
+  const data=await api.request('/rest/v1/samgo_signalements_test?'+query,'PATCH',{statut:next,traite_le:new Date().toISOString()},t);
   if(!Array.isArray(data)||data.length!==1||data[0].statut!==next)throw Error('Le signalement a déjà changé de statut. Recharge la page.');
-  notice('Décision TEST enregistrée. Notification uniquement dans le compte de la personne, sans nom de déclarant. Aucun e-mail envoyé.','good');
+  api.notice('Décision TEST enregistrée. Notification uniquement dans le compte de la personne, sans nom de déclarant. Aucun e-mail envoyé.','good');
   await load();
- }catch(error){notice(escapeError(error),'error');}
+ }catch(error){access?.notice(escapeError(error),'error');}
  finally{processing=false;}
 }
 function clear(){++sessionSeq;for(const id of ['sgAgentReports','sgAgentEscalations','sgAgentInvoices'])$(id)?.replaceChildren();}
-window.sgAdminAgentsTest={load,clear};
+window.sgAdminAgentsTest={load,clear,init:(api)=>{
+ if(!api || typeof api.getToken!=='function' || typeof api.request!=='function' ||
+  typeof api.notice!=='function' || typeof api.isAdmin!=='function')throw Error('Accès administrateur non fourni.');
+ access=api;
+}};
 })();
