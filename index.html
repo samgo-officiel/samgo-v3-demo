@@ -385,9 +385,16 @@ input,select,textarea{font-size:16px}
   #sg-landing .sg-step strong{font-size:12px}
 }
 </style>
+<style id="sg-network-status-style">
+#sgNetworkOffline[hidden]{display:none!important}
+#sgNetworkOffline{position:fixed;z-index:50000;top:calc(env(safe-area-inset-top) + 6px);left:12px;right:12px;
+ max-width:610px;margin:0 auto;padding:11px 13px;border-radius:12px;border:1px solid #e0ab5d;
+ background:#362b18;color:#fff3dc;box-shadow:0 5px 25px #000a;
+ font:600 12px/1.4 system-ui,-apple-system,sans-serif;text-align:center;pointer-events:none}
+</style>
 </head>
 <body class="sg-home-active">
-
+<div id="sgNetworkOffline" role="status" aria-live="polite" hidden></div>
 <section id="sg-landing" aria-label="Accueil SAMGO">
  <div class="sg-hero-frame">
   <div class="sg-hero-photo" aria-hidden="true"></div><div class="sg-hero-shade" aria-hidden="true"></div>
@@ -1589,6 +1596,7 @@ function sgGo(view){
 <script src="assets/stripe-sandbox-connexion.js?v=20261028-safe-accounts"></script>
 <script src="assets/messagerie-test.js?v=20261028"></script>
 <script src="assets/diagnostic-appareil-test.js?v=20261028a"></script>
+<script src="assets/etat-reseau-test.js?v=20261028a"></script>
 <script src="assets/installation-mobile-test.js?v=20261028"></script>
 <script src="assets/recuperation-compte-test.js?v=20261028"></script>
 <script src="assets/fidelite-test.js?v=20261028"></script>
