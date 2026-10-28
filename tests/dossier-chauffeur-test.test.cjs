@@ -57,15 +57,23 @@ test('pas de candidature ou compte invalide : aucune lecture de stockage',async(
 });
 test('changement de compte pendant un appel réseau : résultat ancien ignoré',async()=>{
   const f=fixture();
-  let finish;
-  f.context.fetch=()=>new Promise(resolve=>{finish=()=>resolve({ok:true,json:async()=>[{name:'document'}]});});
+  let finish, markStarted;
+  const started=new Promise(resolve=>{markStarted=resolve;});
+  f.context.fetch=()=>new Promise(resolve=>{
+    finish=()=>resolve({ok:true,json:async()=>[{name:'document'}]});
+    markStarted();
+  });
   f.context.window.sgDriverDocsTest.setCandidate(true);
   const request=f.context.window.sgDriverDocsTest.inspect();
-  // Autoriser la fin de la récupération de jeton avant de changer de compte.
-  await Promise.resolve(); await Promise.resolve();
+  // Attendre l'appel réseau réel, plutôt que supposer qu'il démarre après
+  // exactement deux microtâches (ordre variable dans Node/vm et GitHub Actions).
+  await Promise.race([
+    started,
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error('Le premier appel n’a pas démarré')),1500))
+  ]);
   f.context.sessionUser={id:B};
   f.context.window.sgDriverDocsTest.reset();
-  assert.ok(finish,'Le premier appel n’a pas démarré');
+  assert.equal(typeof finish,'function');
   finish();
   await request;
   assert.equal(f.node('sgDocsPermis').textContent,'Non contrôlé');
