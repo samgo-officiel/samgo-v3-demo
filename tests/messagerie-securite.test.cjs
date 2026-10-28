@@ -28,10 +28,11 @@ function boot(){
  };
  let settle=null;
  const created=[];
+ const messages=[];
  const data={
   testChoices:{async list(){return {data:rows[user.id]||[],error:null};}},
   testMessages:{
-   async list(){return {data:[],error:null};},
+   async list(){return {data:messages.slice(),error:null};},
    create(choiceId,uid,body){
     created.push({choiceId,uid,body});
     return new Promise(resolve=>{settle=resolve;});
@@ -41,7 +42,8 @@ function boot(){
  const win={};
  vm.runInNewContext(source,{document,window:win,sessionUser:user,client:data,
   Intl,Date,Promise},{filename:'SAMGO-chat'});
- return {chat:win.sgChatTest,get,user,created,finish:value=>{assert.ok(settle);settle(value);}};
+ return {chat:win.sgChatTest,get,user,created,messages,
+  finish:value=>{assert.ok(settle);settle(value);}};
 }
 test('après changement de compte, un ancien envoi ne vide pas la nouvelle rédaction',async()=>{
  const app=boot();
@@ -80,4 +82,35 @@ test('une erreur de l’ancien compte ne remplace pas le statut du nouveau',asyn
  app.finish({error:new Error('ancienne erreur')});
  await inflight;
  assert.doesNotMatch(app.get('sgChatClientStatus').textContent,/ancienne erreur/);
+});
+
+test('nouveau message entrant dans un chat déjà ouvert déclenche le signal TEST',async()=>{
+ const app=boot();
+ await app.chat.refresh('client');
+ assert.doesNotMatch(app.get('sgChatClientStatus').textContent,/Nouveau message/);
+ app.messages.push({id:'m1',auteur_id:'X',contenu:'Bonjour (TEST)',cree_le:'2026-10-28T12:00:00Z'});
+ await app.chat.refresh('client');
+ assert.match(app.get('sgChatClientStatus').textContent,/Nouveau message de TEST/);
+ await app.chat.refresh('client');
+ assert.doesNotMatch(app.get('sgChatClientStatus').textContent,/Nouveau message de TEST/);
+});
+test('première lecture et messages que l utilisateur écrit ne déclenchent pas de faux signal',async()=>{
+ const app=boot();
+ app.messages.push({id:'m1',auteur_id:'X',contenu:'Ancien test',cree_le:'2026-10-28T12:00:00Z'});
+ await app.chat.refresh('client');
+ assert.doesNotMatch(app.get('sgChatClientStatus').textContent,/Nouveau message/);
+ app.messages.push({id:'m2',auteur_id:'A',contenu:'Moi (TEST)',cree_le:'2026-10-28T12:01:00Z'});
+ await app.chat.refresh('client');
+ assert.doesNotMatch(app.get('sgChatClientStatus').textContent,/Nouveau message/);
+});
+test('déconnexion purge le signal des messages du précédent compte',async()=>{
+ const app=boot();
+ await app.chat.refresh('client');
+ app.messages.push({id:'m1',auteur_id:'X',contenu:'Message ancien',cree_le:'2026-10-28T12:00:00Z'});
+ await app.chat.refresh('client');
+ assert.match(app.get('sgChatClientStatus').textContent,/Nouveau message/);
+ app.chat.stop();
+ app.user.id='B';
+ await app.chat.refresh('client');
+ assert.doesNotMatch(app.get('sgChatClientStatus').textContent,/Nouveau message/);
 });
