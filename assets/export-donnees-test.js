@@ -88,13 +88,23 @@ async function exportFile(){
   const isNative=window.Capacitor?.isNativePlatform?.()===true;
   if(isNative){
    const copy=window.navigator?.clipboard?.writeText||navigator.clipboard?.writeText;
-   if(typeof copy!=='function'){
-    status('Export disponible depuis le site SAMGO en navigateur. Le presse-papiers natif n’est pas accessible ici.');
-    return false;
+   if(typeof copy==='function'){
+    try{
+     await copy.call(window.navigator?.clipboard||navigator.clipboard,json);
+     if(active())status('Export partiel TEST copié dans le presse-papiers. Collez-le dans un espace personnel sécurisé.');
+     return active();
+    }catch(_){/* Certains appareils interdisent l'accès au presse-papiers WebView. */}
    }
-   await copy.call(window.navigator?.clipboard||navigator.clipboard,json);
-   if(active())status('Export partiel TEST copié dans le presse-papiers. Collez-le dans un espace personnel sécurisé.');
-   return active();
+   if(!active())return false;
+   const manual=$('sgMyDataManual'),textarea=$('sgMyDataManualJson');
+   if(manual&&textarea){
+    textarea.value=json;
+    manual.hidden=false;
+    status('Copie automatique indisponible : sélectionnez le texte ci-dessous pour le copier manuellement. Effacé à la déconnexion.');
+    return true;
+   }
+   status('Export disponible depuis le navigateur Web SAMGO, où le fichier JSON peut être téléchargé.');
+   return false;
   }
   const blob=new Blob([json],{type:'application/json;charset=utf-8'});
   const link=document.createElement('a');
@@ -109,7 +119,9 @@ async function exportFile(){
    return active();
   }finally{
    link.remove?.();
-   URL.revokeObjectURL(objectUrl);
+   // Un délai est nécessaire sur certains Safari mobiles pour terminer le téléchargement.
+   if(typeof setTimeout==='function')setTimeout(()=>URL.revokeObjectURL(objectUrl),5000);
+   else URL.revokeObjectURL(objectUrl);
   }
  }catch(_){
   if(active())status('Export indisponible pour le moment. Réessayez en restant connecté.');
@@ -120,6 +132,9 @@ async function exportFile(){
 }
 function reset(){
  revision++;
+ const manual=$('sgMyDataManual'),textarea=$('sgMyDataManualJson');
+ if(textarea)textarea.value='';
+ if(manual)manual.hidden=true;
  busy=false;
  const button=$('sgMyDataExport');if(button)button.disabled=false;
  status('Connectez-vous pour exporter vos données de test.');
