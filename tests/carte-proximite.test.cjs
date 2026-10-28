@@ -13,9 +13,9 @@ class Element {
  replaceChildren(...nodes){this.children=nodes;}
 }
 function start(){
- const container=new Element('div');
+ const container=new Element('div'),summary=new Element('p');
  const document={
-  getElementById:id=>id==='sgNearbyMap'?container:null,
+  getElementById:id=>id==='sgNearbyMap'?container:id==='sgHeatmapStatus'?summary:null,
   createElementNS:(namespace,tag)=>{
    assert.equal(namespace,'http://www.w3.org/2000/svg');
    return new Element(tag);
@@ -23,7 +23,7 @@ function start(){
  };
  const window={};
  vm.runInNewContext(source,{document,window});
- return {map:window.sgProximityMap,container};
+ return {map:window.sgProximityMap,container,summary};
 }
 const center={lat:48.85,lng:2.35};
 const rows=[
@@ -71,4 +71,37 @@ test('un rayon invalide ne dessine pas de carte',()=>{
  const {map,container}=start();
  map.render({center,requests:rows,radius:0});
  assert.equal(container.children.length,0);
+});
+
+test('zones chaudes : Nord regroupant plus de demandes de test',()=>{
+ const {map,container,summary}=start();
+ const cluster=[
+  {latitude_approx:48.9,longitude_approx:2.35,approach:5.5},
+  {latitude_approx:48.91,longitude_approx:2.36,approach:7},
+  {latitude_approx:48.85,longitude_approx:2.4,approach:3.6},
+  {latitude_approx:48.95,longitude_approx:2.3,approach:30}
+ ];
+ const counts=map.sectors(center,cluster,10);
+ assert.equal(counts.N,2);
+ assert.equal(counts.E,1);
+ assert.equal(counts.O,0);
+ map.render({center,requests:cluster,radius:10});
+ assert.match(summary.textContent,/Nord/);
+ assert.match(summary.textContent,/2 annonces fictives/);
+ const overlays=container.children[0].children.filter(e=>e.tag==='circle'&&e.attrs.opacity);
+ assert.equal(overlays.length,2);
+});
+test('zones chaudes : ignorer les points invalides et hors rayon',()=>{
+ const {map,summary}=start();
+ const invalid=[
+  {latitude_approx:null,longitude_approx:2.3,approach:4},
+  {latitude_approx:99,longitude_approx:2.3,approach:4},
+  {latitude_approx:48.9,longitude_approx:2.4,approach:60}
+ ];
+ const counts=map.sectors(center,invalid,10);
+ assert.equal(Object.values(counts).reduce((a,b)=>a+b,0),0);
+ map.render({center,requests:invalid,radius:10});
+ assert.match(summary.textContent,/Aucune zone active/);
+ map.clear();
+ assert.match(summary.textContent,/Activez le GPS/);
 });
