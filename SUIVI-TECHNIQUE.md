@@ -185,3 +185,20 @@ Les changements ci-dessous sont des améliorations de **démonstration**. Ce ne 
 - **Données du prototype** : nouvelle page `donnees-test.html` liée depuis Compte et Aide. Le texte explique quelles données fictives sont traitées, l'arrondi GPS et l'absence actuelle de purge automatique des annonces en base. **Ce n'est pas une politique RGPD juridique complète.**
 - **Stripe SANDBOX** : les liens Checkout / Connect et les résultats de statut reçus après déconnexion ou changement de compte sont ignorés ; `reset()` remet l'interface dans un état neutre. Aucun passage en production ni activation de paiement réel.
 - **Automatisation** : quatre nouveaux scénarios `tests/stripe-session.test.cjs`, corrigés pour attendre les requêtes simulées explicitement et non un nombre fixe de microtâches. Dernier run connu réussi : `31cb6f2c7c4b83b7465eab969366a6d6a5d048db` (GitHub Actions). Tests réels à deux appareils et Stripe TEST restent à faire.
+
+
+## Fonctionnalités application ajoutées — 28 octobre 2026 (suite)
+
+- Messagerie TEST : trois modèles de réponses rapides pour client et chauffeur, insérés dans le brouillon **sans envoi automatique** ; limite 500 caractères et blocage hors connexion.
+- Nouveau message fictif : indicateur dans la conversation et bannière de navigation vers la section concernée. Aucune notification push en arrière-plan ni contenu privé dans la bannière ; nettoyage à la déconnexion.
+- Missions chauffeurs TEST : classement local par proximité, tarif indicatif ou distance du trajet fictif, sans nouvelle sollicitation du GPS. Mémorisation locale du rayon (5 à 50 km) et du tri uniquement, avec remise à zéro et sans stockage d'identité ou de position.
+- Publication d'annonces fictives : refus explicite hors connexion avant demande GPS.
+- Parcours client : bouton « Modifier ma simulation » pour préremplir le formulaire depuis un trajet local ; ne modifie **pas** une annonce déjà publiée.
+- Assistance : accès direct aux signalements de TEST depuis le client et le chauffeur, sans identifiant dans l'URL, avec rappel du 112 en cas de danger.
+- Le projet compte **133 tests automatiques réussis** au dernier contrôle. Les scripts navigateur et validations sont des tests de prototype, pas une validation métier ou sécurité complète.
+
+### Vérification mobile
+
+- Android : APK DEBUG compilée et manifeste inspecté sur GitHub ; essai d'émulateur encore à suivre après correction du mode de capture d'écran.
+- iOS : compilation sur simulateur et lancement du programme dans un simulateur iPhone réussis ; capture d'écran archivée. **Aucune IPA distribuable** ni installation sur iPhone réel.
+- Le GPS réel sur appareils, les confirmations e-mail et le comportement en conditions réseau réelles restent à tester.
