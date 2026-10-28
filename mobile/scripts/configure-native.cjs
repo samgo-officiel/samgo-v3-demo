@@ -31,9 +31,15 @@ function configureIos(file=ios){
  if(!plist.includes('<key>NSLocationWhenInUseUsageDescription</key>')){
   plist=plist.replace('<dict>','<dict>\n\t<key>NSLocationWhenInUseUsageDescription</key>\n\t<string>'+locationExplanation+'</string>');
  }
- if(plist.includes('<key>NSLocationAlwaysUsageDescription</key>')||
-    plist.includes('<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>'))
-  throw Error('Ne pas activer le GPS iOS en arrière-plan dans SAMGO TEST');
+ // Capacitor Geolocation 8 requiert aussi cette CLE DE TEXTE iOS
+ // même si SAMGO n'appelle jamais requestAlwaysAuthorization ni watchPosition.
+ // Ce libellé ne demande aucun droit de localisation en arrière-plan.
+ if(!plist.includes('<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>')){
+  plist=plist.replace('<dict>',
+   '<dict>\n\t<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>\n\t<string>'+locationExplanation+'</string>');
+ }
+ if(plist.includes('<key>NSLocationAlwaysUsageDescription</key>'))
+  throw Error('Permission Always legacy non autorisée dans SAMGO TEST');
  fs.writeFileSync(file,plist);
  return true;
 }
