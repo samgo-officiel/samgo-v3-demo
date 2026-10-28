@@ -221,8 +221,8 @@ async function sendInterest(adId){
 async function refreshClient(){
  const list=$('sgMyAdsList');
  if(!list)return;
- list.replaceChildren();
  if(!signedIn()){
+  list.replaceChildren();
   status('sgMyAdsStatus','Connectez-vous à votre compte client pour consulter les annonces de test.');
   return;
  }
@@ -237,9 +237,13 @@ async function refreshClient(){
   const allAnswers=Array.isArray(answers.data)?answers.data:[];
   const selected=Array.isArray(choices.data)?choices.data:[];
   if(!ownAds.length){
+   list.replaceChildren();
    status('sgMyAdsStatus','Aucune annonce de test publiée depuis ce compte. Pour publier, utilisez Réserver.');
    return;
   }
+  // Conserver les anciennes cartes tant que l'actualisation n'est pas
+  // terminée ; ne vider que lorsque la nouvelle lecture a réellement réussi.
+  list.replaceChildren();
   const now=Date.now();
   status('sgMyAdsStatus',ownAds.length+' annonce(s) de test retrouvée(s) pour ce compte.');
   for(const ad of ownAds){
