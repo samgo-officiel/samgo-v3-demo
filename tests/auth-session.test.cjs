@@ -103,3 +103,89 @@ test('un fragment de jeton incomplet est efface sans creer de session',()=>{
  assert.equal(app.entries.has('samgo_v3_test_session'),false);
  assert.equal(app.callbackUrl,'/samgo-v3-demo/');
 });
+
+
+test('un ancien refus 401 ne déconnecte pas le compte connecté ensuite',async()=>{
+ let releaseOld;
+ const pending=new Promise(resolve=>{releaseOld=resolve;});
+ const app=boot(async(url,options)=>{
+  if(url.endsWith('/auth/v1/user')){
+   const token=options?.headers?.Authorization||'';
+   if(token.includes('old-user')){await pending;return response(401,{message:'old token expired'});}
+   return response(200,{id:'new-user'});
+  }
+  if(url.includes('grant_type=password'))return response(200,{
+   access_token:'new-user-access',refresh_token:'new-refresh',expires_in:3600,user:{id:'new-user'}
+  });
+  return response(200,{});
+ },{access_token:'old-user-access',refresh_token:'old-refresh',expires_at:Date.now()+3600000,user:{id:'old-user'}});
+ const oldGet=app.client.auth.getUser();
+ const newer=await app.client.auth.signInWithPassword({email:'new@example.test',password:'example'});
+ assert.equal(newer.error,null);
+ releaseOld();
+ const previous=await oldGet;
+ assert.ok(previous.error);
+ assert.equal(app.entries.has('samgo_v3_test_session'),true);
+ const active=JSON.parse(app.entries.get('samgo_v3_test_session'));
+ assert.equal(active.user.id,'new-user');
+ const current=await app.client.auth.getUser();
+ assert.equal(current.error,null);
+ assert.equal(current.data.user.id,'new-user');
+});
+test('une vieille réponse getUser 200 ne remplace pas la nouvelle identité',async()=>{
+ let releaseOld;
+ const pending=new Promise(resolve=>{releaseOld=resolve;});
+ const app=boot(async(url,options)=>{
+  if(url.endsWith('/auth/v1/user')){
+   if(options?.headers?.Authorization?.includes('old-user')){await pending;return response(200,{id:'old-user'});}
+   return response(200,{id:'new-user'});
+  }
+  if(url.includes('grant_type=password'))return response(200,{
+   access_token:'new-user-access',refresh_token:'new-refresh',expires_in:3600,user:{id:'new-user'}
+  });
+  return response(200,{});
+ },{access_token:'old-user-access',refresh_token:'old-refresh',expires_at:Date.now()+3600000,user:{id:'old-user'}});
+ const pendingOld=app.client.auth.getUser();
+ const login=await app.client.auth.signInWithPassword({email:'new@example.test',password:'example'});
+ assert.equal(login.error,null);
+ releaseOld();
+ const old=await pendingOld;
+ assert.ok(old.error,'la requête de l’ancien compte doit être rejetée');
+ const fresh=await app.client.auth.getUser();
+ assert.equal(fresh.error,null);
+ assert.equal(fresh.data.user.id,'new-user');
+});
+test('connexion lente après déconnexion ne restaure jamais une session',async()=>{
+ let releaseLogin;
+ const slow=new Promise(resolve=>{releaseLogin=resolve;});
+ const app=boot(async(url)=>{
+  if(url.includes('grant_type=password')){
+   await slow;
+   return response(200,{access_token:'late-access',refresh_token:'late-refresh',expires_in:3600,user:{id:'late'}});
+  }
+  return response(200,{});
+ });
+ const login=app.client.auth.signInWithPassword({email:'late@example.test',password:'example'});
+ await app.client.auth.signOut();
+ releaseLogin();
+ const old=await login;
+ assert.ok(old.error);
+ assert.equal(app.entries.has('samgo_v3_test_session'),false);
+});
+test('inscription lente après déconnexion ne reconnecte jamais un compte',async()=>{
+ let releaseSignup;
+ const slow=new Promise(resolve=>{releaseSignup=resolve;});
+ const app=boot(async(url)=>{
+  if(url.includes('/auth/v1/signup')){
+   await slow;
+   return response(200,{access_token:'late-access',refresh_token:'late-refresh',expires_in:3600,user:{id:'late'}});
+  }
+  return response(200,{});
+ });
+ const signup=app.client.auth.signUp({email:'late@example.test',password:'example'});
+ await app.client.auth.signOut();
+ releaseSignup();
+ const old=await signup;
+ assert.ok(old.error);
+ assert.equal(app.entries.has('samgo_v3_test_session'),false);
+});
