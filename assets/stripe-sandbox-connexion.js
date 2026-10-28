@@ -154,7 +154,10 @@ function reset(){
  message('sgStripeConnectBadge','💳 STRIPE CONNECT — STATUT TEST À VÉRIFIER');
  shared('Connectez-vous pour consulter le statut Stripe TEST.');
  const btn=$('sgStripeSandboxDriverButton');
- if(btn)btn.disabled=false;
+ if(btn){
+  btn.disabled=false;
+  btn.textContent='Configurer mon compte chauffeur Stripe TEST';
+ }
 }
 showReturnStatus();
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>refresh(),{once:true});
