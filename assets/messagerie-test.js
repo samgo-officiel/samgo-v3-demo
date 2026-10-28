@@ -7,7 +7,8 @@
   client:{selector:'sgChatClientChoices',messages:'sgChatClientMessages',input:'sgChatClientInput',send:'sgChatClientSend',status:'sgChatClientStatus'},
   driver:{selector:'sgChatDriverChoices',messages:'sgChatDriverMessages',input:'sgChatDriverInput',send:'sgChatDriverSend',status:'sgChatDriverStatus'}
  };
- const state={client:{current:null,choices:[],seq:0,sending:false,sendKey:null},driver:{current:null,choices:[],seq:0,sending:false,sendKey:null},user:null};
+ const state={client:{current:null,choices:[],seq:0,sending:false,sendKey:null,lastIncoming:new Map()},
+ driver:{current:null,choices:[],seq:0,sending:false,sendKey:null,lastIncoming:new Map()},user:null};
  function signed(){return typeof sessionUser!=='undefined'&&!!sessionUser&&typeof client!=='undefined'&&!!client?.testMessages&&!!client?.testChoices;}
  function say(role,text){const el=$(view[role].status);if(el)el.textContent=text;}
  function note(role,text){
@@ -47,7 +48,7 @@
    state.user=uid;
    for(const side of ['client','driver']){
     state[side].current=null;state[side].choices=[];state[side].seq++;
-    state[side].sending=false;state[side].sendKey=null;
+    state[side].sending=false;state[side].sendKey=null;state[side].lastIncoming.clear();
     const input=$(view[side].input);if(input)input.value='';
    }
   }
@@ -60,6 +61,7 @@
     .filter(c=>(role==='client'?c.client_id:c.chauffeur_id)===uid)
     .filter(c=>['choisi_test','termine_test','annule_test'].includes(c.statut)).slice(0,20);
    st.choices=rows;
+   for(const id of st.lastIncoming.keys())if(!rows.some(c=>c.id===id))st.lastIncoming.delete(id);
    if(!rows.some(c=>c.id===st.current))st.current=rows.length?rows[0].id:null;
    updateButtons(role);
    if(!rows.length){
@@ -94,7 +96,16 @@
     small.textContent=Number.isFinite(d.getTime())?new Intl.DateTimeFormat('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}).format(d):'TEST';
     article.append(who,p,small);box.append(article);
    }
-   say(role,rows.length+' message(s) de TEST. Actualisation quand SAMGO est ouvert.');
+   // Signal de nouveau message seulement si cette conversation a déjà
+   // été ouverte dans la session courante. Pas de notification de fond.
+   const incoming=rows.filter(row=>row.auteur_id!==currentUser);
+   const newest=incoming.length?incoming[incoming.length-1].id:null;
+   const prior=st.lastIncoming.get(choice);
+   const hasBaseline=st.lastIncoming.has(choice);
+   st.lastIncoming.set(choice,newest);
+   if(hasBaseline&&newest&&newest!==prior)
+    say(role,'🔔 Nouveau message de TEST reçu. '+rows.length+' message(s) affiché(s).');
+   else say(role,rows.length+' message(s) de TEST. Actualisation quand SAMGO est ouvert.');
   }catch(e){if(st.current===choice&&seq===st.seq&&state.user===currentUser&&signed()&&sessionUser.id===currentUser)
     say(role,'Impossible de lire cette conversation : '+(e.message||'Réessayez.'));}
  }
@@ -127,7 +138,7 @@
  function stop(){
   state.user=null;
   for(const role of ['client','driver']){
-   const st=state[role];st.current=null;st.choices=[];st.seq++;st.sending=false;st.sendKey=null;
+   const st=state[role];st.current=null;st.choices=[];st.seq++;st.sending=false;st.sendKey=null;st.lastIncoming.clear();
    const input=$(view[role].input);if(input)input.value='';
    updateButtons(role);note(role,'Connectez-vous pour consulter vos messages fictifs.');say(role,'Messagerie de TEST.');
   }
