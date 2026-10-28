@@ -399,9 +399,23 @@ input,select,textarea{font-size:16px}
  background:#362b18;color:#fff3dc;box-shadow:0 5px 25px #000a;
  font:600 12px/1.4 system-ui,-apple-system,sans-serif;text-align:center;pointer-events:none}
 </style>
+<style id="sg-chat-toast-style">
+#sgChatNewToast[hidden]{display:none!important}
+#sgChatNewToast{position:fixed;z-index:50001;bottom:calc(env(safe-area-inset-bottom) + 12px);
+ left:10px;right:10px;max-width:550px;margin:auto;padding:11px;display:flex;align-items:center;
+ flex-wrap:wrap;gap:8px;border-radius:14px;background:#1d323a;border:1px solid #ecbf68;
+ color:#fff2c9;box-shadow:0 5px 22px #000b;font-size:13px}
+#sgChatNewToast span{flex:1 1 150px}
+#sgChatNewToast button{min-height:40px;padding:9px 12px;font-weight:700}
+</style>
 </head>
 <body class="sg-home-active">
 <div id="sgNetworkOffline" role="status" aria-live="polite" hidden></div>
+<div id="sgChatNewToast" role="status" aria-live="polite" hidden>
+ <span id="sgChatNewText">Nouveau message fictif.</span>
+ <button type="button" onclick="window.sgChatTest.openNotice()">Lire le message TEST</button>
+ <button type="button" class="alt" onclick="window.sgChatTest.dismissNotice()" aria-label="Masquer l’avis de nouveau message">×</button>
+</div>
 <section id="sg-landing" aria-label="Accueil SAMGO">
  <div class="sg-hero-frame">
   <div class="sg-hero-photo" aria-hidden="true"></div><div class="sg-hero-shade" aria-hidden="true"></div>
