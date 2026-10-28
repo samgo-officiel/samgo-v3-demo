@@ -41,8 +41,8 @@ Cette page décrit le fonctionnement technique actuel et ne constitue pas encore
 </section>
 <section>
 <h2>Comment fonctionne la localisation ?</h2>
-<p>Le chauffeur demande lui-même sa position depuis l'écran Missions. Le navigateur l'utilise localement pour calculer les distances approximatives aux annonces. Une zone arrondie à environ 0,1 degré sert au filtrage côté serveur : le GPS précis du chauffeur n'est pas enregistré dans la table des annonces.</p>
-<p>Après 15 minutes sans nouvelle autorisation ou mise à jour volontaire, la recherche cesse de réutiliser cette position. Le bouton « Arrêter la recherche GPS » efface la position locale dans ce module. Il ne supprime pas les permissions accordées dans les réglages du navigateur.</p>
+<p>Le chauffeur demande lui-même sa position depuis l'écran Missions. Sur le site, le GPS du navigateur est utilisé ; dans l'application Android/iPhone de test, le composant GPS natif est sollicité uniquement après cette action. La position est utilisée localement pour calculer les distances approximatives aux annonces. Une zone arrondie à environ 0,1 degré sert au filtrage côté serveur : le GPS précis du chauffeur n'est pas enregistré dans la table des annonces.</p>
+<p>Après 15 minutes sans nouvelle autorisation ou mise à jour volontaire, la recherche cesse de réutiliser cette position. Le bouton « Arrêter la recherche GPS » efface la position locale dans ce module. Il ne supprime pas les autorisations accordées dans les réglages du navigateur ou du téléphone. Si la précision GPS annoncée est trop faible (plus de 5 km d'incertitude), SAMGO refuse cette mesure pour éviter un affichage trompeur.</p>
 <p>Attention : quand un client publie une annonce fictive, des coordonnées <strong>arrondies à deux décimales</strong> sont enregistrées dans le service de test. L'annonce cesse normalement d'être proposée à la recherche après environ deux heures, mais cela ne veut <strong>pas</strong> dire que l'enregistrement est automatiquement supprimé de la base.</p>
 </section>
 <section>
