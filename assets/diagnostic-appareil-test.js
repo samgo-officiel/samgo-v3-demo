@@ -38,6 +38,14 @@
      Notification.permission==='granted'?'autorisées':Notification.permission==='denied'?'refusées':'pas encore autorisées'
    )],
   ];
+  if(native()&&typeof window.Capacitor?.Plugins?.App?.getInfo==='function'){
+   try{
+    const info=await window.Capacitor.Plugins.App.getInfo();
+    const version=String(info?.version||'non précisée').slice(0,30);
+    const build=String(info?.build||'non précisé').slice(0,30);
+    results.push(['Version SAMGO TEST',version+' (build '+build+')']);
+   }catch(_){results.push(['Version SAMGO TEST','indisponible sur cet appareil']);}
+  }
   if(navigator.permissions?.query){
    try{
     const permission=await navigator.permissions.query({name:'geolocation'});
