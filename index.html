@@ -1338,6 +1338,7 @@ function sgGo(view){
  if(view==='book')setSpace('raccompagner');
  if(view==='trips'&&window.sgDemand&&typeof window.sgDemand.refreshClient==='function')window.sgDemand.refreshClient();
  if(view==='trips'&&window.sgStripeSandbox)window.sgStripeSandbox.refresh();
+ if(view==='trips'&&window.sgChatTest)window.sgChatTest.refresh('client');
  const target=view==='account'?'authPanel':view==='trips'?'sg-trips-note':view==='driver'?'spaceChauffeur':'spaceRaccompagner';
  const el=document.getElementById(target);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
 }
