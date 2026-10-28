@@ -112,3 +112,12 @@ La carte actuelle est **schématique et locale**, non une carte OpenStreetMap/Go
 - [ ] Depuis le profil chauffeur, appuyer sur « Actualiser mes avis » et vérifier que le chargement des avis de **test** se lance, même si aucun avis n'existe.
 
 La réussite du diagnostic est indicative : elle ne remplace pas les tests sur téléphone, les assurances ni les contrôles d'identité avant un lancement réel.
+
+
+## Contrôles additionnels préparés
+
+- [ ] Envoyer un message fictif, changer de compte ou se déconnecter très rapidement : aucun contenu de l'ancien compte ne doit réapparaître ni effacer un brouillon du nouveau.
+- [ ] Arrêter la recherche GPS chauffeur depuis Missions : les annonces du client connecté doivent rester visibles dans Mes courses.
+- [ ] Se déconnecter : les annonces privées de l'ancien compte, les conversations et le statut Stripe TEST doivent disparaître de l'écran.
+- [ ] Après une éventuelle inscription Stripe **de test**, vérifier que le bouton et le statut ne restent pas associés à l'ancien compte en cas de déconnexion.
+- [ ] Ouvrir `donnees-test.html` depuis Compte/Aide : comprendre les coordonnées approximatives, la conservation en base et la nature fictive des données. La politique de confidentialité définitive nécessite une révision juridique.
