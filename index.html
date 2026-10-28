@@ -469,6 +469,7 @@ input,select,textarea{font-size:16px}
   <div class="sg-demo-row"><span>Distance choisie</span><b id="demoTripsKm"></b></div>
   <div class="sg-demo-row"><span>Prix estimé</span><b id="demoTripsPrice"></b></div>
   <p class="sg-demo-small">Simulation locale uniquement. Aucun paiement, aucune réservation et aucune transmission au serveur. Elle reste dans cet onglet pendant deux heures maximum, si le navigateur autorise le stockage, et s'efface à la fermeture de l'onglet.</p>
+  <button type="button" onclick="editLocalDemo()">Modifier ma simulation</button>
   <button type="button" class="alt" onclick="resetLocalDemo()">Effacer la simulation</button>
  </div>
  <div class="sg-reply-client-box" id="sgMyPublishedTest">
@@ -1259,6 +1260,18 @@ function createLocalDemo(e){
  saveLocalDemo();
  $('demoBookingMessage').textContent='Simulation prête. Aucun chauffeur n’a été contacté.';
  renderLocalDemo();
+}
+function editLocalDemo(){
+ if(!localDemoRequest)return;
+ const req=localDemoRequest;
+ $('demoDepart').value=req.from;
+ $('demoArrivee').value=req.to;
+ const select=$('km');
+ if([...select.options].some(opt=>Number(opt.value)===Number(req.km)))select.value=String(req.km);
+ calc();
+ $('demoBookingMessage').textContent='Modifiez les lieux fictifs puis créez une nouvelle simulation locale. Cela ne modifie pas une annonce déjà publiée sur le serveur.';
+ sgGo('book');
+ $('demoDepart').focus?.();
 }
 function resetLocalDemo(){
  localDemoRequest=null;
