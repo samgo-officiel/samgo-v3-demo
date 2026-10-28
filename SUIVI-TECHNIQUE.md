@@ -114,3 +114,15 @@ La validation « chauffeur approuvé » actuelle est uniquement une validation d
 - Stripe Connect : toujours un compte test associé, vérification d'identité fictive refusée, `charges_enabled=false` et `payouts_enabled=false`. Zéro paiement d'essai et aucun paiement réel.
 - Plans écrits dans `PLAN-LANCEMENT-SAMGO.md` (8 chantiers, assurance, droit, CNIL, Urssaf 2027) et `RECETTE-SAMGO-2-TELEPHONES.md` (scénario de test). Ce sont des checklists, pas des validations des fonctions manquantes.
 - **RESTE** : deux sessions réelles simultanées, envoi du chat sur deux appareils, géocodage/itinéraire, vrai push, vraie modération, vérifications des chauffeurs, contrat d'assurance spécialisé, avis juridique, tests de paiement complets, production et publication stores. Ne pas ouvrir de vraies courses.
+
+
+## Corrections autonomes du 28 octobre 2026 — comptes et assistance
+
+- **Confirmation d'inscription par e-mail** : le client REST léger transmet désormais son URL de retour dans `redirect_to`, et récupère le jeton de session de la réponse implicite Supabase. Le fragment d'URL contenant le jeton est retiré de la barre d'adresse après lecture.
+- **Conflit JS corrigé** : `URL`, qui masquait le constructeur `URL` natif, a été renommée `SUPABASE_URL` pour réparer la construction de l'adresse de confirmation.
+- **Mot de passe oublié** : ajout de `assets/recuperation-compte-test.js`, avec demande de lien de récupération par e-mail, et formulaire pour changer le mot de passe après lien de récupération. Aucune clé secrète ou mot de passe n'est enregistré dans le dépôt ou dans le stockage du navigateur par ce parcours.
+- **Résilience réseau** : une erreur de renouvellement de session causée par le réseau ne supprime plus immédiatement le jeton de session dans l'application ni dans la page Aide. Seuls les refus explicites (400/401/403) entraînent l'effacement de la session.
+- **Support** : accès à `aide.html` depuis l'espace Compte ; aide mise à jour pour indiquer le nouveau parcours. Formulation de refus GPS adaptée aux différents navigateurs, pas seulement Safari.
+- **Contrôle statique** : JavaScript compilé sans erreur de syntaxe dans les quatre blocs de `index.html`, le nouveau module de récupération, la page Aide et le module GPS ; identifiants HTML uniques contrôlés sur la page.
+- **Audit Supabase** : toutes les tables du schéma public ont RLS activé. Les trois tables historiques sans policies restent fermées ; avertissement sur la protection contre mots de passe compromis toujours présent. Les tables `positions_chauffeurs_test`, `annonces_raccompagnement_test`, `messages_course_test` et `offres_chauffeurs` ont chacune **0 ligne au moment du contrôle**.
+- **Non encore testé** : réception d'un vrai e-mail de confirmation ou de récupération, redirection vers la bonne URL et autorisation `redirect_to` dans la configuration Auth, comportement réel sur iPhone/Android, compte valide sur deux téléphones. Aucun mot de passe de compte, paiement ou donnée personnelle n'a été modifié automatiquement.
