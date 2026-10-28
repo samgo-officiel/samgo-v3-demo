@@ -34,7 +34,7 @@ test('escalade uniquement après trois avertissements VALIDÉS par administrateu
  assert.match(sql,/if n>=3 then/);
  assert.match(sql,/samgo_escalades_test/);
  assert.match(agent,/Valider 1 avertissement TEST/);
- assert.match(agent,/api\.isAdmin\(\)===true/);
+ assert.match(agent,/access\.isAdmin\(\)===true/);
  assert.doesNotMatch(sql,/suspendu|bannissement|delete from auth\.users/i);
 });
 test('facturation: brouillon uniquement si paiement test confirmé; TVA et e-mails bloqués',()=>{
