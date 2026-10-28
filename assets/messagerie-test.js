@@ -115,6 +115,10 @@
   const input=$(cfg.input),text=(input?.value||'').trim();
   if(!row||row.statut!=='choisi_test'){say(role,'La messagerie est réservée aux simulations en cours.');return;}
   if(!text||text.length>500){say(role,'Entrez entre 1 et 500 caractères.');return;}
+  if(typeof navigator!=='undefined'&&navigator.onLine===false){
+   say(role,'Hors connexion : message non envoyé, votre brouillon reste disponible.');
+   return;
+  }
   if(st.sending)return;
   const uid=sessionUser.id,choiceId=row.id,sendKey={};
   // Ne plus réutiliser un résultat de requête si l'utilisateur ou le chat change.
