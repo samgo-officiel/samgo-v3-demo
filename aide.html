@@ -69,6 +69,21 @@ textarea{min-height:120px;resize:vertical}label{display:block;margin:13px 0 6px;
 <button id="ticketButton" type="submit">Enregistrer le signalement</button>
 </form>
 <div id="ticketFeedback" class="notice" role="status" aria-live="polite">Vérification de ton compte…</div>
+<p><a href="./mes-alertes.html">🔔 Consulter mes alertes privées (clients et chauffeurs)</a></p>
+<section id="sgConfidentialReport" class="hidden">
+<h3>🔒 Signaler un participant d'une simulation</h3>
+<p class="subtle">La personne concernée ne reçoit jamais ton identité ni le contenu de ton témoignage. L'équipe SAMGO peut identifier le déclarant pour enquêter. Aucune alerte automatique sur une simple accusation.</p>
+<form id="sgConfReportForm">
+<label for="sgConfTrip">Trajet fictif concerné</label>
+<select id="sgConfTrip" required><option value="">Choisir mon trajet</option></select>
+<label for="sgConfReason">Motif</label>
+<select id="sgConfReason" required><option value="">Choisir</option><option value="comportement">Comportement</option><option value="absence">Absence</option><option value="paiement">Paiement</option><option value="danger">Danger</option><option value="agression">Agression</option><option value="accident">Accident</option><option value="autre">Autre</option></select>
+<label for="sgConfDetails">Décrire les faits</label>
+<textarea id="sgConfDetails" minlength="10" maxlength="1500" required></textarea>
+<button id="sgConfSend" type="submit">Envoyer confidentiellement (TEST)</button>
+</form>
+<p id="sgConfStatus" class="notice" role="status" aria-live="polite">Aucun signalement transmis.</p>
+</section>
 </section>
 <footer><p><a href="./donnees-test.html">🔒 Comprendre les données traitées par SAMGO TEST</a></p>SAMGO — Projet en phase de test. Les réponses de l'assistant sont informatives et ne remplacent pas les secours, l'assurance, ni un conseil juridique.</footer>
 </main>
@@ -117,9 +132,48 @@ $('askForm').addEventListener('submit',e=>{e.preventDefault();ask($('question').
 document.querySelectorAll('[data-question]').forEach(b=>b.addEventListener('click',()=>ask(b.dataset.question)));
 function feedback(message,kind=''){$('ticketFeedback').textContent=message;$('ticketFeedback').className='notice'+(kind?' '+kind:'')}
 function view(){const signed=!!user;$('loginBox').classList.toggle('hidden',signed);$('loggedBox').classList.toggle('hidden',!signed);$('ticketForm').classList.toggle('hidden',!signed);$('loggedEmail').textContent=signed?(user.email||'Compte SAMGO'):''}
-async function init(){try{const t=await token();user=t?await request('/auth/v1/user','GET',undefined,t):null;view();feedback(user?'Tu peux enregistrer un signalement. Il sera consultable par l’administrateur.':'Connecte-toi pour enregistrer un signalement. Tu peux poser tes questions ci-dessus sans connexion.')}catch(err){if(err.status===401||err.status===403)save(null);user=null;view();feedback('Connexion à vérifier : '+err.message,'alert')}}
+const sgMatchedTrips=new Map();
+async function sgRefreshTrips(){
+ sgMatchedTrips.clear();$('sgConfidentialReport').classList.add('hidden');
+ $('sgConfTrip').replaceChildren();
+ if(!user)return;
+ try{
+  const t=await token();if(!t)return;
+  const q=new URLSearchParams({select:'id,client_id,chauffeur_id,statut',order:'cree_le.desc',limit:'40'});
+  const rows=await request('/rest/v1/choix_chauffeur_test?'+q,'GET',undefined,t);
+  if(!Array.isArray(rows))return;
+  for(const choice of rows){
+   const target=choice.client_id===user.id?choice.chauffeur_id:choice.chauffeur_id===user.id?choice.client_id:null;
+   if(!target)continue;
+   const opt=document.createElement('option');opt.value=choice.id;
+   opt.textContent='Trajet TEST '+choice.id.slice(0,8)+' — '+(choice.client_id===user.id?'chauffeur':'client')+' concerné';
+   $('sgConfTrip').append(opt);sgMatchedTrips.set(choice.id,target);
+  }
+  $('sgConfidentialReport').classList.toggle('hidden',sgMatchedTrips.size===0);
+ }catch(_){$('sgConfidentialReport').classList.add('hidden');}
+}
+async function init(){try{const t=await token();user=t?await request('/auth/v1/user','GET',undefined,t):null;view();await sgRefreshTrips();feedback(user?'Tu peux enregistrer un signalement. Il sera consultable par l’administrateur.':'Connecte-toi pour enregistrer un signalement. Tu peux poser tes questions ci-dessus sans connexion.')}catch(err){if(err.status===401||err.status===403)save(null);user=null;view();feedback('Connexion à vérifier : '+err.message,'alert')}}
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();if(loading)return;loading=true;$('loginButton').disabled=true;try{const d=await request('/auth/v1/token?grant_type=password','POST',{email:$('supportEmail').value.trim(),password:$('supportPassword').value});if(!d.access_token)throw new Error('Aucune session reçue.');save({access_token:d.access_token,refresh_token:d.refresh_token,expires_at:Date.now()+(Number(d.expires_in)||3600)*1000,user:d.user||null});$('supportPassword').value='';await init()}catch(err){feedback(/invalid login/i.test(err.message)?'Adresse e-mail ou mot de passe incorrect.':err.message,'alert')}finally{loading=false;$('loginButton').disabled=false}});
 $('logoutButton').addEventListener('click',async()=>{let t=null;try{t=await token()}catch(_){}save(null);user=null;view();feedback('Tu es déconnecté.');if(t)try{await request('/auth/v1/logout','POST',{},t)}catch(_){}});
+$('sgConfReportForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(loading||!user)return;
+ const trajet=$('sgConfTrip').value,cible=sgMatchedTrips.get(trajet);
+ const categorie=$('sgConfReason').value,details=$('sgConfDetails').value.trim();
+ if(!cible||!['comportement','absence','paiement','danger','agression','accident','autre'].includes(categorie)||details.length<10||details.length>1500){
+  $('sgConfStatus').textContent='Vérifie le trajet et le motif.';return;
+ }
+ loading=true;$('sgConfSend').disabled=true;
+ try{
+  const t=await token();if(!t)throw Error('Reconnecte-toi.');
+  const rows=await request('/rest/v1/samgo_signalements_test','POST',{
+   trajet_id:trajet,declarant_id:user.id,cible_id:cible,categorie,details
+  },t);
+  if(!Array.isArray(rows)||rows.length!==1)throw Error('Enregistrement non confirmé.');
+  $('sgConfStatus').textContent='Signalement confidentiel reçu par SAMGO. Ton nom ne sera pas transmis. '+(['danger','agression','accident'].includes(categorie)?'Danger immédiat : appelle le 112.':'');
+  $('sgConfReportForm').reset();
+ }catch(error){$('sgConfStatus').textContent='Échec du signalement : '+(error.message||'réessaie.');}
+ finally{loading=false;$('sgConfSend').disabled=false;}
+});
 $('ticketForm').addEventListener('submit',async e=>{
  e.preventDefault();if(loading)return;
  if(!user)return feedback('Connecte-toi pour signaler un problème.','alert');
