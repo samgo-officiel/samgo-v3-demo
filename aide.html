@@ -97,7 +97,7 @@ async function token(){
  if(Date.now()<Number(session.expires_at||0)-60000)return session.access_token;
  if(!session.refresh_token){save(null);return null}
  try{const d=await request('/auth/v1/token?grant_type=refresh_token','POST',{refresh_token:session.refresh_token});save({access_token:d.access_token,refresh_token:d.refresh_token,expires_at:Date.now()+(Number(d.expires_in)||3600)*1000,user:d.user||null});return d.access_token}
- catch(_){save(null);return null}
+ catch(error){if([400,401,403].includes(error?.status))save(null);throw error}
 }
 function answer(text){
  const s=text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -106,7 +106,7 @@ function answer(text){
  if(/(?:reser|command|course|trajet|disponib|partir|raccompagn)/.test(s))return '🚗 SAMGO est encore en phase de test. Il n’est pas possible de commander un chauffeur pour une course réelle. L’objectif est qu’un chauffeur indépendant vienne conduire ta propre voiture pour te raccompagner.';
  if(/(?:chauffeur|devenir|candidat|independant|inscri|permis|recrut)/.test(s))return '🛴 Pour devenir chauffeur, tu peux déposer une candidature de test depuis le site SAMGO. Une vérification du permis, de l’identité, du statut professionnel et d’une assurance adaptée sera obligatoire avant une activité réelle. Une candidature de test n’autorise aucune course.';
  if(/(?:assur|accrochage|degat|responsab|dommag)/.test(s))return '🛡️ L’assurance des trajets n’est pas encore mise en place ni validée juridiquement. SAMGO ne doit pas proposer de courses réelles avant d’avoir vérifié les contrats, la couverture du conducteur et les responsabilités.';
- if(/(?:mot de passe|connexion|connect|compte|email|e-mail|mail|identifiant)/.test(s))return '🔑 Si tu as déjà un compte, utilise « Me connecter » sur SAMGO, pas « Créer mon compte ». Si tu as oublié ton mot de passe, la réinitialisation par e-mail peut être temporairement limitée par Supabase. N’envoie jamais ton mot de passe au support.';
+ if(/(?:mot de passe|connexion|connect|compte|email|e-mail|mail|identifiant)/.test(s))return '🔑 Si tu as déjà un compte, utilise « Me connecter » sur SAMGO, pas « Créer mon compte ». Si tu as oublié ton mot de passe, ouvre « Compte » puis « Mot de passe oublié ? » pour recevoir un lien de réinitialisation par e-mail. N’envoie jamais ton mot de passe au support.';
  if(/(?:avis|note|etoile|signal|plainte|probleme|reclam)/.test(s))return '📝 Tu peux enregistrer un signalement de test via le formulaire ci-dessous après connexion. Les problèmes graves sont marqués prioritaires et visibles dans l’administration, mais aucun e-mail automatique n’est envoyé pour le moment.';
  if(/(?:bonjour|salut|hello|coucou|merci)/.test(s))return 'Bonjour 👋 ! Je peux répondre sur les prix, les comptes, les chauffeurs, l’assurance et les réservations. Choisis une question ou écris-la ici.';
  return 'Je n’ai pas encore de réponse fiable à cette question. Essaie de parler du prix, des chauffeurs, de l’assurance, d’une réservation ou d’un compte. Pour un problème spécifique, utilise le formulaire de signalement ci-dessous.';
@@ -119,7 +119,7 @@ function feedback(message,kind=''){$('ticketFeedback').textContent=message;$('ti
 function view(){const signed=!!user;$('loginBox').classList.toggle('hidden',signed);$('loggedBox').classList.toggle('hidden',!signed);$('ticketForm').classList.toggle('hidden',!signed);$('loggedEmail').textContent=signed?(user.email||'Compte SAMGO'):''}
 async function init(){try{const t=await token();user=t?await request('/auth/v1/user','GET',undefined,t):null;view();feedback(user?'Tu peux enregistrer un signalement. Il sera consultable par l’administrateur.':'Connecte-toi pour enregistrer un signalement. Tu peux poser tes questions ci-dessus sans connexion.')}catch(err){if(err.status===401||err.status===403)save(null);user=null;view();feedback('Connexion à vérifier : '+err.message,'alert')}}
 $('loginForm').addEventListener('submit',async e=>{e.preventDefault();if(loading)return;loading=true;$('loginButton').disabled=true;try{const d=await request('/auth/v1/token?grant_type=password','POST',{email:$('supportEmail').value.trim(),password:$('supportPassword').value});if(!d.access_token)throw new Error('Aucune session reçue.');save({access_token:d.access_token,refresh_token:d.refresh_token,expires_at:Date.now()+(Number(d.expires_in)||3600)*1000,user:d.user||null});$('supportPassword').value='';await init()}catch(err){feedback(/invalid login/i.test(err.message)?'Adresse e-mail ou mot de passe incorrect.':err.message,'alert')}finally{loading=false;$('loginButton').disabled=false}});
-$('logoutButton').addEventListener('click',async()=>{const t=await token();save(null);user=null;view();feedback('Tu es déconnecté.');if(t)try{await request('/auth/v1/logout','POST',{},t)}catch(_){}});
+$('logoutButton').addEventListener('click',async()=>{let t=null;try{t=await token()}catch(_){}save(null);user=null;view();feedback('Tu es déconnecté.');if(t)try{await request('/auth/v1/logout','POST',{},t)}catch(_){}});
 $('ticketForm').addEventListener('submit',async e=>{
  e.preventDefault();if(loading)return;
  if(!user)return feedback('Connecte-toi pour signaler un problème.','alert');
