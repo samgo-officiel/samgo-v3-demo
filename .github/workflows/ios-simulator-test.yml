@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build-ios-simulator:
-    runs-on: macos-26
+    runs-on: macos-26-intel
     timeout-minutes: 35
     steps:
       - name: Recuperer le depot SAMGO
