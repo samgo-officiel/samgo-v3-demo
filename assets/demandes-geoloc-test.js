@@ -130,6 +130,7 @@ async function open(){
  if(typeof driverTab==='function')driverTab('missions');
  const userId=sessionUser.id,generation=++state.gpsGeneration;
  state.gpsPending=true;
+ const stopButton=$('sgGeoStop');if(stopButton)stopButton.disabled=false;
  try{
   status('sgGeoStatus','Demande de localisation au navigateur…');
   const position=await requestLocation();
@@ -268,6 +269,7 @@ async function optIn(){
  status('sgNotifyStatus',state.notify?'Alertes actives tant que SAMGO est ouvert et visible. Ce ne sont pas des notifications push quand le site est fermé.':'Alertes désactivées.');
 }
 function stop(){
+ const stopButton=$('sgGeoStop');if(stopButton)stopButton.disabled=true;
  ++state.gpsGeneration;++state.fetchGeneration;
  state.fetchKey=null;state.gpsPending=false;state.lastUser=null;
  if(state.poll){clearInterval(state.poll);state.poll=null;}
@@ -282,6 +284,11 @@ function stop(){
  render();
 }
 function authChanged(){if(!approved()||(state.lastUser&&sessionUser?.id!==state.lastUser))stop();}
+function radiusChanged(){
+ ++state.fetchGeneration;state.fetchKey=null;
+ render();
+ if(state.pos)fetchRows(false);
+}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')fetchRows(true);});
-window.sgDemand={open,publish,optIn,refresh:()=>fetchRows(false),refreshClient,render,stop,authChanged};
+window.sgDemand={open,publish,optIn,refresh:()=>fetchRows(false),refreshClient,render,stop,authChanged,radiusChanged};
 })();
