@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'..','assets','demandes-geoloc-test.js'),'utf8');
-function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=null}={}){
+function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=null,nativePosition=undefined}={}){
  const nodes=new Map(),prompts=[];
  class Element {
   constructor(id){this.id=id;this.textContent='';this.value=id==='sgRadius'?'30':'';this.checked=false;this.disabled=true;
@@ -20,7 +20,7 @@ function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=n
    addEventListener(){},visibilityState:'visible'};
  const navigator={onLine:online,geolocation:{getCurrentPosition(ok,fail,opts){prompts.push({ok,fail,opts});}}};
  const sessionUser={id:'driver-A'};
- let calls=0,publishCalls=0;
+ let calls=0,publishCalls=0,nativeCalls=0;
  const client={
   testRequests:{list:async (position,radius)=>{calls++;return fetchRequests?
     fetchRequests(position,radius):{data:[],error:null};},
@@ -29,12 +29,21 @@ function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=n
  };
  const window={isSecureContext:true,
   sgMapsZoneTest:{mapsUrl:(lat,lng)=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(lat+','+lng)}};
+ if(nativePosition!==undefined){
+  window.Capacitor={isNativePlatform:()=>true,Plugins:{Geolocation:{
+   async getCurrentPosition(){
+    nativeCalls++;
+    if(nativePosition instanceof Error)throw nativePosition;
+    return nativePosition;
+   }
+  }}};
+ }
  vm.runInNewContext(source,{
   window,document,navigator,sessionUser,client,driverSimAllowed:approved,localDemoRequest:demoRequest,
   driverTab(){},setInterval(){return 1;},clearInterval(){},Date,Math,Number,
   Intl,Set,Promise,Error,encodeURIComponent
  },{filename:'SAMGO-GPS'});
- return {geo:window.sgDemand,prompts,sessionUser,get,calls:()=>calls,published:()=>publishCalls,
+ return {geo:window.sgDemand,prompts,sessionUser,get,calls:()=>calls,published:()=>publishCalls,nativeCalls:()=>nativeCalls,
   giveGPS:(accuracy=30,measuredAt=Date.now())=>{
    const prompt=prompts.shift();
    assert.ok(prompt,'une demande GPS doit exister');
@@ -216,4 +225,33 @@ test('GPS client trop imprécis : publication réellement bloquée avant appel s
  assert.equal(x.published(),0);
  assert.match(x.get('sgPublishStatus').textContent,/trop imprécise/);
  assert.equal(x.get('sgPublishBtn').disabled,false);
+});
+
+test('Android et iPhone natifs : la localisation ne demarre jamais avant le clic',async()=>{
+ const x=boot({nativePosition:{coords:{latitude:48.86,longitude:2.35,accuracy:80},timestamp:Date.now()}});
+ assert.equal(x.nativeCalls(),0);
+ await x.geo.open();
+ assert.equal(x.nativeCalls(),1);
+ assert.equal(x.prompts.length,0,'pas de double permission navigateur');
+ assert.equal(x.calls(),1,'uniquement une recherche de demandes fictives');
+ assert.match(x.get('sgGeoStatus').textContent,/GPS actif/);
+});
+test('le GPS natif refuse produit un message clair sans appel serveur',async()=>{
+ const x=boot({nativePosition:new Error('location permission denied')});
+ await x.geo.open();
+ assert.equal(x.nativeCalls(),1);
+ assert.equal(x.calls(),0);
+ assert.match(x.get('sgGeoStatus').textContent,/Localisation refusée/);
+});
+test('publier une demande fictive utilise le GPS natif une seule fois',async()=>{
+ const x=boot({
+  demoRequest:{from:'Fictif centre',to:'Fictif maison',km:5},
+  nativePosition:{coords:{latitude:44.83,longitude:-0.56,accuracy:75},timestamp:Date.now()}
+ });
+ x.get('sgPublishConsent').checked=true;
+ await x.geo.publish();
+ assert.equal(x.nativeCalls(),1);
+ assert.equal(x.prompts.length,0);
+ assert.equal(x.published(),1);
+ assert.match(x.get('sgPublishStatus').textContent,/publiée/);
 });
