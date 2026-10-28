@@ -25,7 +25,8 @@ adb shell am start -W -n com.samgo.prototype/.MainActivity
 sleep 12
 adb shell pidof com.samgo.prototype
 mkdir -p mobile/test-output
-adb shell screencap -p /sdcard/samgo-test.png
-adb pull /sdcard/samgo-test.png mobile/test-output/samgo-android-emulateur.png
+# Android recent peut refuser l'écriture directe dans /sdcard.
+# Capturer le flux PNG vers le runner sans permission de stockage externe.
+adb exec-out screencap -p > mobile/test-output/samgo-android-emulateur.png
 test -s mobile/test-output/samgo-android-emulateur.png
 echo "SAMGO Android TEST emulator: app started, screenshot saved."
