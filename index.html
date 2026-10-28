@@ -751,7 +751,20 @@ input,select,textarea{font-size:16px}
     <p id="sgDriverReviewsStatus" role="status" aria-live="polite">Aucun avis de test chargé.</p>
     <div id="sgDriverReviewsList"></div>
    </div>
-   <div class="sg-driver-lock">🔒 N'envoyez aucune pièce d'identité, photo de permis ou selfie sur cette page. Les vérifications nécessiteront un dispositif sécurisé.</div>
+   <section class="sg-driver-lock" id="sgDriverDocumentsTest" aria-label="Dossier chauffeur en test">
+    <h3>🔒 Mon dossier chauffeur — version TEST</h3>
+    <p>Un espace de stockage privé existe, mais le dépôt de vraies pièces n'est pas ouvert. Ne transmettez ici ni permis réel, ni carte d'identité, ni selfie réel, ni RIB.</p>
+    <p>La présence d'un fichier de test ne prouve jamais que l'identité, le permis ou l'assurance sont vérifiés.</p>
+    <dl class="sg-driver-profile">
+     <dt>Identité officielle</dt><dd>Non activée — contrôle futur par prestataire adapté</dd>
+     <dt>Permis</dt><dd id="sgDocsPermis">Non contrôlé</dd>
+     <dt>Justificatif de domicile</dt><dd id="sgDocsDomicile">Non contrôlé</dd>
+     <dt>Selfie</dt><dd id="sgDocsSelfie">Non contrôlé</dd>
+     <dt>RIB / IBAN</dt><dd>Non collecté par SAMGO — futur parcours sécurisé chez Stripe Connect</dd>
+    </dl>
+    <button type="button" class="alt" id="sgDocsInspect" onclick="window.sgDriverDocsTest.inspect()" disabled>↻ Tester l'accès à mon coffre privé</button>
+    <p id="sgDocsStatus" class="sg-stripe-status" role="status" aria-live="polite">Coffre non consulté. Aucune vérification d'identité active.</p>
+   </section>
    <button type="button" class="sg-driver-refresh" onclick="sgGo('account')">Gérer mon compte</button>
   </div>
  </div>
@@ -1432,6 +1445,7 @@ async function refreshUser(){
    if(window.sgReviews)window.sgReviews.clear();
    if(window.sgChatTest)window.sgChatTest.stop();
    if(window.sgMyDataTest)window.sgMyDataTest.reset();
+   if(window.sgDriverDocsTest)window.sgDriverDocsTest.reset();
    if(window.sgStripeSandbox)window.sgStripeSandbox.reset();
    if(window.sgDemand)window.sgDemand.stop({clearClient:true});
    if(window.sgLoyaltyTest)window.sgLoyaltyTest.stop();
@@ -1490,6 +1504,7 @@ function driverTab(tab){
  if((tab==='profil'||tab==='missions')&&window.sgReviews)window.sgReviews.refreshDriver();
  if(tab==='missions'&&window.sgChatTest)window.sgChatTest.refresh('driver');
  if(tab==='gains'&&window.sgStripeSandbox)window.sgStripeSandbox.refresh();
+ if(tab==='profil'&&window.sgDriverDocsTest)window.sgDriverDocsTest.inspect();
  sgMarkCurrentNav('driver');
  document.querySelectorAll('[data-dpane]').forEach(el=>el.classList.toggle('hidden',el.dataset.dpane!==tab));
  document.querySelectorAll('[data-dtab]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.dtab===tab)));
@@ -1498,6 +1513,7 @@ function driverTab(tab){
 }
 function showDriverRecord(record){
  const has=!!record,connected=!!sessionUser;
+ if(window.sgDriverDocsTest)window.sgDriverDocsTest.setCandidate(has);
  $('driverDashboard').classList.toggle('hidden',!has);
  $('driverApplyArea').classList.toggle('hidden',has);
  $('candidateForm').classList.toggle('hidden',has||!connected);
@@ -1617,6 +1633,7 @@ async function signOut(){
  if(window.sgDemand)window.sgDemand.stop({clearClient:true});
  if(window.sgChatTest)window.sgChatTest.stop();
  if(window.sgMyDataTest)window.sgMyDataTest.reset();
+   if(window.sgDriverDocsTest)window.sgDriverDocsTest.reset();
  localDemoRequest=null;saveLocalDemo();renderLocalDemo();
  sessionUser=null;
  driverSimAllowed=false;driverSimActive=false;updateDriverSimulation();
@@ -1709,6 +1726,7 @@ function sgGo(view){
 <script src="assets/messagerie-test.js?v=20261028-chat-v3"></script>
 <script src="assets/messages-rapides-test.js?v=20261028-a"></script>
 <script src="assets/diagnostic-appareil-test.js?v=20261028-native-ver"></script>
+<script src="assets/dossier-chauffeur-test.js?v=20261028-docs1"></script>
 <script src="assets/export-donnees-test.js?v=20261028-b"></script>
 <script src="assets/effacer-local-test.js?v=20261028-a"></script>
 <script src="assets/etat-reseau-test.js?v=20261028a"></script>
