@@ -63,7 +63,7 @@
      st.current=row.id;
      restoreDraft(role);
     }
-    updateButtons(role);loadMessages(role);
+    updateButtons(role);loadMessages(role,{jumpToEnd:true});
    });
    node.append(button);
   }
@@ -103,20 +103,22 @@
    st.choices=rows;
    for(const id of st.lastIncoming.keys())if(!rows.some(c=>c.id===id))st.lastIncoming.delete(id);
    for(const id of st.drafts.keys())if(!rows.some(c=>c.id===id))st.drafts.delete(id);
+   let selectedChanged=false;
    if(!rows.some(c=>c.id===st.current)){
     st.current=rows.length?rows[0].id:null;
     restoreDraft(role);
+    selectedChanged=true;
    }
    updateButtons(role);
    if(!rows.length){
     note(role,'Aucune conversation : le client doit d’abord choisir un chauffeur pour une simulation.');
     say(role,'Messagerie de TEST : aucune vraie mission.');return;
    }
-   await loadMessages(role);
+   await loadMessages(role,{jumpToEnd:selectedChanged});
   }catch(e){if(my===st.seq&&state.user===uid&&signed()&&sessionUser.id===uid)
    say(role,'Messages TEST indisponibles : '+(e.message||'Réessayez.'));}
  }
- async function loadMessages(role){
+ async function loadMessages(role,{jumpToEnd=false}={}){
   const st=state[role],choice=st.current,cfg=view[role];
   if(!choice){note(role,'Choisissez une simulation de test.');return;}
   const currentUser=state.user,seq=++st.seq;
@@ -126,6 +128,9 @@
    if(result.error)throw result.error;
    if(st.current!==choice||seq!==st.seq||state.user!==currentUser||!signed()||sessionUser.id!==currentUser)return;
    const box=$(cfg.messages);if(!box)return;
+   const nearBottom=Number.isFinite(box.scrollHeight)&&Number.isFinite(box.scrollTop)&&
+    Number.isFinite(box.clientHeight)&&
+    box.scrollHeight-box.scrollTop-box.clientHeight<70;
    box.replaceChildren();
    const rows=Array.isArray(result.data)?result.data:[];
    if(!rows.length)note(role,'Aucun message pour cette simulation.');
@@ -147,6 +152,10 @@
    const prior=st.lastIncoming.get(choice);
    const hasBaseline=st.lastIncoming.has(choice);
    st.lastIncoming.set(choice,newest);
+   // Nouvel écran : afficher le dernier message. Pendant la lecture d'anciens
+   // échanges, ne pas déplacer l'écran à chaque actualisation automatique.
+   if((jumpToEnd||nearBottom)&&Number.isFinite(box.scrollHeight))
+    box.scrollTop=box.scrollHeight;
    if(hasBaseline&&newest&&newest!==prior){
     say(role,'🔔 Nouveau message de TEST reçu. '+rows.length+' message(s) affiché(s).');
     if(document.visibilityState!=='hidden')showNotice(role);
@@ -180,7 +189,7 @@
     input.value='';
     st.drafts.delete(choiceId);
    }
-   await loadMessages(role);
+   await loadMessages(role,{jumpToEnd:true});
   }catch(e){
    if(stillCurrent())say(role,'Envoi refusé : '+(e.message||'Réessayez.'));
   }finally{
