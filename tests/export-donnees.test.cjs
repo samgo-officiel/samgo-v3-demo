@@ -11,7 +11,9 @@ function boot(options={}){
  const clipboard=[];
  const messageLog={textContent:''};
  const exportButton={disabled:false};
- const nodes={sgMyDataStatus:messageLog,sgMyDataExport:exportButton};
+ const manual={hidden:true},manualJson={value:''};
+ const nodes={sgMyDataStatus:messageLog,sgMyDataExport:exportButton,
+  sgMyDataManual:manual,sgMyDataManualJson:manualJson};
  const document={getElementById:id=>nodes[id]||null};
  const accountRows=[
   {id:'adA',client_id:'user-A',depart_test:'Lieu fictif',destination_test:'Maison fictive',latitude_approx:44.123456},
@@ -39,11 +41,13 @@ function boot(options={}){
   testPayments:{list:async()=>({data:[{choix_id:'cA',statut:'paye_test'},{choix_id:'cB',statut:'INTERDIT'}],error:null})},
   testMessages:{list:async id=>({data:msgs[id]||[],error:null})}
  };
- const navigator={clipboard:{writeText:async text=>{clipboard.push(text);}}};
+ const navigator={clipboard:options.clipboard===false?undefined:
+  {writeText:async text=>{clipboard.push(text);}}};
  const win={Capacitor:{isNativePlatform:()=>true},navigator};
  vm.runInNewContext(script,{window:win,document,sessionUser:user,client,navigator,Date,JSON,Map,Set,Promise,Blob,URL},
   {filename:'SAMGO-private-export'});
- return {api:win.sgMyDataTest,user,client,clipboard,status:messageLog,button:exportButton,release};
+ return {api:win.sgMyDataTest,user,client,clipboard,status:messageLog,
+  manual,manualJson,button:exportButton,release};
 }
 test('export partiel filtre les autres utilisateurs et n inclut pas le GPS ni jetons',async()=>{
  const t=boot();
@@ -85,4 +89,15 @@ test('bouton de compte charge son module et la déconnexion purge l export',()=>
  assert.match(html,/id="sgMyDataExport"/);
  assert.match(html,/assets\/export-donnees-test\.js/);
  assert.match(html,/sgMyDataTest\.reset\(\)/);
+});
+
+test('iPhone sans presse papiers affiche export manuel puis le purge a deconnexion',async()=>{
+ const t=boot({clipboard:false});
+ assert.equal(await t.api.exportFile(),true);
+ assert.equal(t.manual.hidden,false);
+ assert.match(t.manualJson.value,/EXPORT PARTIEL/);
+ assert.equal(t.clipboard.length,0);
+ t.api.reset();
+ assert.equal(t.manual.hidden,true);
+ assert.equal(t.manualJson.value,'');
 });
