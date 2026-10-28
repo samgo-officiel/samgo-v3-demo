@@ -15,6 +15,30 @@
   const a=document.createElement('p');a.className='sg-chat-test-entry';a.textContent=text;
   const box=$(view[role].messages);if(box){box.replaceChildren(a);}
  }
+ function dismissNotice(){
+  const toast=$('sgChatNewToast');
+  if(toast){toast.hidden=true;toast.removeAttribute?.('data-role');}
+ }
+ function showNotice(role){
+  if(!signed()||!['client','driver'].includes(role))return;
+  const toast=$('sgChatNewToast');
+  if(!toast)return;
+  toast.setAttribute('data-role',role);
+  const label=$('sgChatNewText');
+  if(label)label.textContent='🔔 Nouveau message de TEST — aucun détail personnel affiché.';
+  toast.hidden=false;
+ }
+ function openNotice(){
+  const toast=$('sgChatNewToast'),role=toast?.getAttribute?.('data-role');
+  if(!signed()||sessionUser.id!==state.user||!['client','driver'].includes(role)){
+   dismissNotice();return;
+  }
+  if(typeof sgGo==='function')sgGo(role==='client'?'trips':'driver');
+  if(role==='driver'&&typeof driverTab==='function')driverTab('missions');
+  const target=$(view[role].messages);
+  target?.scrollIntoView?.({behavior:'smooth',block:'center'});
+  dismissNotice();
+ }
  function choiceLabel(row,role,i){return 'Simulation n°'+(i+1)+' — '+(row.statut==='choisi_test'?'en cours':row.statut==='termine_test'?'terminée':'annulée');}
  function updateButtons(role){
   const cfg=view[role],st=state[role],node=$(cfg.selector);
@@ -45,6 +69,7 @@
   }
   const uid=sessionUser.id;
   if(state.user!==uid){
+   dismissNotice();
    state.user=uid;
    for(const side of ['client','driver']){
     state[side].current=null;state[side].choices=[];state[side].seq++;
@@ -103,9 +128,10 @@
    const prior=st.lastIncoming.get(choice);
    const hasBaseline=st.lastIncoming.has(choice);
    st.lastIncoming.set(choice,newest);
-   if(hasBaseline&&newest&&newest!==prior)
+   if(hasBaseline&&newest&&newest!==prior){
     say(role,'🔔 Nouveau message de TEST reçu. '+rows.length+' message(s) affiché(s).');
-   else say(role,rows.length+' message(s) de TEST. Actualisation quand SAMGO est ouvert.');
+    if(document.visibilityState!=='hidden')showNotice(role);
+   }else say(role,rows.length+' message(s) de TEST. Actualisation quand SAMGO est ouvert.');
   }catch(e){if(st.current===choice&&seq===st.seq&&state.user===currentUser&&signed()&&sessionUser.id===currentUser)
     say(role,'Impossible de lire cette conversation : '+(e.message||'Réessayez.'));}
  }
@@ -140,6 +166,7 @@
   }
  }
  function stop(){
+  dismissNotice();
   state.user=null;
   for(const role of ['client','driver']){
    const st=state[role];st.current=null;st.choices=[];st.seq++;st.sending=false;st.sendKey=null;st.lastIncoming.clear();
@@ -155,5 +182,5 @@
   };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
  }
- window.sgChatTest={refresh,send,stop};
+ window.sgChatTest={refresh,send,stop,openNotice,dismissNotice};
 })();
