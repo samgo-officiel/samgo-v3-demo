@@ -605,6 +605,12 @@ input,select,textarea{font-size:16px}
    <label for="sgRadius">Distance autour de moi</label>
    <div class="sg-radius-line"><select id="sgRadius" onchange="window.sgDemand.radiusChanged()"><option value="5">5 km</option><option value="10">10 km</option><option value="20">20 km</option><option value="30" selected>30 km</option><option value="50">50 km</option></select>
    <strong id="sgRadiusValue">30 km</strong></div>
+   <label for="sgDemandSort">Trier les annonces fictives</label>
+   <select id="sgDemandSort" onchange="window.sgDemand.sortChanged()" aria-label="Ordre des annonces fictives">
+    <option value="proximite">Les plus proches de moi</option>
+    <option value="tarif">Tarif indicatif le plus élevé</option>
+    <option value="trajet">Trajet fictif le plus court</option>
+   </select>
    <button type="button" onclick="window.sgDemand.open()">⌖ Activer / actualiser mon GPS</button>
    <button type="button" class="alt" id="sgGeoStop" onclick="window.sgDemand.stop()" disabled>Arrêter la recherche GPS</button>
    <p id="sgGeoStatus" role="status" aria-live="polite">GPS non activé. Aucun suivi de position actif.</p>
