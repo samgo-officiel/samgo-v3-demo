@@ -69,6 +69,9 @@
 .sg-chat-test textarea:disabled{opacity:.5}
 .sg-chat-test button{width:100%;margin-top:8px}
 .sg-chat-test-choices button{width:auto;margin-top:0}
+.sg-safety-help{padding:10px 12px;border-radius:11px;background:#332f25;border:1px solid #8c7240;
+ font-size:13px!important;line-height:1.6!important}
+.sg-safety-help a{color:#ffe0a0;font-weight:700;min-height:40px;display:inline-flex;align-items:center}
 .sg-chat-quick{display:flex;gap:7px;flex-wrap:wrap;margin:9px 0}
 .sg-chat-test .sg-chat-quick-button{width:auto;flex:1 1 170px;min-height:44px;font-size:12px;margin:0}
 .sg-chat-quick-help{margin:8px 0 4px;font-size:12px;color:#d2c39d}
@@ -513,6 +516,7 @@ input,select,textarea{font-size:16px}
    <div id="sgChatClientQuick" class="sg-chat-quick" role="group" aria-label="Messages rapides client"></div>
   <button type="button" id="sgChatClientSend" onclick="window.sgChatTest.send('client')" disabled>Envoyer mon message TEST</button>
   <p id="sgChatClientStatus" role="status" aria-live="polite">Messagerie de démonstration uniquement.</p>
+   <p class="sg-safety-help"><a href="./aide.html#signaler">🚨 Signaler un incident TEST</a> — signalements non surveillés en permanence. En cas de danger immédiat, appelez le 112.</p>
  </section>
  </div>
 </section>
@@ -664,6 +668,7 @@ input,select,textarea{font-size:16px}
    <div id="sgChatDriverQuick" class="sg-chat-quick" role="group" aria-label="Messages rapides chauffeur"></div>
   <button type="button" id="sgChatDriverSend" onclick="window.sgChatTest.send('driver')" disabled>Envoyer mon message TEST</button>
   <p id="sgChatDriverStatus" role="status" aria-live="polite">Messagerie de démonstration uniquement.</p>
+   <p class="sg-safety-help"><a href="./aide.html#signaler">🚨 Signaler un incident TEST</a> — signalements non surveillés en permanence. En cas de danger immédiat, appelez le 112.</p>
  </section>
   <button type="button" class="alt" onclick="window.sgDemand.refresh()">↻ Actualiser les demandes</button>
   <div class="sg-demand-warning">🔒 Aucune annonce ne peut être acceptée en vrai : assurances, vérifications et lancement restent à finaliser.</div>
