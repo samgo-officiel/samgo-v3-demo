@@ -5,9 +5,10 @@ const vm=require('node:vm');
 const fs=require('node:fs');
 const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../mobile/native-navigation.js'),'utf8');
-function boot(native,menuOpen=false,inHome=false){
+function boot(native,menuOpen=false,inHome=false,browserFails=false){
  const calls={listeners:0,home:0,minimize:0,opened:[],stripeRefresh:0,clientRefresh:0};
  let back=null,resume=null;
+ const linkStatus={textContent:''};
  const menu={
   hidden:!menuOpen,
   hasAttribute(k){return k==='hidden'?this.hidden:false;},
@@ -21,7 +22,10 @@ function boot(native,menuOpen=false,inHome=false){
   else resume=callback;
   return Promise.resolve({remove(){}});
  },minimizeApp(){calls.minimize++;}};
- const browser={open:({url})=>{calls.opened.push(url);return Promise.resolve();}};
+ const browser={open:({url})=>{
+  calls.opened.push(url);
+  return browserFails?Promise.reject(new Error('browser unavailable')):Promise.resolve();
+ }};
  const window={Capacitor:{isNativePlatform:()=>native,Plugins:{App:plugin,Browser:browser}},
   location:{href:'http://localhost/index.html',origin:'http://localhost'},
   sgGo:page=>{assert.equal(page,'home');calls.home++;},
@@ -30,11 +34,11 @@ function boot(native,menuOpen=false,inHome=false){
  const doc={
   readyState:'complete',addEventListener:(name,callback)=>{if(name==='click')calls.onClick=callback;},
   body:{classList:{contains:value=>value==='sg-home-active'&&inHome}},
-  getElementById:id=>id==='sg-menu-panel'?menu:null,
+  getElementById:id=>id==='sg-menu-panel'?menu:id==='sgNativeLinkStatus'?linkStatus:null,
   querySelector:()=>trigger
  };
  vm.runInNewContext(source,{window,document:doc,Promise,URL});
- return {calls,menu,open:window.sgNativeOpenExternal,
+ return {calls,menu,linkStatus,open:window.sgNativeOpenExternal,
   back:()=>{if(back)back();},resume:()=>{if(resume)resume();}};
 }
 test('le site web classique n installe pas de listener Android',()=>{
@@ -106,4 +110,12 @@ test('le navigateur web ne lance aucun rafraichissement natif au retour',()=>{
  x.resume();
  assert.equal(x.calls.stripeRefresh,0);
  assert.equal(x.calls.clientRefresh,0);
+});
+
+test('une erreur d ouverture du navigateur externe affiche un message sans naviguer',async()=>{
+ const app=boot(true,false,true,true);
+ assert.equal(app.open('https://example.com'),true);
+ await Promise.resolve();await Promise.resolve();
+ assert.match(app.linkStatus.textContent,/Impossible d’ouvrir ce lien HTTPS/);
+ assert.equal(app.calls.home,0);
 });
