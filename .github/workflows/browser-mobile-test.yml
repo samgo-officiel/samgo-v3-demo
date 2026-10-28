@@ -1,0 +1,48 @@
+name: SAMGO - Test visuel mobile sans donnees privees
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tests/browser-mobile-smoke.cjs'
+      - '.github/workflows/browser-mobile-test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  mobile-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Charger le code SAMGO TEST
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Installer navigateur Chromium de test
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.64.1
+          npx playwright install chromium --with-deps
+      - name: Lancer SAMGO sur serveur de test local
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 > /tmp/samgo-browser-server.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8765/ >/dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent --head http://127.0.0.1:8765/index.html
+      - name: Tester accueil reservation chauffeur et courses sur ecran mobile
+        run: node tests/browser-mobile-smoke.cjs
+        env:
+          SAMGO_SCREENSHOT_DIR: /tmp/samgo-browser-screenshots
+      - name: Conserver les captures anonymes 7 jours
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: samgo-test-ecrans-mobiles
+          path: /tmp/samgo-browser-screenshots/*.png
+          retention-days: 7
+          if-no-files-found: warn
