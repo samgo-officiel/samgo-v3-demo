@@ -611,6 +611,7 @@ input,select,textarea{font-size:16px}
   <section class="sg-proximity-panel" aria-label="Repère de proximité des demandes fictives">
     <h4>🧭 Demandes autour de moi (schéma TEST)</h4>
     <div id="sgNearbyMap" class="sg-proximity-radar" aria-live="off"></div>
+    <p id="sgHeatmapStatus" role="status" aria-live="polite">Activez le GPS pour voir les secteurs fictifs.</p>
     <p>Nord en haut, vous au centre ; les numéros correspondent aux annonces ci-dessous. Distance <strong>à vol d’oiseau</strong> : ce n’est pas une vraie carte routière ni un trajet calculé. Les coordonnées exactes du chauffeur restent dans son navigateur.</p>
   </section>
   <div id="sgNearbyList"></div>
@@ -1588,7 +1589,7 @@ function sgGo(view){
  if(['book','trips','driver','account'].includes(requested))sgGo(requested);
 })();
 </script>
-<script src="assets/carte-proximite-test.js?v=20261028a"></script>
+<script src="assets/carte-proximite-test.js?v=20261028-zones1"></script>
 <script src="assets/demandes-geoloc-test.js?v=20261028-gps-stop3"></script>
 <script src="assets/avis-chauffeurs-test.js"></script>
 <script src="assets/actualisation-test.js?v=fid-2810"></script>
