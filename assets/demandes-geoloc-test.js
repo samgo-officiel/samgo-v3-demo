@@ -73,6 +73,16 @@ function sortRequests(rows,mode){
   return safe(a.approach,Infinity)-safe(b.approach,Infinity);
  });
 }
+function filterRequests(rows,query){
+ const normalise=value=>String(value==null?'':value)
+  .normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('fr-FR');
+ const terms=normalise(query).trim().slice(0,80).split(/\s+/).filter(Boolean);
+ if(!terms.length)return rows.slice();
+ return rows.filter(row=>{
+  const target=normalise((row.depart_test||'')+' '+(row.destination_test||''));
+  return terms.every(term=>target.includes(term));
+ });
+}
 function render(){
  const list=$('sgNearbyList');
  if(!list)return;
@@ -93,8 +103,10 @@ function render(){
   const lat=Number(r.latitude_approx),lon=Number(r.longitude_approx);
   return r.client_id!==sessionUser.id&&Number.isFinite(lat)&&Number.isFinite(lon)&&nearKm(state.pos.lat,state.pos.lng,lat,lon)<=radius;
  }).map(r=>({...r,approach:nearKm(state.pos.lat,state.pos.lng,Number(r.latitude_approx),Number(r.longitude_approx))}));
- const sorted=sortRequests(filtered,$('sgDemandSort')?.value||'proximite');
- status('sgNearbyStatus',sorted.length+' demande'+(sorted.length===1?'':'s')+' de test dans un rayon de '+radius+' km. Distance approximative.');
+ const query=$('sgDemandTextFilter')?.value||'';
+ const sorted=sortRequests(filterRequests(filtered,query),$('sgDemandSort')?.value||'proximite');
+ status('sgNearbyStatus',sorted.length+' demande'+(sorted.length===1?'':'s')+' de test affichée'+(sorted.length===1?'':'s')+
+  ' parmi '+filtered.length+' dans un rayon de '+radius+' km. Distance approximative.'+(query.trim()?' Filtre texte actif.':''));
  window.sgProximityMap?.render({center:state.pos,requests:sorted,radius});
  for(const req of sorted){
   const card=document.createElement('article');card.className='sg-nearby-card';
@@ -405,6 +417,10 @@ function authChanged(){
  else if(state.lastUser&&sessionUser.id!==state.lastUser)stop({clearClient:true});
  else if(!approved())stop();
 }
+function filterChanged(){
+ // Filtre purement local, jamais de requête réseau ni d'autorisation GPS.
+ render();
+}
 function sortChanged(){
  window.sgDriverPrefs?.save?.();
  render();
@@ -416,5 +432,5 @@ function radiusChanged(){
  if(state.pos)fetchRows(false);
 }
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')fetchRows(true);});
-window.sgDemand={open,publish,optIn,refresh:()=>fetchRows(false),refreshClient,render,stop,authChanged,radiusChanged,sortChanged,sortRequests,remainingTime};
+window.sgDemand={open,publish,optIn,refresh:()=>fetchRows(false),refreshClient,render,stop,authChanged,radiusChanged,sortChanged,filterChanged,sortRequests,filterRequests,remainingTime};
 })();
