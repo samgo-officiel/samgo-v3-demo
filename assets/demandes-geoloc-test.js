@@ -6,7 +6,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const radiusOptions=[5,10,20,30,50];
-const state={pos:null,rows:[],replies:[],loading:false,poll:null,notify:false,firstLoad:true,seen:new Set(),lastUser:null,clientLoad:0,responding:null};
+const state={pos:null,rows:[],replies:[],loading:false,poll:null,notify:false,firstLoad:true,seen:new Set(),lastUser:null,clientLoad:0,responding:null,gpsPending:false,gpsGeneration:0,fetchGeneration:0,fetchKey:null};
 function status(id,msg){const node=$(id);if(node)node.textContent=msg;}
 function euros(x){return Number(x).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});}
 function requestLocation(){
@@ -14,7 +14,13 @@ function requestLocation(){
   if(!navigator.geolocation){reject(new Error('La géolocalisation n’est pas disponible dans ce navigateur.'));return;}
   if(!window.isSecureContext){reject(new Error('Le GPS nécessite HTTPS.'));return;}
   navigator.geolocation.getCurrentPosition(
-   p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),
+   p=>{
+    const lat=Number(p.coords?.latitude),lng=Number(p.coords?.longitude);
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180){
+      reject(new Error('Position GPS invalide. Réessayez depuis votre navigateur.'));return;
+    }
+    resolve({lat,lng,accuracy:Math.max(0,Number(p.coords?.accuracy)||0),measuredAt:Number(p.timestamp)||Date.now()});
+   },
    e=>reject(new Error(e.code===1?'Localisation refusée. Autorisez-la dans les réglages de localisation de votre navigateur ou téléphone.':e.code===2?'Position introuvable. Vérifiez le GPS.':'Le GPS ne répond pas. Réessayez.')),
    {enableHighAccuracy:false,maximumAge:60000,timeout:12000}
   );
@@ -71,6 +77,7 @@ function render(){
  }
 }
 function notifyAboutNew(rows){
+ if(!signedIn())return;
  if(state.firstLoad){state.firstLoad=false;rows.forEach(r=>state.seen.add(r.id));return;}
  const radius=Number($('sgRadius').value)||30;
  const newly=rows.filter(r=>!state.seen.has(r.id)&&r.client_id!==sessionUser.id);
@@ -91,38 +98,57 @@ function notifyAboutNew(rows){
  }
 }
 async function fetchRows(silent){
- if(!approved()||!state.pos||state.loading||document.visibilityState==='hidden')return;
- state.loading=true;
- const currentId=sessionUser.id;
+ if(!approved()||!state.pos||state.fetchKey||document.visibilityState==='hidden')return;
+ const currentId=sessionUser.id,currentGeneration=state.fetchGeneration;
+ const position=state.pos,fetchKey={};
+ state.fetchKey=fetchKey;
+ const stillCurrent=()=>state.fetchKey===fetchKey&&state.fetchGeneration===currentGeneration&&
+  state.pos===position&&approved()&&sessionUser.id===currentId;
  try{
-  const [result,replies]=await Promise.all([client.testRequests.list(state.pos,Number($('sgRadius').value)||30),client.testReplies.list()]);
+  const [result,replies]=await Promise.all([
+   client.testRequests.list(position,Number($('sgRadius').value)||30),client.testReplies.list()
+  ]);
+  if(!stillCurrent())return;
   if(result.error)throw result.error;
-  if(!signedIn()||sessionUser.id!==currentId)return;
-  state.replies=replies.error?[]:Array.isArray(replies.data)?replies.data:[];
+  if(replies.error)throw replies.error;
+  state.replies=Array.isArray(replies.data)?replies.data:[];
   const rows=Array.isArray(result.data)?result.data:[];
   state.rows=rows;
   notifyAboutNew(rows);
   render();
  }catch(e){
-  if(!silent)status('sgNearbyStatus','Impossible de charger les demandes : '+(e.message||'réessayez.'));
- }finally{state.loading=false;}
+  if(stillCurrent())status('sgNearbyStatus',
+    'Actualisation GPS indisponible. Les résultats affichés peuvent être anciens : '+(e.message||'réessayez.'));
+ }finally{if(state.fetchKey===fetchKey)state.fetchKey=null;}
 }
 async function open(){
  if(!approved()){
   status('sgGeoStatus','Connectez-vous avec votre compte chauffeur approuvé en version test.');
   return;
  }
+ if(state.gpsPending)return;
  if(typeof driverTab==='function')driverTab('missions');
+ const userId=sessionUser.id,generation=++state.gpsGeneration;
+ state.gpsPending=true;
  try{
   status('sgGeoStatus','Demande de localisation au navigateur…');
   const position=await requestLocation();
-  if(!approved())return;
-  state.pos=position;state.firstLoad=true;state.seen.clear();state.rows=[];
-  status('sgGeoStatus','GPS activé. Votre position précise reste sur cet appareil : seule une zone arrondie (environ 11 km) sert à chercher des annonces sur le serveur.');
-  render();await fetchRows(false);
+  if(generation!==state.gpsGeneration||!approved()||sessionUser.id!==userId)return;
+  ++state.fetchGeneration;state.fetchKey=null;
+  state.pos=position;state.lastUser=userId;
+  state.firstLoad=true;state.seen.clear();state.rows=[];state.replies=[];
+  const accuracy=position.accuracy>0?' · précision annoncée ±'+Math.round(position.accuracy)+' m':'';
+  status('sgGeoStatus','GPS actif'+accuracy+'. Position exacte conservée dans ce navigateur uniquement. Recherche serveur avec une zone arrondie (~11 km), sans suivi en arrière-plan.');
+  render();
+  await fetchRows(false);
+  if(generation!==state.gpsGeneration)return;
   if(state.poll)clearInterval(state.poll);
   state.poll=setInterval(()=>fetchRows(true),30000);
- }catch(e){status('sgGeoStatus',e.message||'Impossible de déterminer votre position.');}
+ }catch(e){
+  if(generation===state.gpsGeneration)status('sgGeoStatus',e.message||'Impossible de déterminer votre position.');
+ }finally{
+  if(generation===state.gpsGeneration)state.gpsPending=false;
+ }
 }
 async function publish(){
  const box=$('sgPublishConsent');
@@ -130,11 +156,13 @@ async function publish(){
  if(!signedIn()){status('sgPublishStatus','Connectez-vous dans Compte avant de publier une demande de test.');return;}
  if(typeof localDemoRequest==='undefined'||!localDemoRequest){status('sgPublishStatus','Créez d’abord une simulation de trajet.');return;}
  const btn=$('sgPublishBtn');btn.disabled=true;
+ const requestingUserId=sessionUser.id;
  try{
   status('sgPublishStatus','Autorisez le GPS : SAMGO arrondira votre position avant publication.');
   const p=await requestLocation();
-  if(!signedIn())return;
+  if(!signedIn()||sessionUser.id!==requestingUserId)throw new Error('Le compte a changé pendant la demande GPS. Recommencez.');
   const req=localDemoRequest;
+  if(!req)throw new Error('Créez à nouveau la simulation avant la publication.');
   const payload={client_id:sessionUser.id,
    depart_test:String(req.from).trim().slice(0,60),
    destination_test:String(req.to).trim().slice(0,60),
@@ -240,6 +268,8 @@ async function optIn(){
  status('sgNotifyStatus',state.notify?'Alertes actives tant que SAMGO est ouvert et visible. Ce ne sont pas des notifications push quand le site est fermé.':'Alertes désactivées.');
 }
 function stop(){
+ ++state.gpsGeneration;++state.fetchGeneration;
+ state.fetchKey=null;state.gpsPending=false;state.lastUser=null;
  if(state.poll){clearInterval(state.poll);state.poll=null;}
  state.pos=null;state.rows=[];state.replies=[];state.notify=false;state.firstLoad=true;state.seen.clear();state.clientLoad++;
  const b=$('sgNotifyToggle');if(b){b.textContent='Activer les alertes pendant la visite';b.setAttribute('aria-pressed','false');}
@@ -251,7 +281,7 @@ function stop(){
  status('sgNotifyStatus','Alertes désactivées.');
  render();
 }
-function authChanged(){if(!approved())stop();}
+function authChanged(){if(!approved()||(state.lastUser&&sessionUser?.id!==state.lastUser))stop();}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')fetchRows(true);});
 window.sgDemand={open,publish,optIn,refresh:()=>fetchRows(false),refreshClient,render,stop,authChanged};
 })();
