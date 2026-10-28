@@ -68,3 +68,15 @@ La validation « chauffeur approuvé » actuelle est uniquement une validation d
 - Un éventuel **10 % SAMGO / 90 % chauffeur** sera décidé plus tard, après communication des tarifs et conditions aux chauffeurs, sans activation automatique.
 - L'unique paramètre visible de démonstration est `SG_DEMO_COMMISSION_PERCENT` dans `index.html`. Ce paramètre navigateur n'a **aucune autorité** pour de véritables paiements, qui devront être calculés et validés côté serveur.
 - La répartition se retrouve dans la réservation, les missions simulées, l'onglet Gains et le simulateur Stripe Connect. Les frais Stripe ne sont pas automatiquement pris en charge par SAMGO : leurs modalités restent à définir.
+
+
+## Avancement Stripe Connect SANDBOX — 28 octobre 2026
+
+- **Compte Stripe de test SAMGO connecté à ChatGPT** (sans comptes chauffeurs Stripe Connect créés).
+- **Deux fonctions Supabase déployées** : `samgo-stripe-sandbox` (onboarding chauffeur et Checkout test, JWT obligatoire) et `samgo-stripe-webhook` (signature Stripe vérifiée).
+- **Webhook créé chez Stripe en sandbox** pour les événements Checkout. Il ne peut pas encore confirmer de paiement avant la configuration du secret de signature côté Supabase.
+- **Deux tables RLS** ajoutées : comptes chauffeurs Stripe test et sessions de paiements sandbox. Modification de paiement interdite côté utilisateur.
+- **Interface Stripe test** accessible dans l'espace client et dans l'onglet Gains du chauffeur.
+- **Aucun paiement n'est disponible à ce stade** : il reste trois secrets sandbox à saisir via le Dashboard Supabase et un chauffeur Stripe test à enregistrer. Voir `PARAMETRAGE-STRIPE-TEST.md`.
+- **Aucune transaction Stripe de test confirmée de bout en bout**, aucun paiement réel, aucune clé live enregistrée.
+- Le modèle 100 % chauffeur / 0 % SAMGO est conservé. En destination charge, **les frais Stripe sont supportés par SAMGO**, un coût à anticiper avant tout lancement.
