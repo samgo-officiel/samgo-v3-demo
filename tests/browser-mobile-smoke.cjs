@@ -29,7 +29,8 @@ async function main(){
    const page=await context.newPage();
    await page.goto(root+spec.path,{waitUntil:'domcontentloaded',timeout:25000});
    await page.waitForFunction(
-    route=>document.body.classList.contains('sg-route-'+route),
+    route=>route==='home'?document.body.classList.contains('sg-home-active'):
+     document.body.classList.contains('sg-route-'+route),
     spec.route,{timeout:10000}
    );
    const result=await page.evaluate(()=>({
