@@ -32,6 +32,7 @@ test('preparer le bundle natif sans installation ni publication',()=>{
   assert.ok(reset.includes('const redirect='+JSON.stringify(redirect)));
   assert.ok(index.includes('id="sg-native-only"'),'native should hide PWA installer');
   assert.ok(index.includes('id="sgNativeAuthNotice"'),'native email confirmation guidance');
+  assert.ok(index.includes('id="sgNativeLinkStatus"'),'native external HTTPS error message');
   assert.ok(index.includes('assets/native-navigation.js'),'native back button script');
   assert.equal(fs.existsSync(path.join(output,'assets/native-navigation.js')),true);
   assert.ok(!fs.readFileSync(path.join(root,'index.html'),'utf8').includes('sgNativeAuthNotice'));
