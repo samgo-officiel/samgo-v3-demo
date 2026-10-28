@@ -40,9 +40,9 @@
   const my=++sequence;setDisplay('Actualisation des tests en cours…');
   try{
    if(target==='client'){
+    // sgDemand.refreshClient est déjà complété par sgReviews à l'initialisation.
+    // Ne pas déclencher deux fois les mêmes lectures de suivi / avis à chaque cycle.
     if(window.sgDemand&&typeof window.sgDemand.refreshClient==='function')await window.sgDemand.refreshClient();
-    // Le suivi de course et les avis clients doivent aussi refléter le chauffeur.
-    if(window.sgReviews&&typeof window.sgReviews.refreshClient==='function')await window.sgReviews.refreshClient();
     if(window.sgLoyaltyTest&&typeof window.sgLoyaltyTest.refresh==='function')await window.sgLoyaltyTest.refresh();
     if(window.sgChatTest&&typeof window.sgChatTest.refresh==='function')await window.sgChatTest.refresh('client');
    }else{
