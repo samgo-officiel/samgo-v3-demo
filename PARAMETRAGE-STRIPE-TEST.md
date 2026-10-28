@@ -44,3 +44,15 @@ Mise à jour : 28 octobre 2026.
 - https://docs.stripe.com/connect/express-accounts
 - https://docs.stripe.com/webhooks
 - https://supabase.com/docs/guides/functions/secrets
+
+## Diagnostic de la vérification du chauffeur fictif — 28 octobre 2026
+
+**La liaison SAMGO → Stripe Connect est fonctionnelle et la déclaration du chauffeur a été soumise.** Stripe a refusé la vérification des données de test et exige leur correction, ou une procédure alternative de vérification de test. Le compte reste désactivé pour les paiements et virements fictifs. Il ne faut pas confondre `details_submitted` avec `charges_enabled` ou `payouts_enabled`.
+
+La fonction Supabase Stripe TEST (version 9) renvoie maintenant `verification_state: "correction_required"` lorsque Stripe signale des erreurs de vérification. La rubrique **Chauffeur → Gains** doit afficher « données de test à corriger » et permettre de reprendre le formulaire Stripe, sans demander d'IBAN ou de pièce d'identité dans SAMGO.
+
+Valeurs documentées par Stripe pour des scénarios de test : `individual.phone=0000000000` (validation de numéro dans l'API), `individual.dob=1901-01-01` et `individual.address.line1=address_full_match` avec une ville et un code postal valides. Ce sont des valeurs **sandbox uniquement** ; leur acceptation par l'interface française doit être vérifiée et aucun véritable document personnel ne doit être fourni pour cette simulation. Voir https://docs.stripe.com/connect/testing .
+
+La création des prochains comptes de test utilise maintenant les contrôleurs Stripe Express (`controller.stripe_dashboard.type=express`, `controller.fees.payer=application`, `controller.losses.payments=application`) plutôt que l'ancien `type=express`. **Cette création nouvelle n'a pas encore été validée en bout de chaîne.**
+
+Vérifications réalisées : projet Supabase sain, fonctions Stripe actives, tables Stripe TEST protégées par RLS, **une seule association de compte**, **zéro paiement**. La carte bancaire et les versements réels restent désactivés.
