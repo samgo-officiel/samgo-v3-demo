@@ -76,3 +76,14 @@ test('le diagnostic detecte une application iPhone native sans GPS automatique',
  assert.match(page.text(),/application native iPhone\/iPad \(TEST\)/);
  assert.equal(page.counters.geoCalls,0);
 });
+
+test('sur Android natif, la version est lue localement sans permission',async()=>{
+ let count=0;
+ const page=setup({window:{Capacitor:{isNativePlatform:()=>true,getPlatform:()=> 'android',
+  Plugins:{App:{getInfo:async()=>{count++;return {name:'SAMGO TEST',version:'0.1.0',build:'1'};}}}}}});
+ await page.run();
+ assert.equal(count,1);
+ assert.match(page.text(),/Version SAMGO TEST/);
+ assert.match(page.text(),/0.1.0 \(build 1\)/);
+ assert.equal(page.counters.geoCalls,0);
+});
