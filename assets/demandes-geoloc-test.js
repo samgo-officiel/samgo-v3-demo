@@ -201,6 +201,10 @@ async function open(){
  }
 }
 async function publish(){
+ if(typeof navigator!=='undefined'&&navigator.onLine===false){
+  status('sgPublishStatus','Hors connexion : annonce non publiée. Rétablissez Internet avant de demander le GPS.');
+  return;
+ }
  const box=$('sgPublishConsent');
  if(!box||!box.checked){status('sgPublishStatus','Confirmez que vos lieux sont fictifs et que vous acceptez de partager une position approximative pour 2 heures.');return;}
  if(!signedIn()){status('sgPublishStatus','Connectez-vous dans Compte avant de publier une demande de test.');return;}
