@@ -69,6 +69,10 @@
 .sg-chat-test textarea:disabled{opacity:.5}
 .sg-chat-test button{width:100%;margin-top:8px}
 .sg-test-filter[hidden]{display:none!important}
+.sg-client-reply-alert[hidden]{display:none!important}
+.sg-client-reply-alert{margin:12px 0;padding:12px;border:1px solid #d3ac57;border-radius:12px;
+ background:#353026;color:#ffe7ab;display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.sg-client-reply-alert button{min-height:42px;flex:0 0 auto}
 #sgTripsFilter{width:100%;max-width:480px;min-height:44px;margin:6px 0 9px;padding:10px 12px;border-radius:11px;background:#122733;color:#f5f6f8;border:1px solid #637b84}
 .sg-reply-card[hidden]{display:none!important}
 .sg-chat-test-choices button{width:auto;margin-top:0}
@@ -515,6 +519,10 @@ input,select,textarea{font-size:16px}
    </select>
    <p id="sgTripsFilterStatus" class="sg-demo-small" role="status" aria-live="polite">Toutes les simulations fictives.</p>
    <p id="sgReviewClientStatus" role="status" aria-live="polite">Aucun avis de test affiché.</p>
+   <div id="sgClientReplyAlert" class="sg-client-reply-alert" role="status" aria-live="polite" hidden>
+    <span id="sgClientReplyAlertText"></span>
+    <button type="button" class="alt" onclick="window.sgReviews.dismissReplies()">Marquer comme vu</button>
+   </div>
    <div id="sgReviewClientList"></div>
   </div>
   <section class="sg-chat-test" aria-label="Messagerie fictive — client">
