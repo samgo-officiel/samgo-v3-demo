@@ -88,3 +88,18 @@ Ce fichier est une liste technique et opérationnelle, **pas un avis juridique n
 - [ ] Finaliser le compte Connect Stripe **fictif** avec les données officiellement prévues par Stripe pour les tests, puis Checkout et webhook, sans pièce d'identité réelle.
 - [ ] Faire confirmer par écrit assurance, activité réglementée, contrat chauffeur, responsabilités et régime de plateforme.
 - [ ] Décider des prix, frais Stripe, récompense fidélité et fournisseurs payants éventuels avant leur activation.
+
+
+## Préparation d'une vraie application mobile — chantier commencé
+
+- [x] Structure préparatoire `mobile/` basée sur Capacitor 8, sans installer de dépendance payante ni activer de production.
+- [x] Script de préparation du site vers un bundle WebView local (`mobile/scripts/prepare-web.cjs`).
+- [x] Test automatique du bundle HTML, des ressources, de l'absence de service worker web dans le bundle natif.
+- [x] Raccourcis d'application web Android Réserver / Mes courses / Chauffeur.
+- [ ] Générer les projets natifs avec les outils de développement puis compiler et tester sur appareils réels.
+- [ ] Réaliser les deep links de confirmation/récupération de compte pour les applications natives et confirmer les URL Auth.
+- [ ] Vérifier les permissions et comportements GPS de la WebView sur iOS et Android.
+- [ ] Choisir l'identifiant officiel, les comptes développeur et la signature avant distribution.
+- [ ] Valider juridique, assurances, KYC, paiements et notifications réels avant le public.
+
+**Ne pas considérer les fichiers Capacitor comme une app iOS/Android déjà construite.**
