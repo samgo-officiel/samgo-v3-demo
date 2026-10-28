@@ -43,6 +43,7 @@
     if(window.sgDemand&&typeof window.sgDemand.refreshClient==='function')await window.sgDemand.refreshClient();
     // Le suivi de course et les avis clients doivent aussi refléter le chauffeur.
     if(window.sgReviews&&typeof window.sgReviews.refreshClient==='function')await window.sgReviews.refreshClient();
+    if(window.sgLoyaltyTest&&typeof window.sgLoyaltyTest.refresh==='function')await window.sgLoyaltyTest.refresh();
     if(window.sgChatTest&&typeof window.sgChatTest.refresh==='function')await window.sgChatTest.refresh('client');
    }else{
     if(window.sgReviews&&typeof window.sgReviews.refreshDriver==='function')await window.sgReviews.refreshDriver();
@@ -50,7 +51,7 @@
     if(document.querySelector('[data-dpane="missions"]:not(.hidden)')&&window.sgDemand&&typeof window.sgDemand.refresh==='function')await window.sgDemand.refresh();
    }
    if(my!==sequence)return;
-   const clientErrors=['sgMyAdsStatus','sgReviewClientStatus','sgChatClientStatus'];
+   const clientErrors=['sgMyAdsStatus','sgReviewClientStatus','sgLoyaltyStatus','sgChatClientStatus'];
    const driverErrors=['sgDriverReviewsStatus','sgDriverSelectionsStatus','sgChatDriverStatus'];
    // Ne pas afficher « synchronisé » si un sous-module a signalé un échec
    // sans lever d'exception à l'appelant.
