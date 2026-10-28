@@ -425,8 +425,8 @@ function sortChanged(){
  window.sgDriverPrefs?.save?.();
  render();
 }
-function radiusChanged(){
- window.sgDriverPrefs?.save?.();
+function radiusChanged({savePreference=true}={}){
+ if(savePreference)window.sgDriverPrefs?.save?.();
  ++state.fetchGeneration;state.fetchKey=null;
  render();
  if(state.pos)fetchRows(false);
