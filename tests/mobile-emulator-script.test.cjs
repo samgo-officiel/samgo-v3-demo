@@ -18,5 +18,5 @@ test('la capture ecran n est produite qu apres installation et lancement APK',()
  const s=fs.readFileSync(script,'utf8');
  assert.ok(s.indexOf('adb install')>=0);
  assert.ok(s.indexOf('adb shell am start')>s.indexOf('adb install'));
- assert.ok(s.indexOf('adb shell screencap')>s.indexOf('adb shell am start'));
+ assert.ok(s.indexOf('adb exec-out screencap')>s.indexOf('adb shell am start'));
 });
