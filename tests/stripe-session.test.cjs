@@ -5,8 +5,8 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'..','assets','stripe-sandbox-connexion.js'),'utf8');
-function boot(){
- const elements=new Map(),opened=[],sent=[];
+function boot(native=false){
+ const elements=new Map(),opened=[],sent=[],external=[];
  const get=id=>{
   if(!elements.has(id))elements.set(id,{textContent:'',disabled:false,hidden:true});
   return elements.get(id);
@@ -24,7 +24,8 @@ function boot(){
  const client={auth:{async getAccessToken(){return 'token-test';}}};
  const window={
   location:{search:'',assign:url=>opened.push(url)},
-  confirm(){return true;}
+  confirm(){return true;},
+  ...(native?{sgNativeOpenExternal:url=>{external.push(url);return true;}}:{})
  };
  const document={getElementById:get,readyState:'loading',addEventListener(){}};
  vm.runInNewContext(source,{window,document,sessionUser:user,client,
@@ -36,7 +37,7 @@ function boot(){
    ok:true,json:async()=>value
   });
  };
- return {api:window.sgStripeSandbox,user,opened,get,reply,requests,waitFor,sent};
+ return {api:window.sgStripeSandbox,user,opened,external,get,reply,requests,waitFor,sent};
 }
 test('onboarding Stripe de TEST tardif ignoré après changement de compte',async()=>{
  const x=boot();
@@ -74,4 +75,23 @@ test('onboarding explicitement demandé fonctionne en TEST avec compte inchangé
  x.reply('onboard_driver',{sandbox:true,url:'https://connect.stripe.com/test'});
  await pending;
  assert.deepEqual(x.opened,['https://connect.stripe.com/test']);
+});
+
+test('Stripe TEST sur Android natif utilise navigateur externe sans quitter SAMGO',async()=>{
+ const x=boot(true);
+ const pending=x.api.onboardDriver();
+ await x.waitFor('onboard_driver');
+ x.reply('onboard_driver',{sandbox:true,url:'https://connect.stripe.com/test'});
+ await pending;
+ assert.deepEqual(x.external,['https://connect.stripe.com/test']);
+ assert.deepEqual(x.opened,[]);
+});
+test('checkout Stripe TEST natif reste dans navigateur externe',async()=>{
+ const x=boot(true);
+ const pending=x.api.checkout('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+ await x.waitFor('checkout');
+ x.reply('checkout',{sandbox:true,url:'https://checkout.stripe.com/test'});
+ await pending;
+ assert.deepEqual(x.external,['https://checkout.stripe.com/test']);
+ assert.deepEqual(x.opened,[]);
 });
