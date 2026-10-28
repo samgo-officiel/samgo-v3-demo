@@ -31,6 +31,45 @@ async function privateRead(table,fields){
 function empty(root,message){
  const div=document.createElement('p');div.className='empty';div.textContent=message;root.append(div);
 }
+function drawUrgencies(rows){
+ const root=$('sgAgentUrgentCases');root.replaceChildren();
+ const pending=rows.filter(item=>item.statut==='a_examiner').length;
+ $('sgAgentUrgentCount').textContent=pending+' dossier(s) non examinés, '+rows.length+' au total (TEST).';
+ if(!rows.length)return empty(root,'Aucun dossier urgent reçu.');
+ const sorted=[...rows].sort((a,b)=>Number(a.statut!=='a_examiner')-Number(b.statut!=='a_examiner')||new Date(b.cree_le)-new Date(a.cree_le));
+ sorted.forEach(item=>{
+  const card=document.createElement('article');card.className='candidate';
+  const title=document.createElement('h3');title.textContent='🚨 '+item.categorie.toUpperCase()+' — '+item.signalement_id.slice(0,8);card.append(title);
+  label(card,'Reçu le',fmt(item.cree_le));
+  label(card,'État',item.statut);
+  label(card,'Compte concerné (référence interne)',item.cible_id.slice(0,8));
+  const note=document.createElement('p');note.className='small';
+  note.textContent='Dossier réservé à l’administrateur. Vérification humaine nécessaire, sans divulguer le déclarant. Aucune sanction automatique.';
+  card.append(note);
+  const controls=document.createElement('div');controls.className='controls';
+  if(item.statut==='a_examiner')controls.append(btn('Prendre en charge',()=>reviewUrgency(item,'en_cours')));
+  if(item.statut==='en_cours')controls.append(btn('Clôturer après examen',()=>reviewUrgency(item,'cloture')));
+  if(controls.children.length)card.append(controls);
+  root.append(card);
+ });
+}
+async function reviewUrgency(item,next){
+ if(!authorized()||processing)return;
+ if(!((item.statut==='a_examiner'&&next==='en_cours')||(item.statut==='en_cours'&&next==='cloture')))return;
+ if(!confirm(next==='cloture'?'Confirmer que cet incident a été examiné et peut être clôturé (TEST) ?':'Prendre ce dossier urgent en charge (TEST) ?'))return;
+ processing=true;
+ try{
+  const api=requireAccess(),t=await api.getToken();
+  if(!t)throw Error('Session expirée.');
+  const q=new URLSearchParams({id:'eq.'+item.id,statut:'eq.'+item.statut});
+  const rows=await api.request('/rest/v1/samgo_urgences_test?'+q,'PATCH',
+   {statut:next,traite_le:new Date().toISOString()},t);
+  if(!Array.isArray(rows)||rows.length!==1||rows[0].statut!==next)throw Error('Le dossier a déjà changé. Rechargez.');
+  api.notice('Suivi urgent SAMGO TEST mis à jour, sans divulgation d’identité ni notification extérieure.','good');
+  await load();
+ }catch(error){access?.notice(escapeError(error),'error');}
+ finally{processing=false;}
+}
 function drawReports(rows){
  const root=$('sgAgentReports');root.replaceChildren();
  const urgent=rows.filter(x=>['danger','agression','accident'].includes(x.categorie)&&x.statut==='en_attente').length;
@@ -90,16 +129,18 @@ async function load(){
  const revision=++sessionSeq;
  if(!authorized()){clear();return;}
  try{
-  const [reports,escalations,invoices]=await Promise.all([
+  const [urgencies,reports,escalations,invoices]=await Promise.all([
+   privateRead('samgo_urgences_test','id,signalement_id,cible_id,categorie,statut,cree_le'),
    privateRead('samgo_signalements_test','id,cible_id,categorie,details,statut,cree_le'),
    privateRead('samgo_escalades_test','id,cible_id,nombre_avertissements,statut,cree_le'),
    privateRead('samgo_factures_brouillons_test','id,choix_id,montant_ttc_centimes,commission_centimes,tva_regime,statut,cree_le')
   ]);
   if(revision!==sessionSeq||!authorized())return;
-  drawReports(reports);drawEscalations(escalations);drawInvoices(invoices);
+  drawUrgencies(urgencies);drawReports(reports);drawEscalations(escalations);drawInvoices(invoices);
  }catch(error){
   if(revision!==sessionSeq)return;
-  $('sgAgentReportCount').textContent='Impossible de charger les agents : '+escapeError(error);
+  $('sgAgentUrgentCount').textContent='Impossible de charger les agents : '+escapeError(error);
+  $('sgAgentReportCount').textContent='Chargement incomplet.';
  }
 }
 async function review(item,next){
@@ -118,7 +159,7 @@ async function review(item,next){
  }catch(error){access?.notice(escapeError(error),'error');}
  finally{processing=false;}
 }
-function clear(){++sessionSeq;for(const id of ['sgAgentReports','sgAgentEscalations','sgAgentInvoices'])$(id)?.replaceChildren();}
+function clear(){++sessionSeq;for(const id of ['sgAgentUrgentCases','sgAgentReports','sgAgentEscalations','sgAgentInvoices'])$(id)?.replaceChildren();}
 window.sgAdminAgentsTest={load,clear,init:(api)=>{
  if(!api || typeof api.getToken!=='function' || typeof api.request!=='function' ||
   typeof api.notice!=='function' || typeof api.isAdmin!=='function')throw Error('Accès administrateur non fourni.');
