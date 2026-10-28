@@ -35,7 +35,7 @@
  }
  async function refresh(role){
   if(!view[role])return;
-  const st=state[role],my=++st.seq;
+  const st=state[role];
   if(!signed()){
    st.current=null;st.choices=[];state.user=null;
    updateButtons(role);note(role,'Connectez-vous pour consulter votre messagerie de test.');
@@ -49,6 +49,7 @@
     const input=$(view[side].input);if(input)input.value='';
    }
   }
+  const my=++st.seq;
   try{
    const data=await client.testChoices.list();
    if(data.error)throw data.error;
