@@ -57,14 +57,33 @@ async function refreshDriver(){
  if(!connected()||typeof driverSimAllowed==='undefined'||!driverSimAllowed)return;
  try{
   const data=await call('driver_status');
-  message('sgStripeConnectBadge',!data.linked?'💳 STRIPE CONNECT — NON LIÉ (TEST)':
-    data.ready_for_test?'💳 STRIPE CONNECT — COMPTE TEST ACTIF':
-    '💳 STRIPE CONNECT — COMPTE TEST LIÉ, VÉRIFICATION EN ATTENTE');
-  message('sgStripeSandboxDriverStatus',
-   !data.linked?'Aucun compte chauffeur Stripe de test encore associé. Vous pouvez commencer l’inscription ci-dessous.':
-   data.ready_for_test?'Compte chauffeur de test actif. Les paiements restent simulés.':
-   'Compte Stripe de test créé ; terminez sa vérification dans Stripe Connect.');
- }catch(e){message('sgStripeSandboxDriverStatus','Statut chauffeur Stripe : '+(e.message||'réessayez.'));}
+  const linked=data.linked===true;
+  const ready=linked && data.ready_for_test===true;
+  const correction=linked && data.verification_state==='correction_required';
+  const reviewing=linked && data.verification_state==='processing';
+  const badge=!linked?'💳 STRIPE CONNECT — NON LIÉ (TEST)':
+   ready?'💳 STRIPE CONNECT — COMPTE TEST ACTIF':
+   correction?'💳 STRIPE CONNECT — DONNÉES DE TEST À CORRIGER':
+   reviewing?'💳 STRIPE CONNECT — VÉRIFICATION TEST EN COURS':
+   '💳 STRIPE CONNECT — INSCRIPTION TEST INCOMPLÈTE';
+  message('sgStripeConnectBadge',badge);
+  const button=$('sgStripeSandboxDriverButton');
+  if(button)button.textContent=!linked?'Configurer mon compte chauffeur Stripe TEST':
+   ready?'Consulter mon compte chauffeur Stripe TEST':
+   correction?'Corriger mon compte chauffeur Stripe TEST':
+   'Reprendre mon inscription chauffeur Stripe TEST';
+  const status=!linked?'Aucun compte chauffeur Stripe de test encore associé.':
+   ready?'Compte chauffeur de TEST validé pour la simulation. Aucun virement réel actif.':
+   correction?'Stripe a refusé la vérification des informations fictives du chauffeur'+
+     (data.identity_test_rejected?' (identité de test non reconnue).':'')+
+     ' Utilisez le bouton ci-dessus pour corriger les données TEST. Ne renseignez pas de vraie pièce d’identité pour cette simulation.':
+   reviewing?'Inscription du chauffeur de TEST soumise ; Stripe vérifie encore les données fictives.':
+   'Inscription Stripe de TEST incomplète. Utilisez le bouton ci-dessus pour reprendre les étapes.';
+  message('sgStripeSandboxDriverStatus',status);
+ }catch(e){
+  message('sgStripeConnectBadge','💳 STRIPE CONNECT — STATUT TEST INDISPONIBLE');
+  message('sgStripeSandboxDriverStatus','Statut chauffeur Stripe : '+(e.message||'réessayez.'));
+ }
 }
 async function onboardDriver(){
  const btn=$('sgStripeSandboxDriverButton');
