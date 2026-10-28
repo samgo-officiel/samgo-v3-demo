@@ -613,6 +613,7 @@ input,select,textarea{font-size:16px}
     <div id="sgNearbyMap" class="sg-proximity-radar" aria-live="off"></div>
     <p id="sgHeatmapStatus" role="status" aria-live="polite">Activez le GPS pour voir les secteurs fictifs.</p>
     <p>Nord en haut, vous au centre ; les numéros correspondent aux annonces ci-dessous. Distance <strong>à vol d’oiseau</strong> : ce n’est pas une vraie carte routière ni un trajet calculé. Les coordonnées exactes du chauffeur restent dans son navigateur.</p>
+    <p>La carte externe ne s'ouvre que si vous cliquez dessus. Elle reçoit uniquement la zone approximative de l'annonce fictive ; le fournisseur de cartes applique ensuite ses propres règles de confidentialité.</p>
   </section>
   <div id="sgNearbyList"></div>
   <div class="sg-driver-ratings"><h3>Mes réponses et simulations (test)</h3>
@@ -1590,7 +1591,8 @@ function sgGo(view){
 })();
 </script>
 <script src="assets/carte-proximite-test.js?v=20261028-zones1"></script>
-<script src="assets/demandes-geoloc-test.js?v=20261028-gps-stop3"></script>
+<script src="assets/zone-carte-externe-test.js?v=20261028-a"></script>
+<script src="assets/demandes-geoloc-test.js?v=20261028-map-zonea"></script>
 <script src="assets/avis-chauffeurs-test.js"></script>
 <script src="assets/actualisation-test.js?v=fid-2810"></script>
 <script src="assets/stripe-connect-demo.js"></script>
