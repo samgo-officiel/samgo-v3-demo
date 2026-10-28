@@ -92,3 +92,21 @@ test('une position GPS incohérente est rejetée',async()=>{
  assert.equal(x.calls(),0);
  assert.match(x.get('sgGeoStatus').textContent,/invalide/i);
 });
+
+
+test('arrêter le GPS préserve les annonces privées du client',()=>{
+ const x=boot();
+ x.get('sgMyAdsList').children=[{id:'annonce-client'}];
+ x.get('sgMyAdsStatus').textContent='Mes annonces chargées';
+ x.geo.stop();
+ assert.equal(x.get('sgMyAdsList').children.length,1);
+ assert.equal(x.get('sgMyAdsStatus').textContent,'Mes annonces chargées');
+});
+test('déconnexion ou changement de compte efface les annonces privées',()=>{
+ const x=boot();
+ x.get('sgMyAdsList').children=[{id:'annonce-client'}];
+ x.get('sgMyAdsStatus').textContent='Mes annonces chargées';
+ x.geo.stop({clearClient:true});
+ assert.equal(x.get('sgMyAdsList').children.length,0);
+ assert.match(x.get('sgMyAdsStatus').textContent,/Connectez-vous/);
+});
