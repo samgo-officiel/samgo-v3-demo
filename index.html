@@ -1262,6 +1262,15 @@ async function refreshUser(){
    sessionUser=previous;
    temporarilyOffline=true;
  }
+ // Une déconnexion forcée ou un changement de compte doit vider tous les
+ // panneaux privés, même sans appui sur « Me déconnecter ».
+ if(previous&&(!sessionUser||previous.id!==sessionUser.id)){
+   if(window.sgReviews)window.sgReviews.clear();
+   if(window.sgChatTest)window.sgChatTest.stop();
+   if(window.sgDemand)window.sgDemand.stop();
+   if(window.sgLoyaltyTest)window.sgLoyaltyTest.stop();
+   localDemoRequest=null;saveLocalDemo();renderLocalDemo();
+ }
  const logged=!!sessionUser;
  const recovering=logged&&window.sgAccountRecovery?.isPending()===true;
  $('loggedOut').classList.toggle('hidden',logged);
