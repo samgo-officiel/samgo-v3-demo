@@ -204,9 +204,7 @@ test('ouvrir une conversation affiche le dernier message sans bloquer la lecture
  box.scrollTop=100;
  await app.chat.refresh('client');
  assert.equal(box.scrollTop,100,'l actualisation ne déplace pas une personne qui lit de vieux messages');
- app.get('sgChatClientChoices').children[1].listeners.click();
- // Le clic charge de façon asynchrone les messages de la deuxième conversation.
- await Promise.resolve();await Promise.resolve();
+ await app.get('sgChatClientChoices').children[1].listeners.click();
  assert.equal(box.scrollTop,1200,'changer de conversation revient aux messages récents');
 });
 test('une actualisation près du bas reste près du dernier message',async()=>{
