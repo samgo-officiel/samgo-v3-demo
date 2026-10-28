@@ -87,3 +87,23 @@ test('sur Android natif, la version est lue localement sans permission',async()=
  assert.match(page.text(),/0.1.0 \(build 1\)/);
  assert.equal(page.counters.geoCalls,0);
 });
+
+test('diagnostic application native confirme module GPS sans déclencher permission ni position',async()=>{
+ let requests=0;
+ const page=setup({window:{Capacitor:{isNativePlatform:()=>true,getPlatform:()=> 'android',
+  Plugins:{Geolocation:{getCurrentPosition:()=>{requests++;throw Error('GPS appelé sans clic');}}}}}});
+ await page.run();
+ assert.match(page.text(),/GPS du téléphone/);
+ assert.match(page.text(),/module natif installé/);
+ assert.match(page.text(),/Autorisation GPS/);
+ assert.match(page.text(),/non vérifiée ici/);
+ assert.equal(requests,0);
+ assert.equal(page.counters.permissionQueries,0);
+ assert.equal(page.counters.geoCalls,0);
+});
+test('si plugin GPS natif absent, diagnostic affiche une action concrète',async()=>{
+ const page=setup({window:{Capacitor:{isNativePlatform:()=>true,getPlatform:()=> 'ios',Plugins:{}}}});
+ await page.run();
+ assert.match(page.text(),/module natif absent/);
+ assert.equal(page.counters.geoCalls,0);
+});
