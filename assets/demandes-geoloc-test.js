@@ -118,7 +118,7 @@ async function open(){
   const position=await requestLocation();
   if(!approved())return;
   state.pos=position;state.firstLoad=true;state.seen.clear();state.rows=[];
-  status('sgGeoStatus','GPS activé sur cet appareil. La position du chauffeur n’est pas envoyée au serveur.');
+  status('sgGeoStatus','GPS activé. Votre position précise reste sur cet appareil : seule une zone arrondie (environ 11 km) sert à chercher des annonces sur le serveur.');
   render();await fetchRows(false);
   if(state.poll)clearInterval(state.poll);
   state.poll=setInterval(()=>fetchRows(true),30000);
