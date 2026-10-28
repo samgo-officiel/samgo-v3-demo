@@ -33,7 +33,11 @@
     window.isSecureContext?'HTTPS / contexte sécurisé':'contexte non sécurisé — GPS indisponible'],
    ['Installation',native()?'application native '+nativePlatform()+' (TEST)':
     standalone()?'ouverte depuis l’icône de l’application web':'ouverte dans un navigateur'],
-   ['GPS du navigateur',navigator.geolocation?'API présente (position non demandée)':'indisponible dans ce navigateur'],
+   native()?['GPS du téléphone',
+    window.Capacitor?.Plugins?.Geolocation?.getCurrentPosition?
+     'module natif installé (position non demandée)':
+     'module natif absent : une compilation SAMGO récente est nécessaire']:
+    ['GPS du navigateur',navigator.geolocation?'API présente (position non demandée)':'indisponible dans ce navigateur'],
    ['Notifications',typeof Notification==='undefined'?'non prises en charge':(
      Notification.permission==='granted'?'autorisées':Notification.permission==='denied'?'refusées':'pas encore autorisées'
    )],
@@ -46,7 +50,11 @@
     results.push(['Version SAMGO TEST',version+' (build '+build+')']);
    }catch(_){results.push(['Version SAMGO TEST','indisponible sur cet appareil']);}
   }
-  if(navigator.permissions?.query){
+  if(native()){
+   // Ne pas consulter les permissions du navigateur : le GPS natif gère
+   // celles du système uniquement après l'action explicite du conducteur.
+   results.push(['Autorisation GPS','non vérifiée ici : appuyez sur GPS dans Missions pour la demander']);
+  }else if(navigator.permissions?.query){
    try{
     const permission=await navigator.permissions.query({name:'geolocation'});
     results.push(['Autorisation GPS',permissionLabel(permission?.state)]);
