@@ -108,8 +108,8 @@ async function handle(action:string,body:any,user:{id:string;email?:string;token
       driverAccountLinked=rows.length>0;
     }
     return output({sandbox:true,configured:isReady,commission_percent:0,
-      driverAccountLinked, payments_enabled:false,
-      message:isReady?"Stripe SANDBOX disponible. Aucun paiement réel.":"Stripe connecté à ChatGPT mais clé secrète de test non encore configurée dans Supabase."});
+      driverAccountLinked, real_payments_enabled:false, sandbox_available:isReady,
+      message:isReady?"Stripe SANDBOX disponible. Aucun paiement réel.":"Clé secrète Stripe de test non encore configurée dans Supabase."});
   }
   if(!isReady) return output({error:"Connexion serveur Stripe non terminée. Aucun paiement ne peut être créé."},503);
   if(action==="driver_status"){
