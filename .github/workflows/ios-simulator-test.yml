@@ -6,6 +6,11 @@ on:
     branches: [main]
     paths:
       - 'mobile/**'
+      - 'index.html'
+      - 'assets/**'
+      - 'aide.html'
+      - 'donnees-test.html'
+      - 'hors-ligne.html'
       - '.github/workflows/ios-simulator-test.yml'
 
 permissions:
