@@ -1,0 +1,71 @@
+name: SAMGO - Compiler iPhone TEST (simulateur uniquement)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/ios-simulator-test.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: samgo-ios-simulator-test
+  cancel-in-progress: true
+
+jobs:
+  build-ios-simulator:
+    runs-on: macos-26
+    timeout-minutes: 35
+    steps:
+      - name: Recuperer le depot SAMGO
+        uses: actions/checkout@v4
+      - name: Installer Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verifier Xcode du simulateur
+        run: xcodebuild -version
+      - name: Installer Capacitor (sans abonnement)
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+      - name: Preparer les pages de l'application
+        working-directory: mobile
+        run: npm run build:web
+      - name: Generer le projet iOS (sans signature)
+        working-directory: mobile
+        run: npx cap add ios
+      - name: Explication GPS pendant utilisation
+        working-directory: mobile
+        run: node scripts/configure-native.cjs
+      - name: Synchroniser l'application
+        working-directory: mobile
+        run: npx cap sync ios
+      - name: Compiler SAMGO TEST pour simulateur (pas d'IPA ni distribution)
+        working-directory: mobile
+        run: |
+          if [ -d ios/App/App.xcworkspace ]; then
+            xcodebuild -workspace ios/App/App.xcworkspace -scheme App \
+              -configuration Debug -sdk iphonesimulator \
+              -destination 'generic/platform=iOS Simulator' \
+              -derivedDataPath ios-build CODE_SIGNING_ALLOWED=NO build
+          else
+            xcodebuild -project ios/App/App.xcodeproj -scheme App \
+              -configuration Debug -sdk iphonesimulator \
+              -destination 'generic/platform=iOS Simulator' \
+              -derivedDataPath ios-build CODE_SIGNING_ALLOWED=NO build
+          fi
+      - name: Verifier bundle iPhone de test
+        run: test -d mobile/ios-build/Build/Products/Debug-iphonesimulator/App.app
+      - name: Archiver pour diagnostic simulateur
+        run: |
+          ditto -c -k --keepParent mobile/ios-build/Build/Products/Debug-iphonesimulator/App.app mobile/samgo-ios-simulator-test.zip
+      - name: Conserver le build simulateur 7 jours
+        uses: actions/upload-artifact@v4
+        with:
+          name: samgo-ios-test-simulateur
+          path: mobile/samgo-ios-simulator-test.zip
+          retention-days: 7
+          if-no-files-found: error
