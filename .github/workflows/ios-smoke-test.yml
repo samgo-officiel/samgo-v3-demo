@@ -23,7 +23,7 @@ jobs:
         with:
           name: samgo-ios-test-simulateur
           repository: samgo-officiel/samgo-v3-demo
-          run-id: 40756907488
+          run-id: 40766097543
           github-token: ${{ github.token }}
           path: ios-artifact
       - name: Extraire l'application de simulateur
