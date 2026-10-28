@@ -221,7 +221,7 @@ async function handle(action:string,body:any,user:{id:string;email?:string;token
     // Les frais Stripe sont supportés par la plateforme dans ce flux.
     const session=await stripe("checkout/sessions","POST",{
       mode:"payment",
-      "payment_method_types[0]":"card",
+      // Stripe choisit les moyens de paiement éligibles; confirmations via webhook.
       "success_url":SITE+"?stripe_test_checkout=success",
       "cancel_url":SITE+"?stripe_test_checkout=cancel",
       client_reference_id:choiceId,
