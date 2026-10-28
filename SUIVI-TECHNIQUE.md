@@ -175,3 +175,13 @@ Les changements ci-dessous sont des améliorations de **démonstration**. Ce ne 
 - `tests/diagnostic-appareil.test.cjs` apporte 5 cas de régression sans géolocalisation réelle.
 - `tests/ui-action-contract.test.cjs` vérifie les appels de fonctions depuis les contrôles HTML (ainsi que le bouton des avis et le chargement des scripts GPS/diagnostic), évitant qu'une fonction absente laisse un bouton inactif.
 - Les contrôles de GitHub Actions sur le commit `ecd9697a64ea22111954eb96573aaea277b04495` ont réussi. Il reste à vérifier le comportement sur appareils réels ; ne pas confondre réussite des tests simulés et validation de l'application prête au public.
+
+
+## Correctifs autonomes — 28 octobre (messagerie, GPS, Stripe TEST, confidentialité)
+
+- **Messagerie** : les envois et chargements asynchrones sont liés à un compte et à une conversation. Un résultat ou échec d'un ancien utilisateur ne vide plus le brouillon ni les statuts du nouveau compte. Trois tests dans `tests/messagerie-securite.test.cjs`.
+- **Actualisation client** : suppression d'un second appel aux avis ; `sgDemand.refreshClient()` est déjà enveloppé par `sgReviews`. Diminution des lectures réseau redondantes.
+- **GPS** : le bouton Arrêter la recherche GPS ne vide plus les annonces du compte client. Seule la déconnexion ou le changement de compte purge la vue privée (`stop({clearClient:true})`). Deux scénarios ajoutés aux tests GPS.
+- **Données du prototype** : nouvelle page `donnees-test.html` liée depuis Compte et Aide. Le texte explique quelles données fictives sont traitées, l'arrondi GPS et l'absence actuelle de purge automatique des annonces en base. **Ce n'est pas une politique RGPD juridique complète.**
+- **Stripe SANDBOX** : les liens Checkout / Connect et les résultats de statut reçus après déconnexion ou changement de compte sont ignorés ; `reset()` remet l'interface dans un état neutre. Aucun passage en production ni activation de paiement réel.
+- **Automatisation** : quatre nouveaux scénarios `tests/stripe-session.test.cjs`, corrigés pour attendre les requêtes simulées explicitement et non un nombre fixe de microtâches. Dernier run connu réussi : `31cb6f2c7c4b83b7465eab969366a6d6a5d048db` (GitHub Actions). Tests réels à deux appareils et Stripe TEST restent à faire.
