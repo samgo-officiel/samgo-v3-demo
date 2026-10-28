@@ -88,3 +88,16 @@ Les fonctions de localisation ci-dessous utilisent le GPS seulement après appui
 **Limite actuelle :** recherche géographique et distance à vol d'oiseau sur des annonces fictives ; **pas encore de carte routière, géocodage d'adresse, itinéraire voiture, temps d'arrivée (ETA) ni distance routière**. Aucun fournisseur cartographique tiers ou abonnement payant n'a été ajouté.
 
 **Régression JavaScript simulée (contrôle de code du 28 octobre 2026)** : 4 scénarios réussis — résultat de GPS après arrêt ignoré, précision de mesure affichée, rayon changé déclenche une nouvelle requête, changement de compte pendant la permission GPS ignoré. Ces tests ne remplacent pas un navigateur et un vrai téléphone.
+
+
+## Site + PWA — essais restants au propriétaire (28 octobre)
+
+- [ ] Sur Chrome Android et Safari iPhone, ouvrir **Chauffeur → Missions**, autoriser la localisation et vérifier le **schéma de proximité** : « VOUS » au centre, N en haut, nombres sur la carte correspondant aux annonces fictives.
+- [ ] Vérifier que **Arrêter la recherche GPS** efface le schéma et les annonces, et que modifier le rayon 5/10/20/30/50 km met à jour la carte.
+- [ ] Faire le test à deux comptes avec publication d'une annonce fictive depuis un autre appareil dans une zone proche : le chauffeur approuvé doit voir la même annonce sur la carte et dans la liste.
+- [ ] Vérifier la version PWA installée depuis l'icône d'écran d'accueil, en rechargeant la page si besoin, et comparer à la version navigateur.
+- [ ] Tester confirmation et récupération e-mail, y compris lien expiré, sur un compte de test contrôlé. **Ne transmettre aucun code OTP, mot de passe, jeton ou lien privé.**
+- [ ] Vérifier les réglages Supabase Auth des redirections et demander l'activation de la protection contre les mots de passe divulgués si disponible.
+- [ ] Vérifier une carte routière, ETA et tarification réelle **seulement après choix d'un fournisseur et validation de sa politique de confidentialité, de ses quotas et coûts**.
+
+La carte actuelle est **schématique et locale**, non une carte OpenStreetMap/Google Maps, et n'a aucune fonction de navigation vers un client. GitHub Actions vérifie la syntaxe et les tests de régression ; ce n'est pas un test d'intégration mobile ni une preuve de lancement possible.
