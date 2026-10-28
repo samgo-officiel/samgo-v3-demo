@@ -12,11 +12,15 @@ function boot(){
   return elements.get(id);
  };
  const user={id:'driver-1'};
- const requests=[];
+ const requests=[],waiters=new Map();
  const fakeFetch=(endpoint,options)=>new Promise(resolve=>{
   const action=JSON.parse(options.body).action;
   requests.push({action,resolve});
+  const notify=waiters.get(action);
+  if(notify){waiters.delete(action);notify();}
  });
+ const waitFor=action=>requests.some(x=>x.action===action)
+  ?Promise.resolve():new Promise(resolve=>waiters.set(action,resolve));
  const client={auth:{async getAccessToken(){return 'token-test';}}};
  const window={
   location:{search:'',assign:url=>opened.push(url)},
@@ -32,12 +36,12 @@ function boot(){
    ok:true,json:async()=>value
   });
  };
- return {api:window.sgStripeSandbox,user,opened,get,reply,requests,sent};
+ return {api:window.sgStripeSandbox,user,opened,get,reply,requests,waitFor,sent};
 }
 test('onboarding Stripe de TEST tardif ignoré après changement de compte',async()=>{
  const x=boot();
  const promise=x.api.onboardDriver();
- await Promise.resolve();await Promise.resolve();
+ await x.waitFor('onboard_driver');
  x.user.id='driver-2';x.api.reset();
  x.reply('onboard_driver',{sandbox:true,url:'https://connect.stripe.com/test'});
  await promise;
@@ -47,7 +51,7 @@ test('onboarding Stripe de TEST tardif ignoré après changement de compte',asyn
 test('checkout Stripe de TEST tardif ignoré après déconnexion',async()=>{
  const x=boot();
  const promise=x.api.checkout('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
- await Promise.resolve();await Promise.resolve();
+ await x.waitFor('checkout');
  x.api.reset();
  x.reply('checkout',{sandbox:true,url:'https://checkout.stripe.com/test'});
  await promise;
@@ -56,7 +60,7 @@ test('checkout Stripe de TEST tardif ignoré après déconnexion',async()=>{
 test('statut Stripe de l’ancien compte non rendu sur le nouveau compte',async()=>{
  const x=boot();
  const pending=x.api.refresh();
- await Promise.resolve();await Promise.resolve();
+ await x.waitFor('status');
  x.user.id='driver-2';x.api.reset();
  x.reply('status',{configured:true});
  await pending;
@@ -66,7 +70,7 @@ test('statut Stripe de l’ancien compte non rendu sur le nouveau compte',async(
 test('onboarding explicitement demandé fonctionne en TEST avec compte inchangé',async()=>{
  const x=boot();
  const pending=x.api.onboardDriver();
- await Promise.resolve();await Promise.resolve();
+ await x.waitFor('onboard_driver');
  x.reply('onboard_driver',{sandbox:true,url:'https://connect.stripe.com/test'});
  await pending;
  assert.deepEqual(x.opened,['https://connect.stripe.com/test']);
