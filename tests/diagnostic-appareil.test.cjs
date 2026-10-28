@@ -62,3 +62,17 @@ test('erreur de consultation des permissions traitée sans planter',async()=>{
  assert.match(page.text(),/état non accessible/);
  assert.equal(page.button.disabled,false);
 });
+
+test('le diagnostic detecte une application Android native sans GPS automatique',async()=>{
+ const page=setup({window:{Capacitor:{isNativePlatform:()=>true,getPlatform:()=> 'android'}}});
+ await page.run();
+ assert.match(page.text(),/application native Android \(TEST\)/);
+ assert.match(page.text(),/pages locales de l’application disponibles/);
+ assert.equal(page.counters.geoCalls,0);
+});
+test('le diagnostic detecte une application iPhone native sans GPS automatique',async()=>{
+ const page=setup({window:{Capacitor:{isNativePlatform:()=>true,getPlatform:()=> 'ios'}}});
+ await page.run();
+ assert.match(page.text(),/application native iPhone\/iPad \(TEST\)/);
+ assert.equal(page.counters.geoCalls,0);
+});
