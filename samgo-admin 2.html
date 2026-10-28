@@ -85,6 +85,11 @@
     <p class="notice">Un signalement ne vaut pas preuve. Le plaignant n’est jamais identifié dans les notifications envoyées à la personne concernée.</p>
     <div id="sgAgentReports"></div>
   </section>
+  <section id="sgAgentPaymentsPanel" class="panel hidden">
+    <div class="row space"><div><h2>💳 Suivi des paiements et prélèvements — TEST</h2><p class="small" id="sgAgentPaymentCount">Aucun résultat chargé.</p></div><button type="button" class="alt" onclick="window.sgAdminAgentsTest.load()">↻ Actualiser</button></div>
+    <p class="notice">Lecture réservée à SAMGO : les états proviennent de Stripe SANDBOX. Aucun encaissement réel, aucune facturation définitive, aucun virement et aucun remboursement n'est exécuté ici. Commission de démonstration : 0 %, frais Stripe potentiellement à la charge de la plateforme.</p>
+    <div id="sgAgentPayments" aria-live="polite"></div>
+  </section>
   <section id="sgAgentInvoicesPanel" class="panel hidden">
     <div class="row space"><div><h2>🧾 Agent facturation — brouillons TEST</h2><p class="small" id="sgAgentInvoiceCount">Aucun brouillon chargé.</p></div><button type="button" class="alt" onclick="window.sgAdminAgentsTest.load()">↻ Actualiser</button></div>
     <div class="notice">TVA, facture définitive et envoi e-mail bloqués tant que le statut fiscal, l'émetteur, la numérotation, le mandat et la procédure de facturation ne sont pas validés.</div>
@@ -93,7 +98,7 @@
   <div id="feedback" class="notice" role="status" aria-live="polite">Préparation de l'espace administrateur…</div>
   <p class="small">SAMGO — Prototype non commercial. Les autorisations de lecture et de modification sont également contrôlées côté serveur par Supabase.</p>
 </main>
-<script src="assets/admin-agents-test.js?v=20261028-agent2"></script>
+<script src="assets/admin-agents-test.js?v=20261028-paiements3"></script>
 <script>
 (function(){
 'use strict';
@@ -132,7 +137,7 @@ function renderAccess(){
   $('loginPanel').classList.toggle('hidden',!!user);
   $('loggedPanel').classList.toggle('hidden',!user);
   $('adminPanel').classList.toggle('hidden',!isAdmin);$('ticketsPanel').classList.toggle('hidden',!isAdmin);
-  for(const id of ['sgAgentUrgentPanel','sgAgentEscalationsPanel','sgAgentReportsPanel','sgAgentInvoicesPanel'])$(id).classList.toggle('hidden',!isAdmin);
+  for(const id of ['sgAgentUrgentPanel','sgAgentEscalationsPanel','sgAgentReportsPanel','sgAgentInvoicesPanel','sgAgentPaymentsPanel'])$(id).classList.toggle('hidden',!isAdmin);
   if(!isAdmin)window.sgAdminAgentsTest?.clear();
   $('identity').textContent=user?(user.email||'Compte connecté'):'';
   $('permissionInfo').textContent=user?(isAdmin?'Accès administrateur confirmé.':'Ce compte n’a pas le rôle administrateur. Utilise un compte autorisé.') : '';
