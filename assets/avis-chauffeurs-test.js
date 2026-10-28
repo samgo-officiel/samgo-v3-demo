@@ -123,14 +123,15 @@ async function refreshClient(){
  const uid=sessionUser.id,seq=++clientSequence;
  status('sgReviewClientStatus','Chargement des chauffeurs intéressés et avis de test…');
  try{
-  const [a,r,c,v,t]=await Promise.all([
-   client.testRequests.mine(uid),client.testReplies.list(),client.testChoices.list(),client.testReviews.list(),client.testTracking.list()
+  const [a,r,c,v,t,p]=await Promise.all([
+   client.testRequests.mine(uid),client.testReplies.list(),client.testChoices.list(),
+   client.testReviews.list(),client.testTracking.list(),client.testPayments.list()
   ]);
   if(!signed()||uid!==sessionUser.id||seq!==clientSequence)return;
-  for(const result of [a,r,c,v,t])if(result.error)throw result.error;
+  for(const result of [a,r,c,v,t,p])if(result.error)throw result.error;
   const ads=Array.isArray(a.data)?a.data:[],replies=Array.isArray(r.data)?r.data:[],
         choices=Array.isArray(c.data)?c.data:[],reviews=Array.isArray(v.data)?v.data:[],
-        tracking=Array.isArray(t.data)?t.data:[];
+        tracking=Array.isArray(t.data)?t.data:[],payments=Array.isArray(p.data)?p.data:[];
   status('sgReviewClientStatus',ads.length?ads.length+' annonce(s) consultée(s) en version de test.':'Aucune annonce publiée pour ce compte.');
   for(const ad of ads){
    const card=document.createElement('article');card.className='sg-reply-card';
@@ -142,12 +143,22 @@ async function refreshClient(){
    if(selected){
     addText(card,'p',selected.statut==='termine_test'?'✓ Course fictive terminée':selected.statut==='annule_test'?'× Simulation annulée':'✓ Un chauffeur a été choisi pour cette simulation.');
     const step=tracking.find(x=>x.choix_id===selected.id);
+    const payment=payments.find(x=>x.choix_id===selected.id);
     renderTimeline(card,selected,step);
+    if(payment){
+     const euros=(Number(payment.montant_centimes)/100).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
+     const paymentText=payment.statut==='paye_test'?'✓ Paiement Stripe SANDBOX confirmé (argent fictif)' :
+      payment.statut==='checkout_ouvert'?'Paiement Stripe SANDBOX en attente de confirmation':
+      payment.statut==='expire_test'?'Session Stripe de test expirée':'Paiement Stripe de test non abouti';
+     addText(card,'p',paymentText+' · '+euros+' · Commission SAMGO : 0 %');
+    }
     if(step)addText(card,'p',stepName(step.etape));
     else if(selected.statut==='choisi_test')addText(card,'p','En attente du premier statut du chauffeur (test).');
     if(selected.statut==='choisi_test'){
      addButton(card,'Terminer la simulation (test)',()=>finishRide(selected),'sg-demo-finish');
      addButton(card,'Annuler cette simulation (test)',()=>cancelRide(selected),'alt');
+     if(window.sgStripeSandbox&&(!payment||payment.statut!=='paye_test'))
+      addButton(card,'💳 Tester le paiement Stripe SANDBOX',()=>window.sgStripeSandbox.checkout(selected.id),'alt');
     }else if(selected.statut==='termine_test'){
      const review=reviews.find(x=>x.choix_id===selected.id);
      if(review){
@@ -177,9 +188,11 @@ async function refreshDriver(){
  const uid=sessionUser.id,seq=++driverSequence;
  status('sgDriverReviewsStatus','Chargement de vos avis de test…');
  try{
-  const [ch,rev,tracking]=await Promise.all([client.testChoices.list(),client.testReviews.list(),client.testTracking.list()]);
+  const [ch,rev,tracking,payments]=await Promise.all([
+   client.testChoices.list(),client.testReviews.list(),client.testTracking.list(),client.testPayments.list()
+  ]);
   if(!signed()||sessionUser.id!==uid||seq!==driverSequence)return;
-  for(const req of [ch,rev,tracking])if(req.error)throw req.error;
+  for(const req of [ch,rev,tracking,payments])if(req.error)throw req.error;
   const mine=(ch.data||[]).filter(c=>c.chauffeur_id===uid);
   const reviews=(rev.data||[]).filter(x=>x.chauffeur_id===uid);
   const avg=reviews.length?(reviews.reduce((sum,x)=>sum+Number(x.note),0)/reviews.length):0;
@@ -197,7 +210,11 @@ async function refreshDriver(){
    const card=document.createElement('div');card.className='sg-review-demo-card';
    addText(card,'strong',selection.statut==='termine_test'?'Simulation terminée':selection.statut==='annule_test'?'Simulation annulée':'Chauffeur choisi (test)');
    const step=(tracking.data||[]).find(x=>x.choix_id===selection.id);
+   const payment=(payments.data||[]).find(x=>x.choix_id===selection.id);
    renderTimeline(card,selection,step);
+   if(payment)addText(card,'p',payment.statut==='paye_test'?
+    '✓ Paiement fictif Stripe confirmé — SANDBOX, aucun gain réel':
+    'Stripe SANDBOX : '+(payment.statut==='checkout_ouvert'?'paiement en attente':payment.statut==='expire_test'?'session expirée':'paiement non abouti'));
    addText(card,'p',step?stepName(step.etape):'En attente : chauffeur non parti (test).');
    if(selection.statut==='choisi_test'&&(!step||step.etape!=='trajet_test')){
     const label=!step?'Indiquer : en route (TEST)':step.etape==='en_route_test'?'Indiquer : arrivé (TEST)':'Indiquer : trajet commencé (TEST)';
