@@ -51,13 +51,31 @@ jobs:
       - name: Installer et ouvrir SAMGO sur emulateur Android
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
-          target: google_apis
+          api-level: 34
+          target: default
           arch: x86_64
           profile: pixel_6
           disable-animations: true
           script: |
-            adb install -r mobile/android/app/build/outputs/apk/debug/app-debug.apk
+            set -eu
+            adb wait-for-device
+            echo "Android started: $(adb shell getprop sys.boot_completed)"
+            echo "Waiting for Android package manager..."
+            for try in 1 2 3 4 5 6; do
+              if adb shell pm list packages >/dev/null 2>&1; then break; fi
+              sleep 8
+            done
+            echo "Installing SAMGO TEST without streaming (emulator compatibility)..."
+            installed=0
+            for try in 1 2 3 4; do
+              if adb install --no-streaming -r mobile/android/app/build/outputs/apk/debug/app-debug.apk; then
+                installed=1
+                break
+              fi
+              sleep 10
+              adb wait-for-device
+            done
+            test "$installed" -eq 1
             adb shell am start -W -n com.samgo.prototype/.MainActivity
             sleep 12
             adb shell pidof com.samgo.prototype
