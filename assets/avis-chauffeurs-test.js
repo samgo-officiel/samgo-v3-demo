@@ -2,10 +2,28 @@
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
-let clientSequence=0,driverSequence=0;
+let clientSequence=0,driverSequence=0,accountRevision=0;
+const pendingActions=new Set();
 const reviewDrafts=new Map(); // Brouillons conservés uniquement dans cette page, jamais en base.
 function signed(){return typeof sessionUser!=='undefined'&&!!sessionUser&&typeof client!=='undefined'&&!!client&&!!client.testChoices&&!!client.testReviews;}
 function driverOk(){return signed()&&typeof driverSimAllowed!=='undefined'&&driverSimAllowed;}
+function ownerIs(uid,revision,role='client'){
+ return accountRevision===revision && signed() && sessionUser.id===uid &&
+  (role!=='driver'||driverOk());
+}
+async function mutateOnce(key,uid,revision,role,request,onSuccess,onError,statusId){
+ if(pendingActions.has(key))return;
+ pendingActions.add(key);
+ try{
+  const result=await request();
+  if(!ownerIs(uid,revision,role))return;
+  if(result.error)throw result.error;
+  await onSuccess();
+ }catch(e){
+  if(ownerIs(uid,revision,role))
+   status(statusId,onError+': '+(e.message||'Réessayez.'));
+ }finally{pendingActions.delete(key);}
+}
 function status(id,value){const el=$(id);if(el)el.textContent=value;}
 function addText(box,tag,value,cls){
  const e=document.createElement(tag);e.textContent=value;if(cls)e.className=cls;box.append(e);return e;
@@ -46,10 +64,14 @@ async function nextStage(choice,record){
  if(!driverOk())return;
  const next=record?({en_route_test:'arrive_test',arrive_test:'trajet_test'}[record.etape]):'en_route_test';
  if(!next)return;
- const result=record?await client.testTracking.advance(choice.id,record.etape,next):await client.testTracking.start(choice.id,sessionUser.id);
- if(result.error){status('sgDriverSelectionsStatus','Modification du suivi impossible : '+(result.error.message||'Réessayez.'));return;}
- await refreshDriver();
- status('sgDriverSelectionsStatus','✓ '+stepName(next)+'. Aucune vraie course commencée.');
+ const uid=sessionUser.id,revision=accountRevision;
+ await mutateOnce('tracking:'+choice.id,uid,revision,'driver',
+  ()=>record?client.testTracking.advance(choice.id,record.etape,next):client.testTracking.start(choice.id,uid),
+  async()=>{
+   await refreshDriver();
+   if(ownerIs(uid,revision,'driver'))
+    status('sgDriverSelectionsStatus','✓ '+stepName(next)+'. Aucune vraie course commencée.');
+  },'Modification du suivi impossible','sgDriverSelectionsStatus');
 }
 function addReviewForm(box,choice){
  const form=document.createElement('div');form.className='sg-review-demo-card';
@@ -84,37 +106,55 @@ function addReviewForm(box,choice){
  const submit=addButton(form,'Publier mon avis de TEST',async()=>{
   if(!signed())return;
   if(selected<1||selected>5){msg.textContent='Sélectionnez entre 1 et 5 étoiles.';return;}
+  const uid=sessionUser.id,revision=accountRevision,chosenRating=selected;
+  const content=comment.value.trim();
   submit.disabled=true;msg.textContent='Enregistrement de la note de test…';
-  const result=await client.testReviews.create(choice.id,sessionUser.id,choice.chauffeur_id,selected,comment.value.trim());
-  if(result.error){msg.textContent='Erreur : '+(result.error.message||'Veuillez réessayer.');submit.disabled=false;return;}
-  reviewDrafts.delete(choice.id);
-  await refreshClient();
-  status('sgReviewClientStatus','✓ Votre avis de '+selected+' étoile(s) a été enregistré en mode TEST.');
+  await mutateOnce('review:'+choice.id,uid,revision,'client',
+   ()=>client.testReviews.create(choice.id,uid,choice.chauffeur_id,chosenRating,content),
+   async()=>{
+    reviewDrafts.delete(choice.id);
+    await refreshClient();
+    if(ownerIs(uid,revision))status('sgReviewClientStatus',
+      '✓ Votre avis de '+chosenRating+' étoile(s) a été enregistré en mode TEST.');
+   },'Avis impossible','sgReviewClientStatus');
+  if(ownerIs(uid,revision)&&submit.isConnected)submit.disabled=false;
  },'sg-review-submit');
  box.append(form);
 }
 async function selectDriver(ad,answer){
  if(!signed())return;
- const result=await client.testChoices.choose(ad.id,answer.id,answer.chauffeur_id,sessionUser.id);
- if(result.error){status('sgReviewClientStatus','Impossible de sélectionner ce chauffeur : '+(result.error.message||'Réessayez.'));return;}
- await refreshClient();
- status('sgReviewClientStatus','✓ Chauffeur sélectionné en simulation. Aucune vraie course attribuée.');
+ const uid=sessionUser.id,revision=accountRevision;
+ await mutateOnce('choose:'+ad.id,uid,revision,'client',
+  ()=>client.testChoices.choose(ad.id,answer.id,answer.chauffeur_id,uid),
+  async()=>{
+   await refreshClient();
+   if(ownerIs(uid,revision))
+    status('sgReviewClientStatus','✓ Chauffeur sélectionné en simulation. Aucune vraie course attribuée.');
+  },'Sélection du chauffeur impossible','sgReviewClientStatus');
 }
 async function cancelRide(choice){
  if(!signed())return;
  if(typeof window.confirm==='function'&&!window.confirm('Annuler cette simulation ? Elle ne sera plus proposée comme course fictive.'))return;
- const result=await client.testChoices.cancel(choice.id,sessionUser.id);
- if(result.error){status('sgReviewClientStatus','Annulation impossible : '+(result.error.message||'Réessayez.'));return;}
- await refreshClient();
- status('sgReviewClientStatus','✓ Simulation annulée. Aucune course réelle concernée.');
+ const uid=sessionUser.id,revision=accountRevision;
+ await mutateOnce('choice:'+choice.id,uid,revision,'client',
+  ()=>client.testChoices.cancel(choice.id,uid),
+  async()=>{
+   await refreshClient();
+   if(ownerIs(uid,revision))
+    status('sgReviewClientStatus','✓ Simulation annulée. Aucune course réelle concernée.');
+  },'Annulation impossible','sgReviewClientStatus');
 }
 async function finishRide(choice){
  if(!signed())return;
  if(typeof window.confirm==='function'&&!window.confirm('Terminer la course fictive pour pouvoir déposer un avis de test ?'))return;
- const result=await client.testChoices.finish(choice.id,sessionUser.id);
- if(result.error){status('sgReviewClientStatus','Erreur de clôture : '+(result.error.message||'Réessayez.'));return;}
- await refreshClient();
- status('sgReviewClientStatus','✓ Simulation terminée. Vous pouvez noter le chauffeur avec les étoiles.');
+ const uid=sessionUser.id,revision=accountRevision;
+ await mutateOnce('choice:'+choice.id,uid,revision,'client',
+  ()=>client.testChoices.finish(choice.id,uid),
+  async()=>{
+   await refreshClient();
+   if(ownerIs(uid,revision))
+    status('sgReviewClientStatus','✓ Simulation terminée. Vous pouvez noter le chauffeur avec les étoiles.');
+  },'Clôture impossible','sgReviewClientStatus');
 }
 async function refreshClient(){
  const list=$('sgReviewClientList');if(!list)return;
@@ -174,7 +214,10 @@ async function refreshClient(){
    }else addText(card,'p',active?'En attente de réponses des chauffeurs de test.':'Annonce expirée : aucun nouveau choix possible.');
    list.append(card);
   }
- }catch(e){status('sgReviewClientStatus','Chargement impossible : '+(e.message||'Veuillez réessayer.'));}
+ }catch(e){
+  if(seq===clientSequence&&signed()&&sessionUser.id===uid)
+   status('sgReviewClientStatus','Chargement impossible : '+(e.message||'Veuillez réessayer.'));
+ }
 }
 async function refreshDriver(){
  const rlist=$('sgDriverReviewsList'),slist=$('sgDriverSelectionsList');
@@ -223,10 +266,14 @@ async function refreshDriver(){
    addText(card,'p','Aucune véritable course ni aucun déplacement n’est demandé.');
    slist.append(card);
   }
- }catch(e){status('sgDriverReviewsStatus','Impossible de lire les avis de test : '+(e.message||'réessayez.'));}
+ }catch(e){
+  if(seq===driverSequence&&driverOk()&&sessionUser.id===uid)
+   status('sgDriverReviewsStatus','Impossible de lire les avis de test : '+(e.message||'réessayez.'));
+ }
 }
 function clear(){
- clientSequence++;driverSequence++;reviewDrafts.clear();
+ accountRevision++;clientSequence++;driverSequence++;
+ pendingActions.clear();reviewDrafts.clear();
  for(const id of ['sgReviewClientList','sgDriverReviewsList','sgDriverSelectionsList']){
   const el=$(id);if(el)el.replaceChildren();
  }
