@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#10171b">
+<meta name="description" content="Sécurité et numéros d'urgence — SAMGO version TEST.">
+<title>SAMGO — Sécurité et urgence</title>
+<style>
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:radial-gradient(ellipse at top,#383020 0,#11191f 65%);color:#f6f6f3;margin:0}
+main{max-width:700px;padding:20px 16px 75px;margin:auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-size:26px;letter-spacing:-1px;font-weight:900}.brand b{color:#ffd36c}
+a{color:#ffdd94}a:focus-visible{outline:3px solid #ffd36c;outline-offset:3px}
+h1{font-size:clamp(26px,6vw,36px);margin:24px 0 8px;line-height:1.14}
+h2{font-size:19px;margin:0 0 10px;color:#ffdc91}
+p,li{line-height:1.65}li{margin:8px 0}
+.panel{padding:18px;margin:18px 0;border:1px solid #46525c;border-radius:17px;background:#1a2931}
+.warning{background:#352320;border-color:#996057}
+.actions{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(205px,1fr))}
+.action{display:flex;align-items:center;justify-content:center;min-height:52px;padding:12px 14px;border:1px solid #ceac77;
+ border-radius:13px;background:#f2c577;text-decoration:none;color:#1d1910;font-weight:800;text-align:center}
+.action.secondary{background:#25343c;border-color:#798e98;color:#fbe6c1}
+small{color:#c0cdd3}
+footer{font-size:12px;color:#c9c9c9;margin-top:22px}
+</style>
+</head>
+<body><main>
+<header><div class="brand">SAM<b>GO</b></div><a href="./index.html?app=account">← Retour à SAMGO</a></header>
+<h1>🚨 Sécurité et urgence</h1>
+<p>Cette page est accessible sans connexion à un compte. Les numéros ci-dessous peuvent être composés depuis votre téléphone, mais SAMGO ne déclenche aucun appel automatiquement.</p>
+<section class="panel warning" aria-label="Danger immédiat">
+<h2>En cas de danger immédiat</h2>
+<p><strong>Accident, personne blessée, violence, menace :</strong> mettez-vous en sécurité et contactez les secours. N'attendez pas une réponse du site.</p>
+<div class="actions">
+<a class="action" href="tel:112" aria-label="Appeler les secours au 112">📞 Appeler le 112 — Urgences</a>
+<a class="action secondary" href="tel:17" aria-label="Appeler la police au 17 en France">📞 Appeler le 17 — Police (France)</a>
+</div>
+<p><small>Si votre appareil ne lance pas l'appel, composez directement le numéro depuis l'application Téléphone. Les appels sont gérés par votre opérateur.</small></p>
+</section>
+<section class="panel">
+<h2>Un problème pendant un test SAMGO ?</h2>
+<p>Vous pouvez laisser un signalement de test. <strong>Ces signalements ne sont pas surveillés en permanence</strong> et ne remplacent jamais un appel aux secours.</p>
+<div class="actions"><a class="action secondary" href="./aide.html#signaler">📝 Signaler un incident (TEST)</a></div>
+</section>
+<section class="panel">
+<h2>Avant de prendre la route</h2>
+<ul>
+<li>Si vous avez consommé de l'alcool ou êtes fatigué, ne prenez pas le volant.</li>
+<li>Vérifiez que le conducteur est autorisé à conduire le véhicule et couvert par une assurance adaptée.</li>
+<li>Ne transmettez pas de pièce d'identité, adresse personnelle ou coordonnées bancaires sur la démonstration SAMGO.</li>
+<li>Ne considérez aucune demande ou validation fictive comme une course réelle réservée.</li>
+</ul>
+</section>
+<section class="panel warning">
+<h2>État du service</h2>
+<p><strong>SAMGO est encore un prototype.</strong> Il n'y a pas de centrale d'urgence SAMGO, de suivi de course réelle, d'alerte transmise aux secours ou de garantie de prise en charge. Les assurances et procédures d'incident doivent être validées avant ouverture commerciale.</p>
+</section>
+<footer>© SAMGO — Écran d'information de la version TEST. <a href="./donnees-test.html">Données personnelles</a></footer>
+</main></body></html>
