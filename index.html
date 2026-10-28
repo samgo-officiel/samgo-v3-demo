@@ -625,6 +625,7 @@ input,select,textarea{font-size:16px}
     <option value="tarif">Tarif indicatif le plus élevé</option>
     <option value="trajet">Trajet fictif le plus court</option>
    </select>
+   <button type="button" class="alt" onclick="window.sgDriverPrefs.reset()">Réinitialiser mes filtres</button>
    <button type="button" onclick="window.sgDemand.open()">⌖ Activer / actualiser mon GPS</button>
    <button type="button" class="alt" id="sgGeoStop" onclick="window.sgDemand.stop()" disabled>Arrêter la recherche GPS</button>
    <p id="sgGeoStatus" role="status" aria-live="polite">GPS non activé. Aucun suivi de position actif.</p>
@@ -1623,7 +1624,8 @@ function sgGo(view){
 </script>
 <script src="assets/carte-proximite-test.js?v=20261028-zones1"></script>
 <script src="assets/zone-carte-externe-test.js?v=20261028-walking"></script>
-<script src="assets/demandes-geoloc-test.js?v=20261028-sort-offline"></script>
+<script src="assets/demandes-geoloc-test.js?v=20261028-driver-prefs"></script>
+<script src="assets/preferences-chauffeur-test.js?v=20261028-a"></script>
 <script src="assets/avis-chauffeurs-test.js"></script>
 <script src="assets/actualisation-test.js?v=fid-2810"></script>
 <script src="assets/stripe-connect-demo.js"></script>
