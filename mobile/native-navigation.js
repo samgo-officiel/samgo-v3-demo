@@ -60,14 +60,25 @@
     if(typeof app.minimizeApp==='function')app.minimizeApp();
    });
    Promise.resolve(result).catch(()=>{registered=false;});
-   // Au retour d'un navigateur externe (e-mail ou Stripe SANDBOX),
-   // relire les statuts du serveur ; le simple retour n'est jamais
-   // une preuve de paiement ni d'approbation chauffeur.
-   const resume=app.addListener('resume',()=>{
+   // Sur iPhone, fermer SafariViewController ne produit pas toujours
+   // un événement App.resume : écouter également Browser.browserFinished.
+   // Aucun appel GPS ici, et aucun statut n'est pris pour une preuve de paiement.
+   let lastRefresh=0;
+   const refreshStatuses=()=>{
+    const now=Date.now();
+    if(now-lastRefresh<1200)return;
+    lastRefresh=now;
     window.sgStripeSandbox?.refresh?.();
     window.sgDemand?.refreshClient?.();
-   });
+   };
+   const resume=app.addListener('resume',refreshStatuses);
    Promise.resolve(resume).catch(()=>{});
+   const browser=capacitor.Plugins?.Browser;
+   if(browser?.addListener){
+    try{
+     Promise.resolve(browser.addListener('browserFinished',refreshStatuses)).catch(()=>{});
+    }catch(_){/* facultatif sur anciens conteneurs */}
+   }
   }catch(_){registered=false;}
  }
  window.sgNativeOpenExternal=openExternal;
