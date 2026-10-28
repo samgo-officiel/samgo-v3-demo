@@ -17,7 +17,8 @@ const modules={
  sgDriverPrefs:'assets/preferences-chauffeur-test.js',
  sgPasswordPreview:'assets/afficher-mot-de-passe-test.js',
  sgMyDataTest:'assets/export-donnees-test.js',
- sgLocalClearTest:'assets/effacer-local-test.js'
+ sgLocalClearTest:'assets/effacer-local-test.js',
+ sgDriverDocsTest:'assets/dossier-chauffeur-test.js'
 };
 function exportsFor(global,file){
  const source=fs.readFileSync(path.join(root,file),'utf8');
