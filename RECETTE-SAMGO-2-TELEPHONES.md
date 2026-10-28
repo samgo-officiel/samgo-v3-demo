@@ -61,3 +61,12 @@ Cette recette ne certifie **ni l'assurance, ni la vérification réelle des perm
 - [ ] Ouvrir « Aide et signalement » depuis Compte, sans envoyer de données confidentielles.
 - [ ] Tester le GPS sur Chrome Android (autorisé puis refusé) et Safari iPhone, si disponible.
 - [ ] Puis suivre le parcours client/chauffeur ci-dessus sur deux comptes et deux appareils, **uniquement avec des données et trajets fictifs**.
+
+## Nouvelles vérifications de régression
+
+- [ ] Après avoir ouvert Mes courses, contrôler que la carte fidélité indique « TEST », progresse après une course fictive terminée, et ne promet aucun cadeau réel.
+- [ ] Tester la déconnexion alors qu'Internet est coupé : le compte et les données privées disparaissent immédiatement.
+- [ ] Si le réseau tombe sur une session existante, vérifier l'alerte et l'impossibilité de lancer les opérations chauffeur sans vérification serveur.
+- [ ] Tester le rafraîchissement du suivi client après une étape du chauffeur sur un second appareil (maximum 45 secondes, application visible).
+- [ ] Installer l'application web sur écran d'accueil iOS/Android et contrôler la nouvelle icône PNG.
+- [ ] Avec Node.js 22 ou version compatible sur un clone de ce dépôt, exécuter `node --test tests/auth-session.test.cjs`. La présence du script ne vaut pas exécution.
