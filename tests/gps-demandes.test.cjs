@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'..','assets','demandes-geoloc-test.js'),'utf8');
-function boot({approved=true,fetchRequests,createReply,online=true}={}){
+function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=null}={}){
  const nodes=new Map(),prompts=[];
  class Element {
   constructor(id){this.id=id;this.textContent='';this.value=id==='sgRadius'?'30':'';this.checked=false;this.disabled=true;
@@ -20,20 +20,21 @@ function boot({approved=true,fetchRequests,createReply,online=true}={}){
    addEventListener(){},visibilityState:'visible'};
  const navigator={onLine:online,geolocation:{getCurrentPosition(ok,fail,opts){prompts.push({ok,fail,opts});}}};
  const sessionUser={id:'driver-A'};
- let calls=0;
+ let calls=0,publishCalls=0;
  const client={
   testRequests:{list:async (position,radius)=>{calls++;return fetchRequests?
-    fetchRequests(position,radius):{data:[],error:null};}},
+    fetchRequests(position,radius):{data:[],error:null};},
+   create:async()=>{publishCalls++;return {error:null};}},
   testReplies:{list:async()=>({data:[],error:null}),create:(adId,uid)=>createReply?createReply(adId,uid):Promise.resolve({error:null})}
  };
  const window={isSecureContext:true,
   sgMapsZoneTest:{mapsUrl:(lat,lng)=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(lat+','+lng)}};
  vm.runInNewContext(source,{
-  window,document,navigator,sessionUser,client,driverSimAllowed:approved,
+  window,document,navigator,sessionUser,client,driverSimAllowed:approved,localDemoRequest:demoRequest,
   driverTab(){},setInterval(){return 1;},clearInterval(){},Date,Math,Number,
   Intl,Set,Promise,Error,encodeURIComponent
  },{filename:'SAMGO-GPS'});
- return {geo:window.sgDemand,prompts,sessionUser,get,calls:()=>calls,
+ return {geo:window.sgDemand,prompts,sessionUser,get,calls:()=>calls,published:()=>publishCalls,
   giveGPS:(accuracy=30,measuredAt=Date.now())=>{
    const prompt=prompts.shift();
    assert.ok(prompt,'une demande GPS doit exister');
@@ -205,16 +206,14 @@ test('GPS chauffeur trop imprécis au-delà de 5 km : aucune annonce recherchée
  assert.match(x.get('sgGeoStatus').textContent,/8500 m/);
  assert.equal(x.get('sgGeoStop').disabled,true);
 });
-test('GPS imprécis pour publier : ne publie aucune adresse fictive',async()=>{
- const x=boot();
- // Le consentement au partage de la zone approximative est explicite.
+test('GPS client trop imprécis : publication réellement bloquée avant appel serveur',async()=>{
+ const x=boot({demoRequest:{from:'Centre-ville fictif',to:'Quartier fictif',km:5}});
  x.get('sgPublishConsent').checked=true;
- // La simulation locale est disponible uniquement dans ce test isolé.
- const source=fs.readFileSync(path.join(__dirname,'..','assets','demandes-geoloc-test.js'),'utf8');
- assert.match(source,/p\.accuracy>5000/);
  const pending=x.geo.publish();
- // Le contexte de test sans localDemoRequest retourne avant toute demande GPS.
+ assert.equal(x.prompts.length,1,'permission GPS demandée seulement après clic volontaire');
+ x.giveGPS(8000);
  await pending;
- assert.equal(x.calls(),0);
- assert.equal(x.prompts.length,0);
+ assert.equal(x.published(),0);
+ assert.match(x.get('sgPublishStatus').textContent,/trop imprécise/);
+ assert.equal(x.get('sgPublishBtn').disabled,false);
 });
