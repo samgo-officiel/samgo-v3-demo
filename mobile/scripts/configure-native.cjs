@@ -9,9 +9,9 @@ const mobile=path.resolve(__dirname,'..');
 const android=path.join(mobile,'android/app/src/main/AndroidManifest.xml');
 const ios=path.join(mobile,'ios/App/App/Info.plist');
 const locationExplanation='SAMGO TEST utilise votre position uniquement lorsque vous demandez à voir des annonces fictives à proximité ou à publier une simulation. Aucun suivi en arrière-plan.';
-function configureAndroid(){
- if(!fs.existsSync(android))return false;
- let xml=fs.readFileSync(android,'utf8');
+function configureAndroid(file=android){
+ if(!fs.existsSync(file))return false;
+ let xml=fs.readFileSync(file,'utf8');
  if(!/<manifest\b/.test(xml)||!/<application\b/.test(xml))throw Error('Manifeste Android inattendu');
  for(const permission of ['android.permission.ACCESS_COARSE_LOCATION','android.permission.ACCESS_FINE_LOCATION']){
   if(!xml.includes('android:name="'+permission+'"')){
@@ -21,12 +21,12 @@ function configureAndroid(){
  }
  if(/ACCESS_BACKGROUND_LOCATION|FOREGROUND_SERVICE_LOCATION/.test(xml))
   throw Error('Permission localisation en arrière-plan interdite pour SAMGO TEST');
- fs.writeFileSync(android,xml);
+ fs.writeFileSync(file,xml);
  return true;
 }
-function configureIos(){
- if(!fs.existsSync(ios))return false;
- let plist=fs.readFileSync(ios,'utf8');
+function configureIos(file=ios){
+ if(!fs.existsSync(file))return false;
+ let plist=fs.readFileSync(file,'utf8');
  if(!plist.includes('<dict>'))throw Error('Info.plist iOS inattendu');
  if(!plist.includes('<key>NSLocationWhenInUseUsageDescription</key>')){
   plist=plist.replace('<dict>','<dict>\n\t<key>NSLocationWhenInUseUsageDescription</key>\n\t<string>'+locationExplanation+'</string>');
@@ -34,7 +34,7 @@ function configureIos(){
  if(plist.includes('<key>NSLocationAlwaysUsageDescription</key>')||
     plist.includes('<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>'))
   throw Error('Ne pas activer le GPS iOS en arrière-plan dans SAMGO TEST');
- fs.writeFileSync(ios,plist);
+ fs.writeFileSync(file,plist);
  return true;
 }
 if(require.main===module){
