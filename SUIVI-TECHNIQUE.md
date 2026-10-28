@@ -126,3 +126,20 @@ La validation « chauffeur approuvé » actuelle est uniquement une validation d
 - **Contrôle statique** : JavaScript compilé sans erreur de syntaxe dans les quatre blocs de `index.html`, le nouveau module de récupération, la page Aide et le module GPS ; identifiants HTML uniques contrôlés sur la page.
 - **Audit Supabase** : toutes les tables du schéma public ont RLS activé. Les trois tables historiques sans policies restent fermées ; avertissement sur la protection contre mots de passe compromis toujours présent. Les tables `positions_chauffeurs_test`, `annonces_raccompagnement_test`, `messages_course_test` et `offres_chauffeurs` ont chacune **0 ligne au moment du contrôle**.
 - **Non encore testé** : réception d'un vrai e-mail de confirmation ou de récupération, redirection vers la bonne URL et autorisation `redirect_to` dans la configuration Auth, comportement réel sur iPhone/Android, compte valide sur deux téléphones. Aucun mot de passe de compte, paiement ou donnée personnelle n'a été modifié automatiquement.
+
+
+## Développement autonome complémentaire — 28 octobre 2026
+
+Les changements ci-dessous sont des améliorations de **démonstration**. Ce ne sont pas des validations du service en production :
+
+- **Sécurité et résilience des sessions** : un seul renouvellement de jeton si plusieurs écrans appellent Supabase en même temps ; une panne réseau ne vide plus automatiquement la session. Un rejet Auth explicite (400, 401, 403) provoque la déconnexion locale. Une réponse de renouvellement tardive ne peut plus recréer une session que l'utilisateur a déconnectée.
+- **Déconnexion immédiate** : effacement des jetons locaux avant la fin éventuelle de l'appel serveur (même hors Internet). Les panneaux privés de messagerie, recherche, notation, fidélité et simulation locale sont effacés lors d'une perte de session ou d'un changement de compte confirmé.
+- **État utilisateur hors connexion** : le nom du compte déjà connu peut rester visible si le réseau est inaccessible, mais les opérations liées à l'approbation chauffeur sont bloquées tant que celle-ci ne peut pas être revérifiée.
+- **Rafraîchissement des courses fictives** : les statuts et avis côté client sont désormais rechargés avec les annonces et les messages lors du cycle de synchronisation. Une erreur d'un module ne doit plus se traduire par un « synchronisé » trompeur.
+- **Carte fidélité fictive** : l'espace Mes courses possède un compteur des choix `termine_test` appartenant au client, avec objectif illustratif 10. Aucun coupon, récompense réelle, virement ni avantage financier ; l'historique REST est limité aux 100 choix récents.
+- **Installation PWA** : icône PNG 192 × 192 issue du logo SVG, ajoutée au manifeste et déclarée en `apple-touch-icon`. L'installation sur un iPhone/Android physique n'a pas encore été validée ; PNG 512 × 512 et tests App Store/Play Store encore à prévoir.
+- **Tests de régression** : ajout de `tests/auth-session.test.cjs` (7 cas Node.js natif : concurrence, réseau hors ligne, session invalide, déconnexion immédiate, lien d'inscription, recovery, réponse tardive). Les scénarios correspondants ont été simulés en JavaScript pendant la modification, mais le fichier de tests Node doit encore être exécuté depuis un clone complet dans un environnement CI/local.
+- **Contrôle technique** : les blocs JS `index.html`, les nouveaux modules et le manifeste ont été analysés sans erreur de syntaxe ; aucun doublon d'identifiant HTML lors de l'intégration de la fidélité.
+- **Contrôles non faits** : expérience réelle navigateur, deux appareils, e-mails Auth, notification quand fermé, couverture assureur, conformité juridique, Stripe Checkout et webhook de bout en bout. Ne pas proposer de vraie course.
+
+**Attention :** le dépôt GitHub `samgo-officiel/samgo-v3-demo` est PUBLIC. Il ne doit pas contenir de données d'identité, secrets Stripe/Supabase, mots de passe ou instructions internes sensibles. Une éventuelle privatisation du dépôt doit être décidée avec un plan de déploiement compatible GitHub Pages.
