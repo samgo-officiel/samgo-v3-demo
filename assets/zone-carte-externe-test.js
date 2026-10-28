@@ -17,11 +17,11 @@
  function walkingRouteUrl(lat,lng){
   const pin=mapsUrl(lat,lng);
   if(!pin)return null;
-  const coords=new URL(pin).searchParams.get('query');
+  const coords=pin.slice(pin.indexOf('query=')+6);
   // Le point d'origine n'est pas transmis par SAMGO : Maps peut le choisir
   // via les permissions propres à son application, seulement après le clic.
   return 'https://www.google.com/maps/dir/?api=1&destination='+
-   encodeURIComponent(coords)+'&travelmode=walking';
+   coords+'&travelmode=walking';
  }
  function open(lat,lng){
   const url=mapsUrl(lat,lng);
