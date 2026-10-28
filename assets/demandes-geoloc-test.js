@@ -277,7 +277,7 @@ async function optIn(){
  btn.setAttribute('aria-pressed',String(state.notify));
  status('sgNotifyStatus',state.notify?'Alertes actives tant que SAMGO est ouvert et visible. Ce ne sont pas des notifications push quand le site est fermé.':'Alertes désactivées.');
 }
-function stop(){
+function stop({clearClient=false}={}){
  const stopButton=$('sgGeoStop');if(stopButton)stopButton.disabled=true;
  ++state.gpsGeneration;++state.fetchGeneration;
  state.fetchKey=null;state.gpsPending=false;state.lastUser=null;
@@ -285,15 +285,23 @@ function stop(){
  state.pos=null;state.rows=[];state.replies=[];state.notify=false;state.firstLoad=true;state.seen.clear();state.clientLoad++;
  window.sgProximityMap?.clear();
  const b=$('sgNotifyToggle');if(b){b.textContent='Activer les alertes pendant la visite';b.setAttribute('aria-pressed','false');}
- const clientAds=$('sgMyAdsList');if(clientAds)clientAds.replaceChildren();
- status('sgMyAdsStatus','Connectez-vous pour voir les annonces publiées.');
+ // Arrêter le GPS chauffeur ne doit pas effacer l'historique client.
+ // Seul un changement de compte / une déconnexion purge la vue privée.
+ if(clearClient){
+  const clientAds=$('sgMyAdsList');if(clientAds)clientAds.replaceChildren();
+  status('sgMyAdsStatus','Connectez-vous pour voir les annonces publiées.');
+ }
  const a=$('sgInAppAlert');if(a){a.hidden=true;a.textContent='';}
  const toast=$('sgRequestToast');if(toast)toast.hidden=true;
  status('sgGeoStatus','GPS non activé. Votre position chauffeur n’est pas enregistrée.');
  status('sgNotifyStatus','Alertes désactivées.');
  render();
 }
-function authChanged(){if(!approved()||(state.lastUser&&sessionUser?.id!==state.lastUser))stop();}
+function authChanged(){
+ if(!signedIn())stop({clearClient:true});
+ else if(state.lastUser&&sessionUser.id!==state.lastUser)stop({clearClient:true});
+ else if(!approved())stop();
+}
 function radiusChanged(){
  ++state.fetchGeneration;state.fetchKey=null;
  render();
