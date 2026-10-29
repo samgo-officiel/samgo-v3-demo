@@ -250,7 +250,7 @@ async function refreshClient(){
      addButton(card,'Terminer la simulation (test)',()=>finishRide(selected),'sg-demo-finish');
      addButton(card,'Annuler cette simulation (test)',()=>cancelRide(selected),'alt');
      if(window.sgStripeSandbox&&(!payment||payment.statut!=='paye_test'))
-      addButton(card,'💳 Tester le paiement Stripe SANDBOX',()=>window.sgStripeSandbox.checkout(selected.id),'alt');
+      addButton(card,'💳 Créer / afficher mon QR Stripe TEST',()=>window.sgStripeSandbox.checkout(selected.id),'alt');
     }else if(selected.statut==='termine_test'){
      const review=reviews.find(x=>x.choix_id===selected.id);
      if(review){
@@ -312,6 +312,14 @@ async function refreshDriver(){
    if(payment)addText(card,'p',payment.statut==='paye_test'?
     '✓ Paiement fictif Stripe confirmé — SANDBOX, aucun gain réel':
     'Stripe SANDBOX : '+(payment.statut==='checkout_ouvert'?'paiement en attente':payment.statut==='expire_test'?'session expirée':'paiement non abouti'));
+   // Le chauffeur peut afficher le QR TEST après création de la session par le client.
+   // Le lien est lu via RLS, uniquement pour les participants de cette simulation.
+   if(payment && payment.statut==='checkout_ouvert' && payment.checkout_url && window.sgStripeQrTest){
+    addButton(card,'📱 Montrer le QR TEST au client',()=>{
+     try{window.sgStripeQrTest.show(payment.checkout_url);}
+     catch(error){status('sgDriverSelectionsStatus','QR Stripe TEST indisponible : '+(error.message||'actualisez SAMGO.'));}
+    },'alt');
+   }
    addText(card,'p',step?stepName(step.etape):'En attente : chauffeur non parti (test).');
    if(selection.statut==='choisi_test'&&(!step||step.etape!=='trajet_test')){
     const label=!step?'Indiquer : en route (TEST)':step.etape==='en_route_test'?'Indiquer : arrivé (TEST)':'Indiquer : trajet commencé (TEST)';
