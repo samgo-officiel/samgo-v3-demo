@@ -117,14 +117,17 @@ async function checkout(choiceId){
  const userId=connected()?sessionUser.id:null,my=revision;
  const id=String(choiceId||'');
  if(!/^[a-f0-9-]{36}$/i.test(id)){message('sgStripeSandboxClientStatus','Réservation de test invalide.');return;}
- if(!window.confirm('Ouvrir Stripe en environnement TEST pour une course fictive ? Aucun vrai paiement et aucune vraie course.'))return;
+ if(!window.confirm('Créer un QR code Stripe en environnement TEST pour une course fictive ? Aucun paiement réel.'))return;
  message('sgStripeSandboxClientStatus','Vérification du chauffeur et préparation du paiement Stripe TEST…');
  try{
   const data=await call('checkout',{choix_id:id});
   if(my!==revision||!sameUser(userId))return;
   if(!data.sandbox||typeof data.url!=='string'||!data.url.startsWith('https://checkout.stripe.com/'))
    throw new Error('Lien de paiement Stripe de test non vérifié.');
-  if(!window.sgNativeOpenExternal?.(data.url))window.location.assign(data.url);
+  if(!window.sgStripeQrTest || typeof window.sgStripeQrTest.show!=='function')
+   throw new Error('QR code Stripe TEST non chargé. Actualisez la page.');
+  window.sgStripeQrTest.show(data.url);
+  message('sgStripeSandboxClientStatus','QR code Stripe TEST prêt. Scannez avec un deuxième téléphone ou ouvrez Stripe TEST sur cet appareil.');
  }catch(e){
   if(my===revision&&(userId===null||sameUser(userId)))
    message('sgStripeSandboxClientStatus','Paiement de test indisponible : '+(e.message||'réessayez.'));
@@ -148,6 +151,7 @@ function showReturnStatus(){
  }
 }
 function reset(){
+ if(window.sgStripeQrTest)window.sgStripeQrTest.close();
  // Sur déconnexion ou changement d'utilisateur : aucun statut de l'ancien
  // compte ni lien Stripe tardif ne doit s'afficher / ouvrir une page.
  revision++;checking=false;lastStatus=null;
