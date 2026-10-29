@@ -81,3 +81,16 @@ test('Le parcours SAMGO ouvre le QR local uniquement apres la verification serve
  assert.match(driverUI,/sgStripeQrTest\.show\(payment\.checkout_url\)/);
  assert.doesNotMatch(qrScript,/api\.qrserver|quickchart|chart\.googleapis|fetch\(/);
 });
+
+test('QR Stripe TEST rejette les chemins trompeurs malgré le bon domaine',()=>{
+ const {win,layer}=setup();
+ for(const invalid of [
+  'https://checkout.stripe.com/redirect/cs_test_abcd1234',
+  'https://checkout.stripe.com/c/pay/cs_test_abcd1234/extra',
+  'https://checkout.stripe.com/c/pay/cs_test_abcd1234.evil',
+  'https://checkout.stripe.com/pay/cs_live_abcd1234'
+ ]){
+  assert.throws(()=>win.sgStripeQrTest.show(invalid),/Stripe/);
+  assert.equal(layer.hidden,true);
+ }
+});

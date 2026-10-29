@@ -99,3 +99,40 @@ test('checkout Stripe TEST montre un QR sur le téléphone, sans ouvrir automati
  x.api.reset();
  assert.equal(x.qrClosed.length,1,'La déconnexion ferme le QR');
 });
+
+test('un double clic ne déclenche qu une demande Checkout TEST et une seule fenêtre QR',async()=>{
+ const x=boot();
+ const id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+ const first=x.api.checkout(id);
+ await x.waitFor('checkout');
+ await x.api.checkout(id);
+ assert.equal(x.requests.filter(r=>r.action==='checkout').length,1);
+ assert.match(x.get('sgStripeSandboxClientStatus').textContent,/déjà en préparation/);
+ x.reply('checkout',{sandbox:true,url:'https://checkout.stripe.com/c/pay/cs_test_12345'});
+ await first;
+ assert.equal(x.qrShown.length,1);
+ // Après réponse serveur, un nouvel essai explicite doit rester possible.
+ const again=x.api.checkout(id);
+ await x.waitFor('checkout');
+ assert.equal(x.requests.filter(r=>r.action==='checkout').length,1);
+ x.reply('checkout',{sandbox:true,url:'https://checkout.stripe.com/c/pay/cs_test_12345'});
+ await again;
+ assert.equal(x.qrShown.length,2);
+});
+test('une déconnexion réinitialise le verrou Checkout et ignore la réponse de l ancien compte',async()=>{
+ const x=boot();
+ const id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+ const first=x.api.checkout(id);
+ await x.waitFor('checkout');
+ x.user.id='driver-2';x.api.reset();
+ const second=x.api.checkout(id);
+ // L'obtention asynchrone du jeton doit finir avant de compter les requêtes.
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(x.requests.filter(r=>r.action==='checkout').length,2);
+ x.reply('checkout',{sandbox:true,url:'https://checkout.stripe.com/c/pay/cs_test_11111'});
+ await first;
+ assert.equal(x.qrShown.length,0);
+ x.reply('checkout',{sandbox:true,url:'https://checkout.stripe.com/c/pay/cs_test_22222'});
+ await second;
+ assert.deepEqual(x.qrShown,['https://checkout.stripe.com/c/pay/cs_test_22222']);
+});

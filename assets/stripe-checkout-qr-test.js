@@ -13,7 +13,7 @@
     let url;
     try{url=new URL(raw);}catch(_){throw new Error('Lien Stripe TEST invalide.');}
     if(url.protocol!=='https:'||url.hostname!=='checkout.stripe.com'||
-       url.username||url.password||!/\/cs_test_[A-Za-z0-9]+/.test(url.pathname)){
+       url.username||url.password||!/^\/(?:c\/)?pay\/cs_test_[A-Za-z0-9]+$/.test(url.pathname)){
       throw new Error('Le QR code accepte uniquement une session Stripe Checkout TEST.');
     }
     return url.href;

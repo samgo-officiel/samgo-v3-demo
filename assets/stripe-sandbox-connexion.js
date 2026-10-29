@@ -8,6 +8,8 @@
 const $=id=>document.getElementById(id);
 const ENDPOINT='https://tgwdycgwgfisuskxwkvk.supabase.co/functions/v1/samgo-stripe-sandbox';
 let lastStatus=null,checking=false,revision=0;
+// Un seul démarrage Checkout à la fois : bloque les doubles clics pendant l'appel réseau.
+let checkoutPending=null;
 function connected(){
  return typeof sessionUser!=='undefined'&&!!sessionUser&&typeof client!=='undefined'&&!!client
    &&client.auth&&typeof client.auth.getAccessToken==='function';
@@ -117,7 +119,13 @@ async function checkout(choiceId){
  const userId=connected()?sessionUser.id:null,my=revision;
  const id=String(choiceId||'');
  if(!/^[a-f0-9-]{36}$/i.test(id)){message('sgStripeSandboxClientStatus','Réservation de test invalide.');return;}
+ if(checkoutPending){
+  message('sgStripeSandboxClientStatus','Un QR Stripe TEST est déjà en préparation. Évitez les doubles clics.');
+  return;
+ }
  if(!window.confirm('Créer un QR code Stripe en environnement TEST pour une course fictive ? Aucun paiement réel.'))return;
+ const operation={uid:userId,choice:id};
+ checkoutPending=operation;
  message('sgStripeSandboxClientStatus','Vérification du chauffeur et préparation du paiement Stripe TEST…');
  try{
   const data=await call('checkout',{choix_id:id});
@@ -131,6 +139,8 @@ async function checkout(choiceId){
  }catch(e){
   if(my===revision&&(userId===null||sameUser(userId)))
    message('sgStripeSandboxClientStatus','Paiement de test indisponible : '+(e.message||'réessayez.'));
+ }finally{
+  if(checkoutPending===operation)checkoutPending=null;
  }
 }
 function showReturnStatus(){
@@ -154,7 +164,7 @@ function reset(){
  if(window.sgStripeQrTest)window.sgStripeQrTest.close();
  // Sur déconnexion ou changement d'utilisateur : aucun statut de l'ancien
  // compte ni lien Stripe tardif ne doit s'afficher / ouvrir une page.
- revision++;checking=false;lastStatus=null;
+ revision++;checking=false;lastStatus=null;checkoutPending=null;
  message('sgStripeConnectBadge','💳 STRIPE CONNECT — STATUT TEST À VÉRIFIER');
  shared('Connectez-vous pour consulter le statut Stripe TEST.');
  const btn=$('sgStripeSandboxDriverButton');
