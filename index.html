@@ -1233,7 +1233,7 @@ input,select,textarea{font-size:16px}
         try{
           const token=await accessToken();
           if(!token)throw new Error('Reconnectez-vous pour voir les paiements de test.');
-          const params=new URLSearchParams({select:'choix_id,client_id,chauffeur_id,montant_centimes,commission_centimes,statut,modifie_le',order:'modifie_le.desc',limit:'100'});
+          const params=new URLSearchParams({select:'choix_id,client_id,chauffeur_id,montant_centimes,commission_centimes,statut,checkout_url,modifie_le',order:'modifie_le.desc',limit:'100'});
           const data=await api('/rest/v1/samgo_stripe_paiements_test?'+params,'GET',undefined,token);
           return {data:Array.isArray(data)?data:[],error:null};
         }catch(error){return {data:[],error};}
