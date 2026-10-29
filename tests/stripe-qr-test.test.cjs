@@ -74,5 +74,10 @@ test('Le parcours SAMGO ouvre le QR local uniquement apres la verification serve
    html.indexOf('assets/stripe-checkout-qr-test.js'));
  assert.ok(html.indexOf('assets/stripe-checkout-qr-test.js')<
    html.indexOf('assets/stripe-sandbox-connexion.js'));
+ assert.match(html,/statut,checkout_url,modifie_le/);
+ const driverUI=fs.readFileSync(path.join(__dirname,'../assets/avis-chauffeurs-test.js'),'utf8');
+ assert.match(driverUI,/Montrer le QR TEST au client/);
+ assert.match(driverUI,/payment\.statut==='checkout_ouvert'/);
+ assert.match(driverUI,/sgStripeQrTest\.show\(payment\.checkout_url\)/);
  assert.doesNotMatch(qrScript,/api\.qrserver|quickchart|chart\.googleapis|fetch\(/);
 });
