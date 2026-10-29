@@ -126,6 +126,8 @@ test('une déconnexion réinitialise le verrou Checkout et ignore la réponse de
  await x.waitFor('checkout');
  x.user.id='driver-2';x.api.reset();
  const second=x.api.checkout(id);
+ // L'obtention asynchrone du jeton doit finir avant de compter les requêtes.
+ await new Promise(resolve=>setImmediate(resolve));
  assert.equal(x.requests.filter(r=>r.action==='checkout').length,2);
  x.reply('checkout',{sandbox:true,url:'https://checkout.stripe.com/c/pay/cs_test_11111'});
  await first;
