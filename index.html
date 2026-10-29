@@ -428,6 +428,17 @@ input,select,textarea{font-size:16px}
 #sgChatNewToast span{flex:1 1 150px}
 #sgChatNewToast button{min-height:40px;padding:9px 12px;font-weight:700}
 </style>
+<style id="sg-stripe-qr-style">
+.sg-stripe-qr-layer[hidden]{display:none!important}
+.sg-stripe-qr-layer{position:fixed;z-index:2000;inset:0;overflow-y:auto;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.9);padding:20px 12px;overscroll-behavior:contain}
+.sg-stripe-qr-card{width:100%;max-width:390px;max-height:calc(100dvh - 30px);overflow-y:auto;border-radius:18px;border:2px solid #d8b76b;background:#19232b;color:#fff;padding:18px;box-shadow:0 12px 48px #000a;text-align:center}
+.sg-stripe-qr-card h2{font-size:21px;margin:12px 0 10px;color:#ffe49d}
+.sg-stripe-qr-card p{font-size:13px;line-height:1.5}
+.sg-stripe-qr-note{color:#f3d2a2}
+.sg-stripe-qr-drawing{display:flex;justify-content:center;align-items:center;background:#fff;border-radius:12px;padding:8px;margin:13px auto;width:min(100%,300px);aspect-ratio:1}
+.sg-stripe-qr-drawing svg{display:block;width:100%;height:auto;max-height:300px}
+.sg-stripe-qr-card button{width:100%;display:block;margin-top:9px}
+</style>
 </head>
 <body class="sg-home-active">
 <div id="sgNetworkOffline" role="status" aria-live="polite" hidden></div>
@@ -502,7 +513,7 @@ input,select,textarea{font-size:16px}
   <section class="sg-stripe-preview" aria-label="Paiements Stripe uniquement en mode test">
    <span class="sg-stripe-label">💳 STRIPE SANDBOX · AUCUN ARGENT RÉEL</span>
    <h3>Essayer le paiement sur une course fictive</h3>
-   <p class="sg-stripe-help">La connexion bancaire ne se fait pas ici. Un bouton de paiement TEST apparaîtra sur une simulation lorsque vous aurez choisi un chauffeur. Les frais de paiement restent à la charge de la plateforme dans le flux Stripe envisagé.</p>
+   <p class="sg-stripe-help">La connexion bancaire ne se fait pas ici. Un bouton de paiement TEST apparaîtra lorsque vous aurez choisi un chauffeur. Il générera un QR code à scanner avec un deuxième téléphone, ou un lien pour payer en test sur cet appareil. Les frais de paiement restent à la charge de la plateforme dans le flux Stripe envisagé.</p>
    <button type="button" class="alt" onclick="window.sgStripeSandbox.refresh()">↻ Vérifier la connexion Stripe TEST</button>
    <p id="sgStripeSandboxClientStatus" class="sg-stripe-status" role="status" aria-live="polite">Connexion Stripe de test en cours de vérification…</p>
  </section>
@@ -1222,7 +1233,7 @@ input,select,textarea{font-size:16px}
         try{
           const token=await accessToken();
           if(!token)throw new Error('Reconnectez-vous pour voir les paiements de test.');
-          const params=new URLSearchParams({select:'choix_id,client_id,chauffeur_id,montant_centimes,commission_centimes,statut,modifie_le',order:'modifie_le.desc',limit:'100'});
+          const params=new URLSearchParams({select:'choix_id,client_id,chauffeur_id,montant_centimes,commission_centimes,statut,checkout_url,modifie_le',order:'modifie_le.desc',limit:'100'});
           const data=await api('/rest/v1/samgo_stripe_paiements_test?'+params,'GET',undefined,token);
           return {data:Array.isArray(data)?data:[],error:null};
         }catch(error){return {data:[],error};}
@@ -1724,7 +1735,9 @@ function sgGo(view){
 <script src="assets/avis-chauffeurs-test.js"></script>
 <script src="assets/actualisation-test.js?v=fid-2810"></script>
 <script src="assets/stripe-connect-demo.js"></script>
-<script src="assets/stripe-sandbox-connexion.js?v=20261028-safe-accounts"></script>
+<script src="assets/vendor/qrcode-generator.js?v=20261029"></script>
+<script src="assets/stripe-checkout-qr-test.js?v=20261029"></script>
+<script src="assets/stripe-sandbox-connexion.js?v=20261029-qr-test"></script>
 <script src="assets/messagerie-test.js?v=20261028-chat-v3"></script>
 <script src="assets/messages-rapides-test.js?v=20261028-a"></script>
 <script src="assets/diagnostic-appareil-test.js?v=20261028-native-ver"></script>

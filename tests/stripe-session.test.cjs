@@ -6,7 +6,7 @@ const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'..','assets','stripe-sandbox-connexion.js'),'utf8');
 function boot(native=false){
- const elements=new Map(),opened=[],sent=[],external=[];
+ const elements=new Map(),opened=[],sent=[],external=[],qrShown=[],qrClosed=[];
  const get=id=>{
   if(!elements.has(id))elements.set(id,{textContent:'',disabled:false,hidden:true});
   return elements.get(id);
@@ -25,6 +25,7 @@ function boot(native=false){
  const window={
   location:{search:'',assign:url=>opened.push(url)},
   confirm(){return true;},
+  sgStripeQrTest:{show(url){qrShown.push(url);},close(){qrClosed.push(true);}},
   ...(native?{sgNativeOpenExternal:url=>{external.push(url);return true;}}:{})
  };
  const document={getElementById:get,readyState:'loading',addEventListener(){}};
@@ -37,7 +38,7 @@ function boot(native=false){
    ok:true,json:async()=>value
   });
  };
- return {api:window.sgStripeSandbox,user,opened,external,get,reply,requests,waitFor,sent};
+ return {api:window.sgStripeSandbox,user,opened,external,qrShown,qrClosed,get,reply,requests,waitFor,sent};
 }
 test('onboarding Stripe de TEST tardif ignoré après changement de compte',async()=>{
  const x=boot();
@@ -86,12 +87,15 @@ test('Stripe TEST sur Android natif utilise navigateur externe sans quitter SAMG
  assert.deepEqual(x.external,['https://connect.stripe.com/test']);
  assert.deepEqual(x.opened,[]);
 });
-test('checkout Stripe TEST natif reste dans navigateur externe',async()=>{
+test('checkout Stripe TEST montre un QR sur le téléphone, sans ouvrir automatiquement le navigateur',async()=>{
  const x=boot(true);
  const pending=x.api.checkout('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
  await x.waitFor('checkout');
- x.reply('checkout',{sandbox:true,url:'https://checkout.stripe.com/test'});
+ x.reply('checkout',{sandbox:true,url:'https://checkout.stripe.com/c/pay/cs_test_12345'});
  await pending;
- assert.deepEqual(x.external,['https://checkout.stripe.com/test']);
+ assert.deepEqual(x.qrShown,['https://checkout.stripe.com/c/pay/cs_test_12345']);
+ assert.deepEqual(x.external,[],'Le navigateur externe ne s ouvre que sur clic du client dans le QR');
  assert.deepEqual(x.opened,[]);
+ x.api.reset();
+ assert.equal(x.qrClosed.length,1,'La déconnexion ferme le QR');
 });
