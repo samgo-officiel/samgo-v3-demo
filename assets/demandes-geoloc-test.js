@@ -105,8 +105,10 @@ function render(){
  }).map(r=>({...r,approach:nearKm(state.pos.lat,state.pos.lng,Number(r.latitude_approx),Number(r.longitude_approx))}));
  const query=$('sgDemandTextFilter')?.value||'';
  const sorted=sortRequests(filterRequests(filtered,query),$('sgDemandSort')?.value||'proximite');
+ const ownAds=state.rows.filter(r=>r.client_id===sessionUser.id).length;
  status('sgNearbyStatus',sorted.length+' demande'+(sorted.length===1?'':'s')+' de test affichée'+(sorted.length===1?'':'s')+
-  ' parmi '+filtered.length+' dans un rayon de '+radius+' km. Distance approximative.'+(query.trim()?' Filtre texte actif.':''));
+  ' parmi '+filtered.length+' dans un rayon de '+radius+' km. Distance approximative.'+(query.trim()?' Filtre texte actif.':'')+
+  (ownAds?' Vos '+ownAds+' propre(s) annonce(s) ne sont pas proposées à votre compte chauffeur : utilisez un autre compte client pour tester.':''));
  window.sgProximityMap?.render({center:state.pos,requests:sorted,radius});
  for(const req of sorted){
   const card=document.createElement('article');card.className='sg-nearby-card';
@@ -330,10 +332,11 @@ async function refreshClient(){
   const ownAds=Array.isArray(ads.data)?ads.data:[];
   const allAnswers=Array.isArray(answers.data)?answers.data:[];
   const selected=Array.isArray(choices.data)?choices.data:[];
+  const snapshot={uid:currentId,ads:ownAds,replies:allAnswers,choices:selected};
   if(!ownAds.length){
    list.replaceChildren();
    status('sgMyAdsStatus','Aucune annonce de test publiée depuis ce compte. Pour publier, utilisez Réserver.');
-   return;
+   return snapshot;
   }
   // Conserver les anciennes cartes tant que l'actualisation n'est pas
   // terminée ; ne vider que lorsque la nouvelle lecture a réellement réussi.
@@ -360,6 +363,7 @@ async function refreshClient(){
    }
    list.append(box);
   }
+  return snapshot;
  }catch(e){
   if(sequence===state.clientLoad&&signedIn()&&sessionUser.id===currentId)
    status('sgMyAdsStatus','Impossible de consulter vos annonces : '+(e.message||'Réessayez.'));
