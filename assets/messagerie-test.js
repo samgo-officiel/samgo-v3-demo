@@ -7,8 +7,8 @@
   client:{selector:'sgChatClientChoices',messages:'sgChatClientMessages',input:'sgChatClientInput',send:'sgChatClientSend',status:'sgChatClientStatus'},
   driver:{selector:'sgChatDriverChoices',messages:'sgChatDriverMessages',input:'sgChatDriverInput',send:'sgChatDriverSend',status:'sgChatDriverStatus'}
  };
- const state={client:{current:null,choices:[],seq:0,sending:false,sendKey:null,lastIncoming:new Map(),drafts:new Map()},
- driver:{current:null,choices:[],seq:0,sending:false,sendKey:null,lastIncoming:new Map(),drafts:new Map()},user:null};
+ const state={client:{current:null,choices:[],seq:0,messageSeq:0,loadPending:null,sending:false,sendKey:null,lastIncoming:new Map(),drafts:new Map()},
+ driver:{current:null,choices:[],seq:0,messageSeq:0,loadPending:null,sending:false,sendKey:null,lastIncoming:new Map(),drafts:new Map()},user:null};
  function signed(){return typeof sessionUser!=='undefined'&&!!sessionUser&&typeof client!=='undefined'&&!!client?.testMessages&&!!client?.testChoices;}
  function say(role,text){const el=$(view[role].status);if(el)el.textContent=text;}
  function note(role,text){
@@ -61,6 +61,7 @@
     if(st.current!==row.id){
      captureDraft(role);
      st.current=row.id;
+     ++st.messageSeq; // l'ancienne conversation ne doit pas remplacer la nouvelle
      restoreDraft(role);
     }
     updateButtons(role);return loadMessages(role,{jumpToEnd:true});
@@ -87,6 +88,7 @@
    state.user=uid;
    for(const side of ['client','driver']){
     state[side].current=null;state[side].choices=[];state[side].seq++;
+    state[side].messageSeq++;state[side].loadPending=null;
     state[side].sending=false;state[side].sendKey=null;state[side].lastIncoming.clear();
     state[side].drafts.clear();
     const input=$(view[side].input);if(input)input.value='';
@@ -106,6 +108,7 @@
    let selectedChanged=false;
    if(!rows.some(c=>c.id===st.current)){
     st.current=rows.length?rows[0].id:null;
+    ++st.messageSeq;
     restoreDraft(role);
     selectedChanged=true;
    }
@@ -123,12 +126,19 @@
  async function loadMessages(role,{jumpToEnd=false}={}){
   const st=state[role],choice=st.current,cfg=view[role];
   if(!choice){note(role,'Choisissez une simulation de test.');return;}
-  const currentUser=state.user,seq=++st.seq;
+  // Un rafraîchissement automatique toutes les 15 s ne doit jamais
+  // invalider une lecture lente de la même conversation (4G instable).
+  if(st.loadPending?.choice===choice){
+   st.loadPending.jumpToEnd=st.loadPending.jumpToEnd||jumpToEnd;
+   return;
+  }
+  const currentUser=state.user,seq=++st.messageSeq;
+  const request={choice,jumpToEnd};st.loadPending=request;
   say(role,'Chargement des messages fictifs…');
   try{
    const result=await client.testMessages.list(choice);
    if(result.error)throw result.error;
-   if(st.current!==choice||seq!==st.seq||state.user!==currentUser||!signed()||sessionUser.id!==currentUser)return;
+   if(st.current!==choice||seq!==st.messageSeq||state.user!==currentUser||!signed()||sessionUser.id!==currentUser)return;
    const box=$(cfg.messages);if(!box)return;
    const nearBottom=Number.isFinite(box.scrollHeight)&&Number.isFinite(box.scrollTop)&&
     Number.isFinite(box.clientHeight)&&
@@ -156,14 +166,15 @@
    st.lastIncoming.set(choice,newest);
    // Nouvel écran : afficher le dernier message. Pendant la lecture d'anciens
    // échanges, ne pas déplacer l'écran à chaque actualisation automatique.
-   if((jumpToEnd||nearBottom)&&Number.isFinite(box.scrollHeight))
+   if((request.jumpToEnd||nearBottom)&&Number.isFinite(box.scrollHeight))
     box.scrollTop=box.scrollHeight;
    if(hasBaseline&&newest&&newest!==prior){
     say(role,'🔔 Nouveau message de TEST reçu. '+rows.length+' message(s) affiché(s).');
     if(document.visibilityState!=='hidden')showNotice(role);
    }else say(role,rows.length+' message(s) de TEST. Actualisation quand SAMGO est ouvert.');
-  }catch(e){if(st.current===choice&&seq===st.seq&&state.user===currentUser&&signed()&&sessionUser.id===currentUser)
+  }catch(e){if(st.current===choice&&seq===st.messageSeq&&state.user===currentUser&&signed()&&sessionUser.id===currentUser)
     say(role,'Impossible de lire cette conversation : '+(e.message||'Réessayez.'));}
+  finally{if(st.loadPending===request)st.loadPending=null;}
  }
  async function send(role){
   if(!signed()||!view[role])return;
@@ -191,6 +202,9 @@
     input.value='';
     st.drafts.delete(choiceId);
    }
+   // Forcer une lecture fraîche après l'envoi, même si un sondage
+   // plus ancien est encore en attente de réponse.
+   st.loadPending=null;
    await loadMessages(role,{jumpToEnd:true});
   }catch(e){
    if(stillCurrent())say(role,'Envoi refusé : '+(e.message||'Réessayez.'));
@@ -202,7 +216,7 @@
   dismissNotice();
   state.user=null;
   for(const role of ['client','driver']){
-   const st=state[role];st.current=null;st.choices=[];st.seq++;st.sending=false;st.sendKey=null;st.lastIncoming.clear();st.drafts.clear();
+   const st=state[role];st.current=null;st.choices=[];st.seq++;st.messageSeq++;st.loadPending=null;st.sending=false;st.sendKey=null;st.lastIncoming.clear();st.drafts.clear();
    const input=$(view[role].input);if(input)input.value='';
    updateButtons(role);note(role,'Connectez-vous pour consulter vos messages fictifs.');say(role,'Messagerie de TEST.');
   }
