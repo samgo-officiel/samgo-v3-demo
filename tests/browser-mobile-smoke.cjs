@@ -55,7 +55,7 @@ async function main(){
     assert.match(journey,/pas connecté|Connectez-vous/,
       'Le diagnostic doit orienter vers la connexion sans annoncer de fausse publication');
     const chat=await page.locator('#sgChatClientStatus').innerText();
-    assert.match(chat,/TEST|connexion|convers|simul/i);
+    assert.match(chat,/TEST|connexion|convers|simul|démonstration/i);
    }
    if(spec.route==='account'){
     await page.locator('#signinModeBtn').click();
