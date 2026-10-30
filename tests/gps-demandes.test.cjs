@@ -221,7 +221,7 @@ test('GPS client trop imprécis : publication réellement bloquée avant appel s
  const x=boot({demoRequest:{from:'Centre-ville fictif',to:'Quartier fictif',km:5}});
  x.get('sgPublishConsent').checked=true;
  const pending=x.geo.publish();
- await Promise.resolve(); // attendre la vérification anti-doublon avant la demande GPS
+ await new Promise(resolve=>setImmediate(resolve)); // attendre la verification asynchrone avant GPS
  assert.equal(x.prompts.length,1,'permission GPS demandée seulement après clic volontaire');
  x.giveGPS(8000);
  await pending;
@@ -273,7 +273,7 @@ test('aucune annonce n est publiée quand SAMGO passe en arrière-plan',async()=
  const x=boot({demoRequest:{from:'Quartier fictif',to:'Centre fictif',km:10}});
  x.get('sgPublishConsent').checked=true;
  const pending=x.geo.publish();
- await Promise.resolve(); // attendre la vérification anti-doublon avant la demande GPS
+ await new Promise(resolve=>setImmediate(resolve)); // attendre la verification asynchrone avant GPS
  x.setVisibility('hidden');
  x.giveGPS();
  await pending;
