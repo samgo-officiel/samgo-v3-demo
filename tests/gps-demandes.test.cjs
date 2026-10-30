@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'..','assets','demandes-geoloc-test.js'),'utf8');
-function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=null,nativePosition=undefined}={}){
+function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=null,nativePosition=undefined,existingAds=[],existingAdsError=null}={}){
  const nodes=new Map(),prompts=[];
  class Element {
   constructor(id){this.id=id;this.textContent='';this.value=id==='sgRadius'?'30':'';this.checked=false;this.disabled=true;
@@ -24,7 +24,8 @@ function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=n
  const client={
   testRequests:{list:async (position,radius)=>{calls++;return fetchRequests?
     fetchRequests(position,radius):{data:[],error:null};},
-   create:async()=>{publishCalls++;return {error:null};}},
+   mine:async()=>existingAdsError?{error:existingAdsError}:{data:existingAds,error:null},
+   create:async()=>{publishCalls++;return {error:null};}}
   testReplies:{list:async()=>({data:[],error:null}),create:(adId,uid)=>createReply?createReply(adId,uid):Promise.resolve({error:null})}
  };
  const window={isSecureContext:true,
@@ -220,6 +221,7 @@ test('GPS client trop imprécis : publication réellement bloquée avant appel s
  const x=boot({demoRequest:{from:'Centre-ville fictif',to:'Quartier fictif',km:5}});
  x.get('sgPublishConsent').checked=true;
  const pending=x.geo.publish();
+ await Promise.resolve(); // attendre la vérification anti-doublon avant la demande GPS
  assert.equal(x.prompts.length,1,'permission GPS demandée seulement après clic volontaire');
  x.giveGPS(8000);
  await pending;
@@ -271,6 +273,7 @@ test('aucune annonce n est publiée quand SAMGO passe en arrière-plan',async()=
  const x=boot({demoRequest:{from:'Quartier fictif',to:'Centre fictif',km:10}});
  x.get('sgPublishConsent').checked=true;
  const pending=x.geo.publish();
+ await Promise.resolve(); // attendre la vérification anti-doublon avant la demande GPS
  x.setVisibility('hidden');
  x.giveGPS();
  await pending;
@@ -317,4 +320,31 @@ test('filtre texte sur annonces déjà chargées sans nouvelle requête réseau'
  assert.equal(x.get('sgNearbyList').children.length,1);
  assert.match(x.get('sgNearbyStatus').textContent,/Filtre texte actif/);
  assert.equal(x.calls(),calls,'aucun nouvel appel réseau');
+});
+
+test('ne pas republier une annonce déjà active ni redemander le GPS',async()=>{
+ const x=boot({demoRequest:{from:'Centre fictif',to:'Gare fictive',km:5},
+  existingAds:[{statut:'test_en_attente',expire_le:new Date(Date.now()+3600000).toISOString()}]});
+ x.get('sgPublishConsent').checked=true;
+ await x.geo.publish();
+ assert.equal(x.prompts.length,0);
+ assert.equal(x.published(),0);
+ assert.match(x.get('sgPublishStatus').textContent,/déjà une annonce TEST active/);
+ assert.equal(x.get('sgPublishBtn').disabled,false);
+});
+test('annonce expirée : la publication reste possible',async()=>{
+ const x=boot({demoRequest:{from:'Centre fictif',to:'Gare fictive',km:5},
+  nativePosition:{coords:{latitude:44.8,longitude:-0.5,accuracy:50},timestamp:Date.now()},
+  existingAds:[{statut:'test_en_attente',expire_le:new Date(Date.now()-1000).toISOString()}]});
+ x.get('sgPublishConsent').checked=true;
+ await x.geo.publish();
+ assert.equal(x.published(),1);
+});
+test('erreur serveur pendant anti-doublon bloque toute publication sans GPS',async()=>{
+ const x=boot({demoRequest:{from:'Centre fictif',to:'Gare fictive',km:5},existingAdsError:Error('réseau')});
+ x.get('sgPublishConsent').checked=true;
+ await x.geo.publish();
+ assert.equal(x.prompts.length,0);
+ assert.equal(x.published(),0);
+ assert.match(x.get('sgPublishStatus').textContent,/Aucune nouvelle publication effectuée/);
 });
