@@ -71,7 +71,7 @@
       status('sgResetRequestInfo',"Si cette adresse possède un compte SAMGO, un e-mail de réinitialisation a été demandé. Vérifiez aussi les spams.");
     }catch(error){
       status('sgResetRequestInfo',error.message==='rate-limit'?
-        'Trop de demandes. Réessayez plus tard.':
+        'Limite d’e-mails SAMGO atteinte. Aucun nouveau lien n’a été envoyé pour cette tentative. Réessayez plus tard.':
         'Impossible de demander le lien pour le moment. Vérifiez la connexion Internet.');
     }finally{submit.disabled=false;}
   }
