@@ -23,3 +23,10 @@ test('le client ne fixe pas le montant et SAMGO ne prend aucune commission',()=>
  assert.match(src,/commission_centimes:0/);
  assert.match(src,/transfer_data\]\[destination/);
 });
+
+test('un chauffeur suspendu ou refusé ne peut plus recevoir de Checkout TEST',()=>{
+ assert.match(src,/async function requireApprovedChosenDriver\(driverId:string\)/);
+ assert.match(src,/adminGet\("candidatures_chauffeur",\{/);
+ assert.match(src,/rows\[0\]\?\.statut!=="approuve"/);
+ assert.match(src,/await requireApprovedChosenDriver\(choice\.chauffeur_id\)/);
+});
