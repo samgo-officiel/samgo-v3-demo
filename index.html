@@ -885,14 +885,23 @@ input,select,textarea{font-size:16px}
       const headers = { apikey: publishableKey, ...extraHeaders };
       if (token) headers.Authorization = 'Bearer ' + token;
       if (body !== undefined) headers['Content-Type'] = 'application/json';
-      let response;
+      let response,raw;
       try {
+        // Évite qu'une requête en attente bloque la connexion, le chat ou
+        // le rafraîchissement des annonces sur un réseau mobile instable.
+        // Aucun minuteur de fond : signal natif quand le navigateur le prend en charge.
+        const timeoutSignal=typeof AbortSignal!=='undefined'&&typeof AbortSignal.timeout==='function'
+          ? AbortSignal.timeout(20000):undefined;
         response = await fetch(base + path, {
           method, headers, body: body === undefined ? undefined : JSON.stringify(body),
-          cache: 'no-store'
+          cache: 'no-store',signal:timeoutSignal
         });
-      } catch (_) { throw new Error('Impossible de joindre Supabase. Vérifie la connexion Internet et réessaie.'); }
-      const raw = await response.text();
+        raw = await response.text();
+      } catch (error) {
+        if(error?.name==='TimeoutError'||error?.name==='AbortError')
+          throw new Error('Connexion trop lente : délai de 20 secondes dépassé. Réessayez en vérifiant votre réseau.');
+        throw new Error('Impossible de joindre Supabase. Vérifie la connexion Internet et réessaie.');
+      }
       let payload = null;
       try { payload = raw ? JSON.parse(raw) : null; } catch (_) { payload = raw; }
       if (!response.ok) {
