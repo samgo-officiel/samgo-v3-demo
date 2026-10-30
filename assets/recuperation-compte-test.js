@@ -158,6 +158,12 @@
       try{history.replaceState(history.state,'',location.pathname+location.search);}catch(_){}
     }
     render();
+    // Un retour depuis Gmail atterrit sur l'accueil : afficher directement le formulaire de récupération.
+    if(isPending()){
+      if(typeof sgGo==='function')sgGo('account');
+      const passwordField=$('sgResetNew');
+      if(passwordField)passwordField.focus();
+    }
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});
   else mount();
