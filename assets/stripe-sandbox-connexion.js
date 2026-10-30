@@ -24,16 +24,25 @@ async function call(action,extra={}){
  if(!connected())throw new Error('Connectez-vous à SAMGO avant de continuer.');
  const token=await client.auth.getAccessToken();
  if(!token)throw new Error('Votre session a expiré. Reconnectez-vous.');
- let response;
+ let response,body;
  try{
+  const timeoutSignal=typeof AbortSignal!=='undefined'&&typeof AbortSignal.timeout==='function'
+   ?AbortSignal.timeout(20000):undefined;
   response=await fetch(ENDPOINT,{
    method:'POST',
    headers:{'Content-Type':'application/json','apikey':PUBLISHABLE_KEY,'Authorization':'Bearer '+token},
    body:JSON.stringify({action,...extra}),
-   cache:'no-store'
+   cache:'no-store',signal:timeoutSignal
   });
- }catch(_){throw new Error('Impossible de joindre le serveur de test. Vérifiez Internet.');}
- const body=await response.json().catch(()=>({}));
+  body=await response.json().catch(error=>{
+   if(error?.name==='AbortError'||error?.name==='TimeoutError')throw error;
+   return {};
+  });
+ }catch(error){
+  if(error?.name==='AbortError'||error?.name==='TimeoutError')
+   throw new Error('Stripe TEST ne répond pas après 20 secondes. Vérifiez votre connexion, puis réessayez : le serveur réutilise une session de paiement TEST déjà créée.');
+  throw new Error('Impossible de joindre le serveur de test. Vérifiez Internet.');
+ }
  if(!response.ok)throw new Error(body.error||'Le serveur Stripe de test est indisponible.');
  return body;
 }
