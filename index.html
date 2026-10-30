@@ -489,6 +489,13 @@ input,select,textarea{font-size:16px}
  <span class="sg-demo-eyebrow">ESPACE CLIENT · DÉMONSTRATION</span>
  <h2>Mes courses</h2>
  <p class="subtle">Les simulations locales restent sur cet appareil. Seules les annonces de test que vous publiez volontairement sont enregistrées sur le serveur et visibles par les chauffeurs approuvés en test.</p>
+ <section id="sgJourneyV2" class="sg-reply-client-box" aria-label="Diagnostic du parcours SAMGO TEST">
+  <h3>🧭 Mon parcours SAMGO — TEST V2.0</h3>
+  <p class="sg-demo-small">Une simulation locale n'est pas une annonce publiée. Vérifiez ici votre progression sans GPS, sans paiement et sans nouvelle inscription.</p>
+  <button type="button" id="sgJourneyCheck" class="alt" onclick="window.sgJourneyV2.check()">↻ Vérifier mon parcours TEST</button>
+  <p id="sgJourneyStatus" role="status" aria-live="polite">Appuyez sur « Vérifier mon parcours TEST » pour savoir quelle étape effectuer.</p>
+  <p class="sg-demo-small">Pour échanger des messages, un autre compte chauffeur approuvé doit répondre, puis le client doit le sélectionner. Vous ne pouvez pas être à la fois le client et le chauffeur de la même annonce.</p>
+ </section>
  <div id="demoTripsEmpty" class="sg-demo-placeholder">
   <strong>Aucune simulation en cours</strong><p>Allez sur Réserver pour essayer un trajet fictif.</p>
   <button type="button" onclick="sgGo('book')">Essayer la réservation</button>
@@ -1733,6 +1740,7 @@ function sgGo(view){
 <script src="assets/demandes-geoloc-test.js?v=20261028-driver-prefs"></script>
 <script src="assets/preferences-chauffeur-test.js?v=20261028-a"></script>
 <script src="assets/avis-chauffeurs-test.js"></script>
+<script src="assets/parcours-v2-test.js?v=20261030-v2"></script>
 <script src="assets/actualisation-test.js?v=fid-2810"></script>
 <script src="assets/stripe-connect-demo.js"></script>
 <script src="assets/vendor/qrcode-generator.js?v=20261029"></script>
