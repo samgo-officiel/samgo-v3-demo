@@ -1423,7 +1423,7 @@ async function handleAuth(e){e.preventDefault();if(!client)return setStatus('aut
  if(authMode==='signup'){
    result=await client.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin+window.location.pathname}});
    if(result.error)throw result.error;
-   setStatus('authStatus',result.data.session?'Compte de test créé et connecté.':'Inscription demandée. Vérifie ta boîte e-mail et clique sur le lien de confirmation. Ensuite, reviens te connecter.','success');
+   setStatus('authStatus',result.data.session?'Compte de test créé et connecté.':'Demande traitée. Si tu viens de créer un compte, vérifie ta boîte e-mail pour le confirmer. Si tu es déjà inscrit, appuie sur « Déjà inscrit » : aucune nouvelle confirmation n’est nécessaire. La réception dépend du service d’envoi d’e-mails.','success');
  }else{
    result=await client.auth.signInWithPassword({email,password});
    if(result.error)throw result.error;
