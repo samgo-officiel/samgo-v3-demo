@@ -7,6 +7,7 @@ const root=path.join(__dirname,'..');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const modules={
  sgDemand:'assets/demandes-geoloc-test.js',
+ sgJourneyV2:'assets/parcours-v2-test.js',
  sgReviews:'assets/avis-chauffeurs-test.js',
  sgChatTest:'assets/messagerie-test.js',
  sgStripeDemo:'assets/stripe-connect-demo.js',
