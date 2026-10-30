@@ -88,3 +88,20 @@ test('en cas de panne réseau, garder les anciennes annonces affichées',async()
  assert.equal(x.get('sgReviewClientList').children.length,1);
  assert.match(x.get('sgReviewClientStatus').textContent,/Chargement impossible/);
 });
+
+test('les lectures client déjà chargées sont réutilisées même si une nouvelle lecture échouerait',async()=>{
+ const x=boot();
+ x.failReads();
+ const snapshot={
+  uid:'client-A',
+  ads:[{id:'ad-1',client_id:'client-A',depart_test:'Lieu fictif A',
+   destination_test:'Lieu fictif B',
+   expire_le:new Date(Date.now()+3600000).toISOString(),statut:'test_en_attente'}],
+  replies:[{id:'reply-1',annonce_id:'ad-1',chauffeur_id:'driver-B'}],
+  choices:[]
+ };
+ await x.api.refreshClient(snapshot);
+ assert.equal(x.get('sgReviewClientList').children.length,1);
+ assert.match(x.get('sgReviewClientStatus').textContent,/annonce\(s\) consultée/);
+ assert.ok(x.selectButton(),'la réponse chauffeur doit rester sélectionnable');
+});
