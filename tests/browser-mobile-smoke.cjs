@@ -23,7 +23,8 @@ async function main(){
    {path:'',route:'home',image:'accueil-mobile.png'},
    {path:'?app=book',route:'book',image:'reservation-test-mobile.png'},
    {path:'?app=driver',route:'driver',image:'chauffeur-test-mobile.png'},
-   {path:'?app=trips',route:'trips',image:'courses-test-mobile.png'}
+   {path:'?app=trips',route:'trips',image:'courses-test-mobile.png'},
+   {path:'?app=account',route:'account',image:'compte-test-mobile.png'}
   ];
   for(const spec of cases){
    const page=await context.newPage();
@@ -47,6 +48,22 @@ async function main(){
     'Débordement horizontal sur '+spec.route+': '+result.width+' pour '+result.viewport+' px');
    // Aucun raccourci d'application ne doit solliciter le GPS spontanément.
    assert.doesNotMatch(result.gpsStatus,/GPS actif|précision annoncée/i);
+   // Vérifier les nouveaux parcours V2 sans connexion ni autorisation GPS.
+   if(spec.route==='trips'){
+    await page.locator('#sgJourneyCheck').click();
+    const journey=await page.locator('#sgJourneyStatus').innerText();
+    assert.match(journey,/pas connecté|Connectez-vous/,
+      'Le diagnostic doit orienter vers la connexion sans annoncer de fausse publication');
+    const chat=await page.locator('#sgChatClientStatus').innerText();
+    assert.match(chat,/TEST|connexion|convers|simul/i);
+   }
+   if(spec.route==='account'){
+    await page.locator('#signinModeBtn').click();
+    assert.match(await page.locator('#accountTitle').innerText(),/Connexion SAMGO/i);
+    assert.match(await page.locator('#authEmailHelp').innerText(),/même compte SAMGO/i);
+    await page.locator('#signupModeBtn').click();
+    assert.match(await page.locator('#accountTitle').innerText(),/Créer mon compte SAMGO/i);
+   }
    await page.screenshot({path:path.join(out,spec.image),fullPage:false});
    console.log('SAMGO mobile OK : '+spec.route+' ['+result.viewport+' px]');
    await page.close();
