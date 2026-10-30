@@ -136,3 +136,46 @@ test('une déconnexion réinitialise le verrou Checkout et ignore la réponse de
  await second;
  assert.deepEqual(x.qrShown,['https://checkout.stripe.com/c/pay/cs_test_22222']);
 });
+
+test('Stripe TEST coupe un appel trop lent et libère la relance du checkout',async()=>{
+ const dom=new Map(),get=id=>{
+  if(!dom.has(id))dom.set(id,{textContent:'',disabled:false,hidden:true});
+  return dom.get(id);
+ };
+ let calls=0,delay;
+ const fetch=async(_url,options)=>{
+  calls++;assert.equal(options.signal?.enabled,true);
+  const error=Error('network timeout');error.name='TimeoutError';throw error;
+ };
+ const window={location:{search:''},confirm:()=>true,sgStripeQrTest:{show(){},close(){}}};
+ const document={getElementById:get,readyState:'loading',addEventListener(){}};
+ const user={id:'client'};
+ const client={auth:{async getAccessToken(){return 'test_token';}}};
+ const AbortSignal={timeout(ms){delay=ms;return {enabled:true};}};
+ vm.runInNewContext(source,{window,document,sessionUser:user,client,driverSimAllowed:false,
+  PUBLISHABLE_KEY:'sb_publishable_test',fetch,URLSearchParams,AbortSignal});
+ const id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+ await window.sgStripeSandbox.checkout(id);
+ assert.equal(calls,1);
+ assert.equal(delay,20000);
+ assert.match(get('sgStripeSandboxClientStatus').textContent,/ne répond pas après 20 secondes/);
+ await window.sgStripeSandbox.checkout(id);
+ assert.equal(calls,2,'l’utilisateur peut relancer explicitement le même Checkout sandbox');
+});
+test('un timeout pendant la lecture de la réponse Stripe est affiché',async()=>{
+ const dom=new Map(),get=id=>{
+  if(!dom.has(id))dom.set(id,{textContent:'',disabled:false});
+  return dom.get(id);
+ };
+ const fetch=async()=>({ok:true,json:async()=>{
+  const error=Error('aborted');error.name='AbortError';throw error;
+ }});
+ const window={location:{search:''},confirm:()=>true,sgStripeQrTest:{show(){},close(){}}};
+ const document={getElementById:get,readyState:'loading',addEventListener(){}};
+ const client={auth:{async getAccessToken(){return 'token';}}};
+ vm.runInNewContext(source,{window,document,sessionUser:{id:'client'},client,
+  driverSimAllowed:false,PUBLISHABLE_KEY:'sb_publishable_test',
+  fetch,URLSearchParams,AbortSignal:{timeout(){return {};}}});
+ await window.sgStripeSandbox.checkout('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+ assert.match(get('sgStripeSandboxClientStatus').textContent,/20 secondes/);
+});
