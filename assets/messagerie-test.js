@@ -227,7 +227,7 @@
   const role=classes?.contains('sg-route-trips')?'client':
    classes?.contains('sg-route-driver')?'driver':null;
   if(!role||!state[role].current||state[role].sending)return;
-  loadMessages(role);
+  return loadMessages(role);
  },15000);
  window.sgChatTest={refresh,send,stop,openNotice,dismissNotice};
 })();
