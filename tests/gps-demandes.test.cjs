@@ -25,7 +25,7 @@ function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=n
   testRequests:{list:async (position,radius)=>{calls++;return fetchRequests?
     fetchRequests(position,radius):{data:[],error:null};},
    mine:async()=>existingAdsError?{error:existingAdsError}:{data:existingAds,error:null},
-   create:async()=>{publishCalls++;return {error:null};}}
+   create:async()=>{publishCalls++;return {error:null};}},
   testReplies:{list:async()=>({data:[],error:null}),create:(adId,uid)=>createReply?createReply(adId,uid):Promise.resolve({error:null})}
  };
  const window={isSecureContext:true,
