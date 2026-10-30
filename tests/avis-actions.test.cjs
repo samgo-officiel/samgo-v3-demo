@@ -22,7 +22,7 @@ function boot(){
  };
  const doc={getElementById:get,createElement:tag=>new Node(tag)};
  const user={id:'client-A'};
- let requests=0,resolver=null,failReads=false;
+ let requests=0,resolver=null,failReads=false,chatLoads=0;
  const ad={id:'ad-1',client_id:'client-A',depart_test:'Ville fictive',
   destination_test:'Maison fictive',expire_le:new Date(Date.now()+3600000).toISOString(),
   statut:'test_en_attente'};
@@ -41,7 +41,9 @@ function boot(){
   testTracking:{list:async()=>({data:[],error:null})},
   testPayments:{list:async()=>({data:[],error:null})}
  };
- const win={confirm:()=>true};
+ const win={confirm:()=>true,sgChatTest:{refresh:async role=>{
+  assert.equal(role,'client');chatLoads++;
+ }}};
  vm.runInNewContext(source,{window:win,document:doc,client:data,sessionUser:user,
   driverSimAllowed:false,Date,Intl,Map,Set,Number,Math,Promise},
   {filename:'SAMGO-reviews'});
@@ -53,7 +55,8 @@ function boot(){
   return btn;
  };
  return {get,user,api:win.sgReviews,selectButton,
-  requests:()=>requests,finish:result=>{assert.ok(resolver);resolver(result);},
+  requests:()=>requests,chatLoads:()=>chatLoads,
+  finish:result=>{assert.ok(resolver);resolver(result);},
   failReads:()=>{failReads=true;}};
 }
 test('choix de chauffeur : double clic n’envoie qu’une seule sélection',async()=>{
@@ -66,6 +69,8 @@ test('choix de chauffeur : double clic n’envoie qu’une seule sélection',asy
  x.finish({error:null});
  await Promise.all([a,b]);
  assert.match(x.get('sgReviewClientStatus').textContent,/Chauffeur sélectionné/);
+ assert.match(x.get('sgReviewClientStatus').textContent,/messagerie TEST est disponible/);
+ assert.equal(x.chatLoads(),1,'le chat client doit s’ouvrir aussitôt que le chauffeur est choisi');
 });
 test('ancien choix de chauffeur ne remplace pas le statut après déconnexion',async()=>{
  const x=boot();
@@ -78,6 +83,7 @@ test('ancien choix de chauffeur ne remplace pas le statut après déconnexion',a
  await pending;
  assert.equal(x.get('sgReviewClientStatus').textContent,'Compte différent connecté');
  assert.equal(x.get('sgReviewClientList').children.length,0);
+ assert.equal(x.chatLoads(),0,'une réponse tardive ne doit pas ouvrir le chat du mauvais compte');
 });
 test('en cas de panne réseau, garder les anciennes annonces affichées',async()=>{
  const x=boot();
