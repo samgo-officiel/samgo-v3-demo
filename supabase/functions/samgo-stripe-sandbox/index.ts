@@ -104,6 +104,15 @@ async function requireApprovedDriver(user:{id:string;token:string}) {
   if(!Array.isArray(data)||data[0]?.statut!=="approuve")
     throw new Error("Le compte chauffeur doit être approuvé dans la démo SAMGO.");
 }
+// Le chauffeur choisi doit TOUJOURS être encore approuvé à l'instant du Checkout.
+// L'approbation au moment du choix ne suffit pas si son accès a été suspendu depuis.
+async function requireApprovedChosenDriver(driverId:string):Promise<void>{
+  const rows=await adminGet("candidatures_chauffeur",{
+    select:"statut",utilisateur_id:"eq."+driverId,limit:"1"
+  });
+  if(!Array.isArray(rows)||rows[0]?.statut!=="approuve")
+    throw new Error("Ce chauffeur n'est plus approuvé pour la simulation. Choisissez un autre chauffeur.");
+}
 async function mappingFor(userId:string):Promise<string|null>{
   const found=await adminGet("samgo_stripe_chauffeurs_test",{
     select:"stripe_compte_id",utilisateur_id:"eq."+userId,limit:"1"
@@ -203,6 +212,7 @@ async function handle(action:string,body:any,user:{id:string;email?:string;token
     if(!Number.isInteger(distance)||distance<5||distance>20)
       throw new Error("La distance fictive doit être entre 5 et 20 km.");
     const amount=distance*100;
+    await requireApprovedChosenDriver(choice.chauffeur_id);
     const destination=await mappingFor(choice.chauffeur_id);
     if(!destination)throw new Error("Le chauffeur n'a pas encore ouvert son compte Stripe de test.");
     const connected=await accountInfo(destination);

@@ -78,6 +78,7 @@ test('Le parcours SAMGO ouvre le QR local uniquement apres la verification serve
  const driverUI=fs.readFileSync(path.join(__dirname,'../assets/avis-chauffeurs-test.js'),'utf8');
  assert.match(driverUI,/Montrer le QR TEST au client/);
  assert.match(driverUI,/payment\.statut==='checkout_ouvert'/);
+ assert.match(driverUI,/selection\.statut==='choisi_test' && payment/);
  assert.match(driverUI,/sgStripeQrTest\.show\(payment\.checkout_url\)/);
  assert.doesNotMatch(qrScript,/api\.qrserver|quickchart|chart\.googleapis|fetch\(/);
 });
