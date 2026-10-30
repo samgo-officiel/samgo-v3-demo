@@ -171,8 +171,11 @@ async function selectDriver(ad,answer){
   ()=>client.testChoices.choose(ad.id,answer.id,answer.chauffeur_id,uid),
   async()=>{
    await refreshClient();
+   // Le choix ouvre immédiatement la conversation pour le client,
+   // sans attendre le rafraîchissement général (45 secondes).
+   if(ownerIs(uid,revision))await window.sgChatTest?.refresh?.('client');
    if(ownerIs(uid,revision))
-    status('sgReviewClientStatus','✓ Chauffeur sélectionné en simulation. Aucune vraie course attribuée.');
+    status('sgReviewClientStatus','✓ Chauffeur sélectionné en simulation. Aucune vraie course attribuée. La messagerie TEST est disponible plus bas.');
   },'Sélection du chauffeur impossible','sgReviewClientStatus');
 }
 async function cancelRide(choice){
@@ -183,6 +186,8 @@ async function cancelRide(choice){
   ()=>client.testChoices.cancel(choice.id,uid),
   async()=>{
    await refreshClient();
+   // Bloquer immédiatement la rédaction pour une simulation clôturée.
+   if(ownerIs(uid,revision))await window.sgChatTest?.refresh?.('client');
    if(ownerIs(uid,revision))
     status('sgReviewClientStatus','✓ Simulation annulée. Aucune course réelle concernée.');
   },'Annulation impossible','sgReviewClientStatus');
@@ -195,6 +200,7 @@ async function finishRide(choice){
   ()=>client.testChoices.finish(choice.id,uid),
   async()=>{
    await refreshClient();
+   if(ownerIs(uid,revision))await window.sgChatTest?.refresh?.('client');
    if(ownerIs(uid,revision))
     status('sgReviewClientStatus','✓ Simulation terminée. Vous pouvez noter le chauffeur avec les étoiles.');
   },'Clôture impossible','sgReviewClientStatus');
