@@ -260,6 +260,19 @@ async function publish(){
  const btn=$('sgPublishBtn');btn.disabled=true;
  const requestingUserId=sessionUser.id,requestGeneration=state.publishGeneration;
  try{
+  // Une seule annonce active par compte dans le parcours public de TEST.
+  // Vérifier le serveur avant tout GPS pour éviter les publications répétées
+  // lorsque l'utilisateur croit qu'une précédente demande a échoué.
+  status('sgPublishStatus','Vérification de vos annonces de test déjà publiées…');
+  const existing=await client.testRequests.mine(requestingUserId);
+  if(state.publishGeneration!==requestGeneration||!signedIn()||sessionUser.id!==requestingUserId)return;
+  if(existing.error)throw new Error('Impossible de vérifier vos anciennes annonces. Aucune nouvelle publication effectuée : '+(existing.error.message||'réessayez.'));
+  const active=(Array.isArray(existing.data)?existing.data:[]).some(row=>
+   row.statut==='test_en_attente'&&Date.parse(row.expire_le)>Date.now());
+  if(active){
+   status('sgPublishStatus','Vous avez déjà une annonce TEST active. Ouvrez « Courses → Mes annonces publiées » pour voir les réponses ou la retirer avant d’en créer une nouvelle. Aucun GPS demandé.');
+   return;
+  }
   status('sgPublishStatus','Autorisez le GPS : SAMGO arrondira votre position avant publication.');
   const p=await requestLocation();
   if(!signedIn()||sessionUser.id!==requestingUserId)throw new Error('Le compte a changé pendant la demande GPS. Recommencez.');
