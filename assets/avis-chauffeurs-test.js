@@ -199,7 +199,7 @@ async function finishRide(choice){
     status('sgReviewClientStatus','✓ Simulation terminée. Vous pouvez noter le chauffeur avec les étoiles.');
   },'Clôture impossible','sgReviewClientStatus');
 }
-async function refreshClient(){
+async function refreshClient(shared=null){
  const list=$('sgReviewClientList');if(!list)return;
  if(!signed()){
   list.replaceChildren();
@@ -209,8 +209,13 @@ async function refreshClient(){
  const uid=sessionUser.id,seq=++clientSequence;
  status('sgReviewClientStatus','Chargement des chauffeurs intéressés et avis de test…');
  try{
+  // sgDemand a déjà lu annonces/réponses/sélections pour ce même compte.
+  // Les réutiliser évite trois appels Supabase en double sur mobile/4G.
+  const sameUser=shared&&shared.uid===uid;
   const [a,r,c,v,t,p]=await Promise.all([
-   client.testRequests.mine(uid),client.testReplies.list(),client.testChoices.list(),
+   sameUser&&Array.isArray(shared.ads)?{data:shared.ads,error:null}:client.testRequests.mine(uid),
+   sameUser&&Array.isArray(shared.replies)?{data:shared.replies,error:null}:client.testReplies.list(),
+   sameUser&&Array.isArray(shared.choices)?{data:shared.choices,error:null}:client.testChoices.list(),
    client.testReviews.list(),client.testTracking.list(),client.testPayments.list()
   ]);
   if(!signed()||uid!==sessionUser.id||seq!==clientSequence)return;
@@ -344,7 +349,7 @@ function clear(){
 }
 if(window.sgDemand){
  const old=window.sgDemand.refreshClient;
- window.sgDemand.refreshClient=async function(){if(old)await old();await refreshClient();};
+ window.sgDemand.refreshClient=async function(){const snapshot=old?await old():null;await refreshClient(snapshot);};
 }
 window.sgReviews={refreshClient,refreshDriver,filterClient,dismissReplies,clear};
 })();
