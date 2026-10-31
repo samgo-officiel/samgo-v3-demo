@@ -13,7 +13,7 @@ Audit de lecture réalisé sur GitHub et sur le projet Supabase SAMGO-V3. Ce doc
 ## 2 — GPS, annonces, affectation
 - Présents en TEST : annonces, réponses, choix de chauffeur et positions approximatives.
 - À faire : deux sessions distinctes sur deux téléphones, consentement GPS, rayon 30 km, déconnexion, refus d'autorisation, réseau faible.
-- À renforcer : unicité des annonces actives **côté serveur**, après vérification du modèle exact et de sa migration; vérifier qu'un chauffeur ne répond pas à sa propre annonce.
+- Corrigé côté serveur le 31/10 : contrainte PostgreSQL d'exclusion anti-doublons pour les créneaux TEST qui se chevauchent (validée); message utilisateur clair ajouté au frontend. Reste à réaliser un essai réel multi-comptes et à vérifier qu'un chauffeur ne répond pas à sa propre annonce.
 - Ne jamais utiliser des lieux réels dans la recette.
 
 ## 3 — Messagerie
@@ -49,6 +49,11 @@ Audit de lecture réalisé sur GitHub et sur le projet Supabase SAMGO-V3. Ce doc
 - Bloqué : tests physiques, comptes développeurs, signature/certificats, fiches store, politique de confidentialité, revue et acceptation Apple/Google.
 - Lancement conditionné au passage complet du test sur deux appareils, traitement des incidents, consentements et validations assurance/juridique.
 - Ne publier, ne dépenser et ne lancer aucune campagne sans autorisation explicite.
+
+## Vérification technique effectuée le 31/10
+- Correction de rafraîchissement après changement de compte / réseau lent, avec nouveaux tests automatisés.
+- Garde anti-doublons de créneaux TEST appliquée dans Supabase et vérifiée (contrainte validée).
+- GitHub Actions : les tests automatiques de la branche de correction ont réussi avant publication de ce bilan.
 
 ## Prochain test utilisateur groupé (quand le propriétaire revient)
 1. Configurer SMTP et révoquer l'ancienne clé.
