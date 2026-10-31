@@ -291,7 +291,16 @@ async function publish(){
   if(payload.depart_test.length<3||payload.destination_test.length<3)throw new Error('Utilisez des noms de lieux fictifs comportant au moins trois caractères.');
   const result=await client.testRequests.create(payload);
   if(state.publishGeneration!==requestGeneration||!signedIn()||sessionUser.id!==requestingUserId)return;
-  if(result.error)throw result.error;
+  if(result.error){
+   // PostgreSQL 23P01 : le serveur a détecté une autre annonce TEST
+   // concurrente. Ne pas afficher les détails internes de l'index au client.
+   if(String(result.error.code||'')==='23P01'||
+      /annonces_test_sans_chevauchement_client/i.test(String(result.error.message||''))){
+    status('sgPublishStatus','Une annonce TEST active existe déjà pour ce compte. Ouvrez « Courses » pour consulter ou retirer votre demande avant d’en publier une autre.');
+    return;
+   }
+   throw result.error;
+  }
   status('sgPublishStatus','Annonce de test publiée pendant deux heures maximum. Seuls les comptes chauffeurs de test approuvés peuvent la voir. Aucune vraie course créée.');
   box.checked=false;
   await refreshClient();
