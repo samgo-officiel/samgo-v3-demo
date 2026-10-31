@@ -4,7 +4,7 @@
  'use strict';
  const $=id=>document.getElementById(id);
  const INTERVAL_MS=45000;
- let inFlight=false, lastRun=0, sequence=0;
+ let inFlight=false, lastRun=0, sequence=0, pendingForced=false;
  function route(){
   if(document.body.classList.contains('sg-route-trips'))return 'client';
   if(document.body.classList.contains('sg-route-driver')){
@@ -27,7 +27,9 @@
  async function refresh(force){
   const target=route();
   if(!target||document.visibilityState==='hidden'||!signed())return;
-  if(inFlight)return;
+  // Une demande manuelle (ou un retour au premier plan) ne doit pas être perdue
+  // pendant une lecture réseau lente lancée par l'ancien compte/écran.
+  if(inFlight){if(force)pendingForced=true;return;}
   // Ne jamais remplacer le formulaire pendant la saisie d'un avis client.
   const focused=document.activeElement;
   if(target==='client'&&focused&&typeof focused.closest==='function'){
@@ -37,20 +39,29 @@
   if(!force&&Date.now()-lastRun<INTERVAL_MS-1000)return;
   if(navigator.onLine===false){setDisplay('Hors connexion — affichage potentiellement ancien.');return;}
   inFlight=true;lastRun=Date.now();
-  const my=++sequence;setDisplay('Actualisation des tests en cours…');
+  const my=++sequence,uid=sessionUser.id;
+  const stillCurrent=()=>my===sequence&&signed()&&sessionUser.id===uid&&
+   route()===target&&document.visibilityState!=='hidden';
+  setDisplay('Actualisation des tests en cours…');
   try{
    if(target==='client'){
     // sgDemand.refreshClient est déjà complété par sgReviews à l'initialisation.
     // Ne pas déclencher deux fois les mêmes lectures de suivi / avis à chaque cycle.
     if(window.sgDemand&&typeof window.sgDemand.refreshClient==='function')await window.sgDemand.refreshClient();
+    if(!stillCurrent())return;
     if(window.sgLoyaltyTest&&typeof window.sgLoyaltyTest.refresh==='function')await window.sgLoyaltyTest.refresh();
+    if(!stillCurrent())return;
     if(window.sgChatTest&&typeof window.sgChatTest.refresh==='function')await window.sgChatTest.refresh('client');
+    if(!stillCurrent())return;
    }else{
     if(window.sgReviews&&typeof window.sgReviews.refreshDriver==='function')await window.sgReviews.refreshDriver();
+    if(!stillCurrent())return;
     if(window.sgChatTest&&typeof window.sgChatTest.refresh==='function')await window.sgChatTest.refresh('driver');
+    if(!stillCurrent())return;
     if(document.querySelector('[data-dpane="missions"]:not(.hidden)')&&window.sgDemand&&typeof window.sgDemand.refresh==='function')await window.sgDemand.refresh();
+    if(!stillCurrent())return;
    }
-   if(my!==sequence)return;
+   if(!stillCurrent())return;
    const clientErrors=['sgMyAdsStatus','sgReviewClientStatus','sgLoyaltyStatus','sgChatClientStatus'];
    const driverErrors=['sgDriverReviewsStatus','sgDriverSelectionsStatus','sgChatDriverStatus'];
    // Ne pas afficher « synchronisé » si un sous-module a signalé un échec
@@ -60,8 +71,14 @@
    if(failed)setDisplay('Certaines données de TEST n’ont pas été actualisées. Réessayez avec ↻.');
    else setDisplay('Tests synchronisés à '+localTime()+' · Rafraîchissement automatique toutes les 45 s.');
   }catch(_){
-   if(my===sequence)setDisplay('Connexion instable : actualisation impossible, réessayez.');
-  }finally{inFlight=false;}
+   if(stillCurrent())setDisplay('Connexion instable : actualisation impossible, réessayez.');
+  }finally{
+   inFlight=false;
+   if(pendingForced){
+    pendingForced=false;
+    Promise.resolve().then(()=>refresh(true));
+   }
+  }
  }
  setInterval(()=>refresh(false),INTERVAL_MS);
  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refresh(true);});
