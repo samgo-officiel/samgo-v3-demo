@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'..','assets','demandes-geoloc-test.js'),'utf8');
-function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=null,nativePosition=undefined,existingAds=[],existingAdsError=null}={}){
+function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=null,nativePosition=undefined,existingAds=[],existingAdsError=null,createRequest=null}={}){
  const nodes=new Map(),prompts=[];
  class Element {
   constructor(id){this.id=id;this.textContent='';this.value=id==='sgRadius'?'30':'';this.checked=false;this.disabled=true;
@@ -25,7 +25,7 @@ function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=n
   testRequests:{list:async (position,radius)=>{calls++;return fetchRequests?
     fetchRequests(position,radius):{data:[],error:null};},
    mine:async()=>existingAdsError?{error:existingAdsError}:{data:existingAds,error:null},
-   create:async()=>{publishCalls++;return {error:null};}},
+   create:async()=>{publishCalls++;return createRequest?await createRequest():{error:null};}},
   testReplies:{list:async()=>({data:[],error:null}),create:(adId,uid)=>createReply?createReply(adId,uid):Promise.resolve({error:null})}
  };
  const window={isSecureContext:true,
@@ -347,4 +347,17 @@ test('erreur serveur pendant anti-doublon bloque toute publication sans GPS',asy
  assert.equal(x.prompts.length,0);
  assert.equal(x.published(),0);
  assert.match(x.get('sgPublishStatus').textContent,/Aucune nouvelle publication effectuée/);
+});
+
+
+test('erreur serveur 23P01 : annonce concurrente refusée avec message clair, sans exposer le SQL',async()=>{
+ const x=boot({demoRequest:{from:'Gare fictive',to:'Maison fictive',km:5},
+  nativePosition:{coords:{latitude:48.86,longitude:2.35,accuracy:40},timestamp:Date.now()},
+  createRequest:async()=>({error:{code:'23P01',message:'conflicting key value violates exclusion constraint "annonces_test_sans_chevauchement_client"'}})});
+ x.get('sgPublishConsent').checked=true;
+ await x.geo.publish();
+ assert.equal(x.published(),1,'une seule tentative réseau');
+ assert.match(x.get('sgPublishStatus').textContent,/Une annonce TEST active existe déjà/);
+ assert.doesNotMatch(x.get('sgPublishStatus').textContent,/conflicting|constraint|23P01/);
+ assert.equal(x.get('sgPublishBtn').disabled,false);
 });
