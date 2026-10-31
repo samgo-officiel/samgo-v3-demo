@@ -180,6 +180,10 @@ function notifyAboutNew(rows){
 }
 async function fetchRows(silent){
  if(!approved()||!state.pos||state.fetchKey||document.visibilityState==='hidden')return;
+ if(navigator.onLine===false){
+  status('sgNearbyStatus','Hors connexion : les demandes de test affichées peuvent être anciennes. La recherche reprendra à la reconnexion.');
+  return;
+ }
  // Ne pas réutiliser indéfiniment une ancienne localisation (aucun suivi GPS de fond).
  if(Date.now()-state.pos.measuredAt>15*60*1000){
   stop();
@@ -209,6 +213,10 @@ async function fetchRows(silent){
  }finally{if(state.fetchKey===fetchKey)state.fetchKey=null;}
 }
 async function open(){
+ if(navigator.onLine===false){
+  status('sgGeoStatus','Hors connexion : rétablissez Internet avant d’activer la recherche de demandes. Aucun GPS demandé.');
+  return;
+ }
  if(!approved()){
   status('sgGeoStatus','Connectez-vous avec votre compte chauffeur approuvé en version test.');
   return;
@@ -458,5 +466,13 @@ function radiusChanged({savePreference=true}={}){
  if(state.pos)fetchRows(false);
 }
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')fetchRows(true);});
+window.addEventListener?.('offline',()=>{
+ if(state.pos)status('sgNearbyStatus','Hors connexion : résultats de test potentiellement anciens. Aucun GPS relancé.');
+});
+window.addEventListener?.('online',()=>{
+ // Utilise uniquement la dernière position consentie, si elle est encore valide.
+ // Un onglet caché ou un GPS arrêté ne relance jamais de recherche.
+ if(state.pos&&approved()&&document.visibilityState!=='hidden')fetchRows(false);
+});
 window.sgDemand={open,publish,optIn,refresh:()=>fetchRows(false),refreshClient,render,stop,authChanged,radiusChanged,sortChanged,filterChanged,sortRequests,filterRequests,remainingTime};
 })();

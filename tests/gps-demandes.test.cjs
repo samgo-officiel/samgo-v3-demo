@@ -6,7 +6,7 @@ const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'..','assets','demandes-geoloc-test.js'),'utf8');
 function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=null,nativePosition=undefined,existingAds=[],existingAdsError=null,createRequest=null}={}){
- const nodes=new Map(),prompts=[];
+ const nodes=new Map(),prompts=[],windowEvents={};
  class Element {
   constructor(id){this.id=id;this.textContent='';this.value=id==='sgRadius'?'30':'';this.checked=false;this.disabled=true;
    this.hidden=true;this.children=[];this.attrs={};this.listeners={};}
@@ -29,6 +29,7 @@ function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=n
   testReplies:{list:async()=>({data:[],error:null}),create:(adId,uid)=>createReply?createReply(adId,uid):Promise.resolve({error:null})}
  };
  const window={isSecureContext:true,
+  addEventListener:(type,handler)=>{windowEvents[type]=handler;},
   sgMapsZoneTest:{mapsUrl:(lat,lng)=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(lat+','+lng)}};
  if(nativePosition!==undefined){
   window.Capacitor={isNativePlatform:()=>true,Plugins:{Geolocation:{
@@ -46,6 +47,8 @@ function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=n
  },{filename:'SAMGO-GPS'});
  return {geo:window.sgDemand,prompts,sessionUser,get,calls:()=>calls,published:()=>publishCalls,nativeCalls:()=>nativeCalls,
   setVisibility:state=>{document.visibilityState=state;},
+  setOnline:state=>{navigator.onLine=state;},
+  fire:type=>windowEvents[type]?.(),
   giveGPS:(accuracy=30,measuredAt=Date.now())=>{
    const prompt=prompts.shift();
    assert.ok(prompt,'une demande GPS doit exister');
@@ -360,4 +363,38 @@ test('erreur serveur 23P01 : annonce concurrente refusée avec message clair, sa
  assert.match(x.get('sgPublishStatus').textContent,/Une annonce TEST active existe déjà/);
  assert.doesNotMatch(x.get('sgPublishStatus').textContent,/conflicting|constraint|23P01/);
  assert.equal(x.get('sgPublishBtn').disabled,false);
+});
+
+
+test('4G coupée : ne sollicite pas le GPS ni le serveur au premier démarrage',async()=>{
+ const x=boot({online:false});
+ await x.geo.open();
+ assert.equal(x.prompts.length,0);
+ assert.equal(x.calls(),0);
+ assert.match(x.get('sgGeoStatus').textContent,/Hors connexion/);
+});
+test('reconnexion 4G : reprendre une recherche déjà autorisée sans redemander le GPS',async()=>{
+ const x=boot();
+ const starting=x.geo.open();x.giveGPS();await starting;
+ assert.equal(x.calls(),1);
+ x.setOnline(false);x.fire('offline');
+ await x.geo.refresh();
+ assert.equal(x.calls(),1,'aucune requête quand la 4G est coupée');
+ assert.match(x.get('sgNearbyStatus').textContent,/Hors connexion/);
+ x.setOnline(true);x.fire('online');
+ await Promise.resolve();await Promise.resolve();
+ assert.equal(x.calls(),2,'une nouvelle lecture après reconnexion');
+ assert.equal(x.prompts.length,0,'pas de nouvelle permission GPS');
+});
+test('reconnexion 4G : ne réactive pas un GPS arrêté ni un onglet masqué',async()=>{
+ const x=boot();
+ const starting=x.geo.open();x.giveGPS();await starting;
+ assert.equal(x.calls(),1);
+ x.setVisibility('hidden');x.fire('online');
+ await Promise.resolve();
+ assert.equal(x.calls(),1);
+ x.setVisibility('visible');x.geo.stop();x.fire('online');
+ await Promise.resolve();
+ assert.equal(x.calls(),1);
+ assert.equal(x.prompts.length,0);
 });
