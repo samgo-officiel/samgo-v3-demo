@@ -48,12 +48,18 @@
     // sgDemand.refreshClient est déjà complété par sgReviews à l'initialisation.
     // Ne pas déclencher deux fois les mêmes lectures de suivi / avis à chaque cycle.
     if(window.sgDemand&&typeof window.sgDemand.refreshClient==='function')await window.sgDemand.refreshClient();
+    if(!stillCurrent())return;
     if(window.sgLoyaltyTest&&typeof window.sgLoyaltyTest.refresh==='function')await window.sgLoyaltyTest.refresh();
+    if(!stillCurrent())return;
     if(window.sgChatTest&&typeof window.sgChatTest.refresh==='function')await window.sgChatTest.refresh('client');
+    if(!stillCurrent())return;
    }else{
     if(window.sgReviews&&typeof window.sgReviews.refreshDriver==='function')await window.sgReviews.refreshDriver();
+    if(!stillCurrent())return;
     if(window.sgChatTest&&typeof window.sgChatTest.refresh==='function')await window.sgChatTest.refresh('driver');
+    if(!stillCurrent())return;
     if(document.querySelector('[data-dpane="missions"]:not(.hidden)')&&window.sgDemand&&typeof window.sgDemand.refresh==='function')await window.sgDemand.refresh();
+    if(!stillCurrent())return;
    }
    if(!stillCurrent())return;
    const clientErrors=['sgMyAdsStatus','sgReviewClientStatus','sgLoyaltyStatus','sgChatClientStatus'];
