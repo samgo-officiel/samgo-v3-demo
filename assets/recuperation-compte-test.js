@@ -58,11 +58,17 @@
     try{
       const redirect=window.location.origin+window.location.pathname;
       const endpoint=BASE+'/auth/v1/recover?redirect_to='+encodeURIComponent(redirect);
-      const response=await fetch(endpoint,{
-        method:'POST',cache:'no-store',
-        headers:{apikey:PUBLISHABLE_KEY,'Content-Type':'application/json'},
-        body:JSON.stringify({email})
-      });
+      // Ne jamais bloquer indéfiniment l'interface si la 4G coupe.
+      const controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),20000);
+      let response;
+      try{
+        response=await fetch(endpoint,{
+          method:'POST',cache:'no-store',signal:controller.signal,
+          headers:{apikey:PUBLISHABLE_KEY,'Content-Type':'application/json'},
+          body:JSON.stringify({email})
+        });
+      }finally{clearTimeout(timeout);}
       if(!response.ok){
         if(response.status===429)throw new Error('rate-limit');
         throw new Error('recovery-error');
@@ -70,7 +76,9 @@
       // Réponse identique, que le compte existe ou non.
       status('sgResetRequestInfo',"Si cette adresse possède un compte SAMGO, un e-mail de réinitialisation a été demandé. Vérifiez aussi les spams.");
     }catch(error){
-      status('sgResetRequestInfo',error.message==='rate-limit'?
+      status('sgResetRequestInfo',error?.name==='AbortError'?
+        'Le serveur ne répond pas. Un e-mail a peut-être été envoyé : vérifiez votre boîte et les spams avant de redemander un lien.':
+        error.message==='rate-limit'?
         'Limite d’e-mails SAMGO atteinte. Aucun nouveau lien n’a été envoyé pour cette tentative. Réessayez plus tard.':
         'Impossible de demander le lien pour le moment. Vérifiez la connexion Internet.');
     }finally{submit.disabled=false;}
@@ -88,11 +96,16 @@
     try{
       const token=await client?.auth?.getAccessToken?.();
       if(!token)throw new Error('not-authorized');
-      const response=await fetch(BASE+'/auth/v1/user',{
-        method:'PUT',cache:'no-store',
-        headers:{apikey:PUBLISHABLE_KEY,'Authorization':'Bearer '+token,'Content-Type':'application/json'},
-        body:JSON.stringify({password})
-      });
+      const controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),20000);
+      let response;
+      try{
+        response=await fetch(BASE+'/auth/v1/user',{
+          method:'PUT',cache:'no-store',signal:controller.signal,
+          headers:{apikey:PUBLISHABLE_KEY,'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+          body:JSON.stringify({password})
+        });
+      }finally{clearTimeout(timeout);}
       if(!response.ok)throw new Error(response.status===401?'not-authorized':'update-error');
       $('sgResetNew').value='';$('sgResetConfirm').value='';
       markCleared();
@@ -101,7 +114,9 @@
       if(typeof refreshUser==='function')await refreshUser();
       render();
     }catch(error){
-      status('sgResetCompleteStatus',error.message==='not-authorized'?
+      status('sgResetCompleteStatus',error?.name==='AbortError'?
+        'Réponse trop lente. Le mot de passe a peut-être été modifié : vérifiez votre connexion avant de refaire une demande.':
+        error.message==='not-authorized'?
         'Lien expiré ou session déconnectée. Demandez un nouveau lien.':
         'Impossible de changer le mot de passe. Réessayez ou demandez un nouveau lien.');
     }finally{submit.disabled=false;}
