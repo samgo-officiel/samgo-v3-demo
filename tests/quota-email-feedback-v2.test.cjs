@@ -17,3 +17,11 @@ test('problème de mot de passe et limitation non SMTP restent distincts',()=>{
  assert.match(message({message:'invalid login credentials'}),/mot de passe incorrect/);
  assert.match(message({message:'rate limit exceeded',code:'over_request_rate_limit'}),/Limite temporaire de requêtes/);
 });
+test('un email non autorise indique clairement que le serveur SMTP manque',()=>{
+  const msg=message({message:'Email address not authorized',code:'email_address_not_authorized'});
+  assert.match(msg,/SMTP externe/);
+  assert.doesNotMatch(msg,/mot de passe incorrect/);
+});
+test('un echec du SMTP est traduit en francais',()=>{
+  assert.match(message({message:'Error sending confirmation email'}),/paramétrage SMTP/);
+});
