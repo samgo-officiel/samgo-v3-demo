@@ -428,6 +428,15 @@ input,select,textarea{font-size:16px}
 #sgChatNewToast span{flex:1 1 150px}
 #sgChatNewToast button{min-height:40px;padding:9px 12px;font-weight:700}
 </style>
+<style id="sg-stripe-qr-quicktest-style">
+.sg-stripe-qr-quicktest{border:2px solid #deb754;border-radius:17px;padding:17px;margin:18px 0;background:linear-gradient(145deg,#2d2920,#162831);color:#f7f5f0}
+.sg-stripe-qr-quicktest h3{color:#ffe59c;font-size:19px;margin:9px 0}
+.sg-stripe-qr-quicktest p{font-size:13px;line-height:1.6}
+.sg-stripe-qr-quicktest strong{color:#ffe59c}
+.sg-stripe-qr-quicktest button{width:100%;min-height:53px;line-height:1.4;background:#f5ce53;color:#1c1d20}
+.sg-stripe-qr-quicktest .sg-stripe-qr-quicknote{font-size:12px;color:#c5d5d9}
+.sg-stripe-qr-quicktest code{font-size:12px;color:#b9efc8;user-select:all}
+</style>
 <style id="sg-stripe-qr-style">
 .sg-stripe-qr-layer[hidden]{display:none!important}
 .sg-stripe-qr-layer{position:fixed;z-index:2000;inset:0;overflow-y:auto;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.9);padding:20px 12px;overscroll-behavior:contain}
@@ -665,6 +674,14 @@ input,select,textarea{font-size:16px}
       <div id="sgAvailableDriversResults"></div>
       <p class="sg-client-map-note">Les distances sont des estimations par tranches et ne servent pas à réserver une course. Aucun chauffeur n’est visible sans autorisation et disponibilité valides.</p>
     </section>
+  </section>
+  <section id="sgStripeQrNoAccountTest" class="sg-stripe-qr-quicktest" aria-label="Tester un QR code de paiement Stripe sans compte SAMGO">
+    <span class="sg-stripe-label">💳 QR CODE PAIEMENT — STRIPE TEST</span>
+    <h3>Essayer le QR code sur ton iPhone</h3>
+    <p>Essai de paiement <strong>10,00 € fictifs</strong> dans le véritable environnement de test Stripe SAMGO. Aucun compte SAMGO, chauffeur ou e-mail requis. <strong>Aucun argent réel, aucune course réservée.</strong></p>
+    <button type="button" id="sgStripeQrNoAccountButton" onclick="window.sgStripeQrTest.showDemo()">📲 Afficher mon QR code de paiement TEST</button>
+    <p class="sg-stripe-qr-quicknote">Deux choix : scanner avec un deuxième téléphone ou ouvrir Stripe directement sur cet iPhone. Sur la page Stripe, utilisez une carte de test (Visa <code>4242 4242 4242 4242</code>, date future, CVC fictif), jamais votre carte bancaire réelle.</p>
+    <p class="sg-stripe-qr-quicknote">Cet essai de 10 € est indépendant de la simulation de réservation et du montant indiqué ci-dessous. La confirmation d'une vraie course restera liée au serveur et à un chauffeur approuvé.</p>
   </section>
   <form id="demoBookingForm" onsubmit="createLocalDemo(event)">
     <label for="demoDepart">Lieu de départ fictif</label>
@@ -1881,7 +1898,7 @@ function sgGo(view){
 <script src="assets/actualisation-test.js?v=fid-2810"></script>
 <script src="assets/stripe-connect-demo.js"></script>
 <script src="assets/vendor/qrcode-generator.js?v=20261029"></script>
-<script src="assets/stripe-checkout-qr-test.js?v=20261029"></script>
+<script src="assets/stripe-checkout-qr-test.js?v=20261101-sandbox-qr10"></script>
 <script src="assets/stripe-sandbox-connexion.js?v=20261029-qr-test"></script>
 <script src="assets/messagerie-test.js?v=20261028-chat-v3"></script>
 <script src="assets/messages-rapides-test.js?v=20261028-a"></script>

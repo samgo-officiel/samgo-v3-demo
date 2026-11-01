@@ -11,6 +11,7 @@ const modules={
  sgReviews:'assets/avis-chauffeurs-test.js',
  sgChatTest:'assets/messagerie-test.js',
  sgStripeDemo:'assets/stripe-connect-demo.js',
+ sgStripeQrTest:'assets/stripe-checkout-qr-test.js',
  sgStripeSandbox:'assets/stripe-sandbox-connexion.js',
  sgInstallTest:'assets/installation-mobile-test.js',
  sgLoyaltyTest:'assets/fidelite-test.js',

@@ -20,9 +20,11 @@ function setup(){
  }
  const close=button(),open=button();
  const drawing={innerHTML:'',replaceChildren(){this.innerHTML='';}};
+ const title={textContent:''},intro={textContent:''},note={textContent:''};
  const layer={
   hidden:true,innerHTML:'',addEventListener(){},querySelector(s){
-   return {'#sgStripeQrClose':close,'#sgStripeQrOpen':open,'#sgStripeQrDrawing':drawing}[s];
+   return {'#sgStripeQrClose':close,'#sgStripeQrOpen':open,'#sgStripeQrDrawing':drawing,
+    '#sgStripeQrTitle':title,'#sgStripeQrIntro':intro,'#sgStripeQrNote':note}[s];
   },querySelectorAll(){return [open,close];}
  };
  doc.createElement=()=>layer;
