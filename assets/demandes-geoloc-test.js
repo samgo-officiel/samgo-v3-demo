@@ -6,7 +6,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const radiusOptions=[5,10,20,30,50];
-const state={pos:null,rows:[],replies:[],loading:false,poll:null,notify:false,firstLoad:true,seen:new Set(),lastUser:null,clientLoad:0,responding:null,replyGeneration:0,publishGeneration:0,gpsPending:false,gpsGeneration:0,fetchGeneration:0,fetchKey:null};
+const state={pos:null,rows:[],replies:[],loading:false,poll:null,notify:false,firstLoad:true,seen:new Set(),lastUser:null,clientLoad:0,responding:null,replyGeneration:0,publishGeneration:0,publishing:false,gpsPending:false,gpsGeneration:0,fetchGeneration:0,fetchKey:null};
 function status(id,msg){const node=$(id);if(node)node.textContent=msg;}
 function euros(x){return Number(x).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});}
 function remainingTime(expireAt,now=Date.now()){
@@ -257,6 +257,8 @@ async function open(){
  }
 }
 async function publish(){
+ // Un second clic ne doit jamais lancer une deuxième publication ni un deuxième GPS.
+ if(state.publishing)return;
  if(typeof navigator!=='undefined'&&navigator.onLine===false){
   status('sgPublishStatus','Hors connexion : annonce non publiée. Rétablissez Internet avant de demander le GPS.');
   return;
@@ -265,7 +267,8 @@ async function publish(){
  if(!box||!box.checked){status('sgPublishStatus','Confirmez que vos lieux sont fictifs et que vous acceptez de partager une position approximative pour 2 heures.');return;}
  if(!signedIn()){status('sgPublishStatus','Connectez-vous dans Compte avant de publier une demande de test.');return;}
  if(typeof localDemoRequest==='undefined'||!localDemoRequest){status('sgPublishStatus','Créez d’abord une simulation de trajet.');return;}
- const btn=$('sgPublishBtn');btn.disabled=true;
+ const btn=$('sgPublishBtn');if(!btn)return;
+ state.publishing=true;btn.disabled=true;
  const requestingUserId=sessionUser.id,requestGeneration=state.publishGeneration;
  try{
   // Une seule annonce active par compte dans le parcours public de TEST.
@@ -283,6 +286,7 @@ async function publish(){
   }
   status('sgPublishStatus','Autorisez le GPS : SAMGO arrondira votre position avant publication.');
   const p=await requestLocation();
+  if(state.publishGeneration!==requestGeneration)return; // Annulée pendant la permission GPS.
   if(!signedIn()||sessionUser.id!==requestingUserId)throw new Error('Le compte a changé pendant la demande GPS. Recommencez.');
   if(document.visibilityState==='hidden')
    throw new Error('Publication annulée : SAMGO a été masqué pendant la demande GPS.');
@@ -316,7 +320,10 @@ async function publish(){
   if(state.publishGeneration===requestGeneration&&signedIn()&&sessionUser.id===requestingUserId)
    status('sgPublishStatus',e.message||'Publication impossible.');
  }
- finally{btn.disabled=false;}
+ finally{
+  // Ne pas réactiver le formulaire d'un autre compte après une ancienne réponse.
+  if(state.publishGeneration===requestGeneration){state.publishing=false;btn.disabled=false;}
+ }
 }
 
 async function sendInterest(adId){
@@ -436,6 +443,9 @@ function stop({clearClient=false}={}){
  // Seul un changement de compte / une déconnexion purge la vue privée.
  if(clearClient){
   ++state.publishGeneration;
+  state.publishing=false;
+  const publishButton=$('sgPublishBtn');
+  if(publishButton)publishButton.disabled=false;
   state.clientLoad++;
   const clientAds=$('sgMyAdsList');if(clientAds)clientAds.replaceChildren();
   status('sgMyAdsStatus','Connectez-vous pour voir les annonces publiées.');
