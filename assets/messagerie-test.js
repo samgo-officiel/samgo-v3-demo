@@ -207,7 +207,14 @@
    st.loadPending=null;
    await loadMessages(role,{jumpToEnd:true});
   }catch(e){
-   if(stillCurrent())say(role,'Envoi refusé : '+(e.message||'Réessayez.'));
+   if(stillCurrent()){
+    // Un délai 4G dépassé ne prouve pas que le serveur a rejeté le message.
+    // Conserver le brouillon et éviter d'encourager un renvoi en double.
+    const rejected=[400,401,403,404,409,422].includes(Number(e?.status));
+    say(role,rejected
+     ?'Envoi refusé par le serveur. Vérifiez votre session et les droits de cette conversation.'
+     :'Envoi non confirmé : le serveur a peut-être reçu le message. Vérifiez les messages récents avant de réessayer pour éviter un doublon.');
+   }
   }finally{
    if(st.sendKey===sendKey){st.sendKey=null;st.sending=false;updateButtons(role);}
   }
