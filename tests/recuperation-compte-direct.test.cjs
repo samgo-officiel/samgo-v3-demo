@@ -35,7 +35,7 @@ test('Un lien valide de récupération ouvre immédiatement Mon compte et le for
  const app=boot(true);
  assert.deepEqual(app.routes,['account']);
  assert.equal(app.elements.get('sgResetCompletePanel').hidden,false);
- assert.ok(html.includes('assets/recuperation-compte-test.js?v=20261030-direct-reset'));
+ assert.ok(html.includes('assets/recuperation-compte-test.js?v=20261101-renvoi-confirmation'));
 });
 test('Sans lien de récupération, la page conserve son parcours habituel',()=>{
  const app=boot(false);
