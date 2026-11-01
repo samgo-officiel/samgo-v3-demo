@@ -48,10 +48,20 @@
     if(!isPending()&&requestButton)requestButton.hidden=false;
     $('authForm')?.classList.remove('hidden');
   }
+  const RECOVERY_COOLDOWN='samgo_v3_recovery_next_attempt';
+  function recoveryCooldownSeconds(){
+    try{return Math.max(0,Math.ceil((Number(sessionStorage.getItem(RECOVERY_COOLDOWN)||0)-Date.now())/1000));}
+    catch(_){return 0;}
+  }
   async function requestReset(event){
     event.preventDefault();
     const email=$('sgResetEmail')?.value.trim();
     if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return;
+    const delay=recoveryCooldownSeconds();
+    if(delay){
+      status('sgResetRequestInfo','Une demande vient déjà d’être faite. Attendez encore '+delay+' secondes avant un nouvel essai.');
+      return;
+    }
     const submit=$('sgResetSubmit');
     submit.disabled=true;
     status('sgResetRequestInfo','Demande en cours…');
@@ -75,8 +85,11 @@
         if(response.status>=500)throw new Error('email-server-error');
         throw new Error('recovery-error');
       }
+      // Le fournisseur a accepté la demande, sans garantir que le mail est arrivé.
+      // Limiter les envois répétés pour préserver les quotas et éviter les doublons.
+      try{sessionStorage.setItem(RECOVERY_COOLDOWN,String(Date.now()+60000));}catch(_){}
       // Réponse identique, que le compte existe ou non.
-      status('sgResetRequestInfo',"Si cette adresse possède un compte SAMGO, un e-mail de réinitialisation a été demandé. Vérifiez aussi les spams.");
+      status('sgResetRequestInfo',"Si cette adresse possède un compte SAMGO, un e-mail de réinitialisation a été demandé. Vérifiez aussi les spams. Patientez au moins une minute avant un nouvel essai.");
     }catch(error){
       status('sgResetRequestInfo',error?.name==='AbortError'?
         'Le serveur ne répond pas. Un e-mail a peut-être été envoyé : vérifiez votre boîte et les spams avant de redemander un lien.':
