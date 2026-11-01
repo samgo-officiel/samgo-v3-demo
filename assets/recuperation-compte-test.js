@@ -83,6 +83,62 @@
         'Impossible de demander le lien pour le moment. Vérifiez la connexion Internet.');
     }finally{submit.disabled=false;}
   }
+  const CONFIRM_COOLDOWN='samgo_v3_confirm_next_attempt';
+  function cooldownSeconds(){
+    try{return Math.max(0,Math.ceil((Number(sessionStorage.getItem(CONFIRM_COOLDOWN)||0)-Date.now())/1000));}
+    catch(_){return 0;}
+  }
+  // Renvoi explicitement demandé par l'utilisateur, jamais automatique à l'ouverture du site.
+  async function resendConfirmation(){
+    const address=$('email')?.value.trim()||'';
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)){
+      status('sgResendConfirmationStatus','Saisissez votre adresse e-mail complète dans le formulaire ci-dessus.');
+      $('email')?.focus();
+      return;
+    }
+    if(typeof navigator!=='undefined'&&navigator.onLine===false){
+      status('sgResendConfirmationStatus','Vous êtes hors connexion. Réessayez quand Internet sera rétabli.');
+      return;
+    }
+    const delay=cooldownSeconds();
+    if(delay){
+      status('sgResendConfirmationStatus','Un renvoi vient d’être demandé. Attendez encore '+delay+' secondes avant de réessayer.');
+      return;
+    }
+    const button=$('sgResendConfirmation');
+    if(!button||button.disabled)return;
+    button.disabled=true;
+    status('sgResendConfirmationStatus','Demande de renvoi en cours…');
+    try{
+      const redirect=window.location.origin+window.location.pathname;
+      const controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),20000);
+      let response;
+      try{
+        response=await fetch(BASE+'/auth/v1/resend?redirect_to='+encodeURIComponent(redirect),{
+          method:'POST',cache:'no-store',signal:controller.signal,
+          headers:{apikey:PUBLISHABLE_KEY,'Content-Type':'application/json'},
+          body:JSON.stringify({type:'signup',email:address})
+        });
+      }finally{clearTimeout(timeout);}
+      if(!response.ok){
+        if(response.status===429)throw new Error('email-rate-limit');
+        if(response.status===403||response.status===422)throw new Error('email-not-authorized');
+        throw new Error('email-server-error');
+      }
+      try{sessionStorage.setItem(CONFIRM_COOLDOWN,String(Date.now()+60000));}catch(_){}
+      // Réponse neutre : ni l'existence du compte ni la livraison ne sont garanties.
+      status('sgResendConfirmationStatus',"Demande prise en compte. Si ce compte attend une confirmation, un nouveau lien a été demandé. Vérifiez aussi vos spams. Patientez au moins une minute avant un autre essai.");
+    }catch(error){
+      status('sgResendConfirmationStatus',error?.name==='AbortError'?
+        "La connexion a expiré : le message a peut-être été envoyé. Vérifiez vos e-mails avant de réessayer.":
+        error.message==='email-rate-limit'?
+        "Limite d’envoi atteinte. Aucun nouvel e-mail n’a été envoyé pour cette tentative. Réessayez plus tard.":
+        error.message==='email-not-authorized'?
+        "L’envoi d’e-mails SAMGO TEST n’est pas encore disponible pour cette adresse. Le service SMTP doit être configuré.":
+        "Impossible de demander le renvoi pour le moment. Réessayez plus tard.");
+    }finally{button.disabled=false;}
+  }
   async function changePassword(event){
     event.preventDefault();
     if(!isPending())return;
@@ -135,6 +191,11 @@
     requestButton.style.cssText='width:100%;margin:12px 0;background:#273844;color:#ffe0a0;';
     requestButton.addEventListener('click',openRequest);
     loggedOut.append(requestButton);
+    const resendButton=make('button',{type:'button',id:'sgResendConfirmation',className:'alt'},'Renvoyer mon e-mail de confirmation');
+    resendButton.style.cssText='width:100%;margin:5px 0;background:#273844;color:#ffe0a0;';
+    resendButton.addEventListener('click',resendConfirmation);
+    const resendStatus=make('p',{id:'sgResendConfirmationStatus',role:'status','aria-live':'polite'});
+    loggedOut.append(resendButton,resendStatus);
     requestPanel=make('section',{id:'sgResetRequestPanel',hidden:true,className:'sg-auth-recovery'});
     requestPanel.style.cssText='margin:15px 0;padding:15px;border:1px solid #635b44;border-radius:15px;background:#172730;';
     const h=make('h3',{},'Retrouver mon compte');
