@@ -419,6 +419,28 @@ input,select,textarea{font-size:16px}
  background:#362b18;color:#fff3dc;box-shadow:0 5px 25px #000a;
  font:600 12px/1.4 system-ui,-apple-system,sans-serif;text-align:center;pointer-events:none}
 </style>
+<style id="sg-ride-chat-local-style">
+.sg-ride-chat-local{margin:17px 0;padding:16px;border:1px solid #8b9d78;border-radius:17px;background:linear-gradient(150deg,#162c31,#1c2d27);color:#f7f6f0}
+.sg-ride-chat-local h3{margin:8px 0 10px;font-size:19px;color:#ffe1a0}
+.sg-ride-chat-local p{line-height:1.55;font-size:13px}
+.sg-ride-chat-local button{min-height:44px;margin:3px 0;font-size:13px;line-height:1.4}
+.sg-ride-chat-local button:disabled{opacity:.45;cursor:not-allowed}
+.sg-ride-chat-stage{border-left:3px solid #e9be69;padding:11px;background:#283a35;border-radius:7px;font-weight:700}
+.sg-ride-chat-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin:12px 0}
+.sg-ride-chat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin:12px 0}
+.sg-ride-chat-view{min-width:0;border:1px solid #61756b;border-radius:13px;padding:12px;background:#142328}
+.sg-ride-chat-view h4{margin:0 0 10px;color:#bcf0d5}
+.sg-ride-chat-log{height:168px;overflow:auto;padding:8px;border:1px solid #53665e;border-radius:10px;background:#101c21;margin-bottom:10px}
+.sg-ride-chat-empty{color:#a6b8b2;font-size:12px}
+.sg-ride-chat-bubble{padding:7px 9px;margin:5px 0;border-radius:9px;font-size:12px;background:#293a40}
+.sg-ride-chat-bubble strong{display:block;color:#c7e3d6;font-size:11px}
+.sg-ride-chat-bubble p{margin:3px 0 0;overflow-wrap:anywhere;white-space:pre-wrap}
+.sg-ride-chat-mine{background:#254a43}
+.sg-ride-chat-view textarea{width:100%;max-width:100%;resize:vertical;font-size:16px}
+.sg-ride-chat-view label{font-size:13px;font-weight:700;display:block;margin:9px 0 4px}
+.sg-ride-chat-view button{width:100%}
+.sg-ride-chat-status{padding:10px;border-radius:8px;background:#263c43;color:#c5f5d7}
+</style>
 <style id="sg-chat-toast-style">
 #sgChatNewToast[hidden]{display:none!important}
 #sgChatNewToast{position:fixed;z-index:50001;bottom:calc(env(safe-area-inset-bottom) + 12px);
@@ -555,6 +577,38 @@ input,select,textarea{font-size:16px}
   <button type="button" id="sgJourneyCheck" class="alt" onclick="window.sgJourneyV2.check()">↻ Vérifier mon parcours TEST</button>
   <p id="sgJourneyStatus" role="status" aria-live="polite">Appuyez sur « Vérifier mon parcours TEST » pour savoir quelle étape effectuer.</p>
   <p class="sg-demo-small">Pour échanger des messages, un autre compte chauffeur approuvé doit répondre, puis le client doit le sélectionner. Vous ne pouvez pas être à la fois le client et le chauffeur de la même annonce.</p>
+ </section>
+ <section id="sgRideChatDemoPanel" class="sg-ride-chat-local" aria-label="Essai de réservation et messages client chauffeur sur ce téléphone">
+  <span class="sg-demo-eyebrow">🧪 BANC D'ESSAI LOCAL · SANS INSCRIPTION</span>
+  <h3>Réservation + messages : test client et chauffeur</h3>
+  <p><strong>Deux rôles sur ton iPhone.</strong> Simule une réservation, envoie un message comme client, lis-le comme chauffeur, puis réponds. Aucun message n'est transmis à une vraie personne, aucun paiement et aucune réservation réelle.</p>
+  <p id="sgRideChatDemoStage" class="sg-ride-chat-stage" role="status">Étape : Aucune réservation — simulation locale uniquement.</p>
+  <div class="sg-ride-chat-actions">
+   <button type="button" id="sgRideChatDemoStart" onclick="window.sgRideChatDemo.start()">1. Le client réserve (TEST)</button>
+   <button type="button" id="sgRideChatDemoAccept" onclick="window.sgRideChatDemo.accept()" disabled>2. Le chauffeur accepte (TEST)</button>
+  </div>
+  <div class="sg-ride-chat-grid">
+   <section class="sg-ride-chat-view" aria-label="Vue client simulée">
+    <h4>👤 Vue client</h4>
+    <div class="sg-ride-chat-log" id="sgRideChatDemoClientLog" role="log" aria-label="Messages côté client en test local" aria-live="polite"></div>
+    <label for="sgRideChatDemoClientInput">Ton message comme client</label>
+    <textarea id="sgRideChatDemoClientInput" rows="2" maxlength="500" disabled placeholder="Exemple : Bonjour, où es-tu ?"></textarea>
+    <button type="button" id="sgRideChatDemoClientSend" onclick="window.sgRideChatDemo.sendClient()" disabled>Envoyer au chauffeur (TEST LOCAL)</button>
+   </section>
+   <section class="sg-ride-chat-view" aria-label="Vue chauffeur simulée">
+    <h4>🚗 Vue chauffeur</h4>
+    <div class="sg-ride-chat-log" id="sgRideChatDemoDriverLog" role="log" aria-label="Messages côté chauffeur en test local" aria-live="polite"></div>
+    <label for="sgRideChatDemoDriverInput">Ta réponse comme chauffeur</label>
+    <textarea id="sgRideChatDemoDriverInput" rows="2" maxlength="500" disabled placeholder="Exemple : Bonjour, j'arrive."></textarea>
+    <button type="button" id="sgRideChatDemoDriverSend" onclick="window.sgRideChatDemo.sendDriver()" disabled>Répondre au client (TEST LOCAL)</button>
+   </section>
+  </div>
+  <p id="sgRideChatDemoStatus" class="sg-ride-chat-status" role="status" aria-live="polite">Lancez une demande fictive : aucun compte ni réseau nécessaire.</p>
+  <div class="sg-ride-chat-actions">
+   <button type="button" id="sgRideChatDemoFinish" onclick="window.sgRideChatDemo.complete()" disabled>3. Terminer le trajet fictif</button>
+   <button type="button" class="alt" id="sgRideChatDemoReset" onclick="window.sgRideChatDemo.reset()" disabled>Recommencer / effacer les messages</button>
+  </div>
+  <p class="sg-demo-small"><strong>Essai local seulement :</strong> les deux vues sont sur ce même téléphone, sans Supabase. Pour tester un vrai envoi à un autre appareil, il faut deux comptes distincts (client et chauffeur approuvé), puis une réservation de TEST confirmée.</p>
  </section>
  <div id="demoTripsEmpty" class="sg-demo-placeholder">
   <strong>Aucune simulation en cours</strong><p>Allez sur Réserver pour essayer un trajet fictif.</p>
@@ -1901,6 +1955,7 @@ function sgGo(view){
 <script src="assets/stripe-checkout-qr-test.js?v=20261101-sandbox-qr10"></script>
 <script src="assets/stripe-sandbox-connexion.js?v=20261029-qr-test"></script>
 <script src="assets/messagerie-test.js?v=20261028-chat-v3"></script>
+<script src="assets/essai-reservation-chat-local.js?v=20261101-1"></script>
 <script src="assets/messages-rapides-test.js?v=20261028-a"></script>
 <script src="assets/diagnostic-appareil-test.js?v=20261028-native-ver"></script>
 <script src="assets/gps-diagnostic-local-test.js?v=20261101-1"></script>
