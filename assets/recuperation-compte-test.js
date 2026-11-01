@@ -20,6 +20,9 @@
   }
   function status(id,msg){const node=$(id);if(node)node.textContent=msg;}
   let requestPanel,completion,requestButton;
+  // Annule l'effet des réponses réseau tardives après abandon de la récupération.
+  let recoveryAttempt=0;
+  const stillRecovering=attempt=>attempt===recoveryAttempt&&isPending();
   function render(){
     if(!completion)return;
     const pending=isPending();
@@ -53,6 +56,7 @@
     const email=$('sgResetEmail')?.value.trim();
     if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return;
     const submit=$('sgResetSubmit');
+    if(submit.disabled)return; // Empêche un double e-mail via Entrée / double clic.
     submit.disabled=true;
     status('sgResetRequestInfo','Demande en cours…');
     try{
@@ -71,6 +75,7 @@
       }finally{clearTimeout(timeout);}
       if(!response.ok){
         if(response.status===429)throw new Error('rate-limit');
+        if(response.status>=500||response.status===422)throw new Error('delivery-error');
         throw new Error('recovery-error');
       }
       // Réponse identique, que le compte existe ou non.
@@ -80,7 +85,9 @@
         'Le serveur ne répond pas. Un e-mail a peut-être été envoyé : vérifiez votre boîte et les spams avant de redemander un lien.':
         error.message==='rate-limit'?
         'Limite d’e-mails SAMGO atteinte. Aucun nouveau lien n’a été envoyé pour cette tentative. Réessayez plus tard.':
-        'Impossible de demander le lien pour le moment. Vérifiez la connexion Internet.');
+        error.message==='delivery-error'?
+        'Service d’e-mails SAMGO momentanément indisponible. Le lien n’a pas été confirmé comme envoyé. Réessayez plus tard ou contactez l’assistance.':
+        'Impossible de demander le lien pour le moment. Vérifiez la connexion Internet ou réessayez plus tard.');
     }finally{submit.disabled=false;}
   }
   async function changePassword(event){
@@ -91,10 +98,14 @@
     if(password!==$('sgResetConfirm')?.value){
       status('sgResetCompleteStatus','Les mots de passe ne correspondent pas.');return;
     }
-    const submit=$('sgResetSave');submit.disabled=true;
+    const submit=$('sgResetSave');
+    if(submit.disabled)return; // Un seul changement de mot de passe à la fois.
+    const attempt=++recoveryAttempt;
+    submit.disabled=true;
     status('sgResetCompleteStatus','Enregistrement sécurisé…');
     try{
       const token=await client?.auth?.getAccessToken?.();
+      if(!stillRecovering(attempt))return;
       if(!token)throw new Error('not-authorized');
       const controller=new AbortController();
       const timeout=setTimeout(()=>controller.abort(),20000);
@@ -106,6 +117,7 @@
           body:JSON.stringify({password})
         });
       }finally{clearTimeout(timeout);}
+      if(!stillRecovering(attempt))return;
       if(!response.ok)throw new Error(response.status===401?'not-authorized':'update-error');
       $('sgResetNew').value='';$('sgResetConfirm').value='';
       markCleared();
@@ -114,6 +126,7 @@
       if(typeof refreshUser==='function')await refreshUser();
       render();
     }catch(error){
+      if(!stillRecovering(attempt))return;
       status('sgResetCompleteStatus',error?.name==='AbortError'?
         'Réponse trop lente. Le mot de passe a peut-être été modifié : vérifiez votre connexion avant de refaire une demande.':
         error.message==='not-authorized'?
@@ -122,6 +135,7 @@
     }finally{submit.disabled=false;}
   }
   async function cancelRecovery(){
+    ++recoveryAttempt;
     markCleared();
     $('sgResetNew').value='';$('sgResetConfirm').value='';
     completion.hidden=true;
