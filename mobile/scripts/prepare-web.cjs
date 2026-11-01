@@ -61,6 +61,11 @@ const reset=fs.readFileSync(resetFile,'utf8');
 fs.writeFileSync(resetFile,replaceOnce(reset,
  'const redirect=window.location.origin+window.location.pathname;',
  'const redirect='+JSON.stringify(WEB_ACCOUNT_CALLBACK)+';',
- 'e-mail récupération native'),'utf8');
+ 'e-mail récupération native'), 'utf8');
+const resendNative=fs.readFileSync(resetFile,'utf8');
+fs.writeFileSync(resetFile,replaceOnce(resendNative,
+ 'const confirmRedirect=window.location.origin+window.location.pathname;',
+ 'const confirmRedirect='+JSON.stringify(WEB_ACCOUNT_CALLBACK)+';',
+ 'e-mail de confirmation native'),'utf8');
 console.log('SAMGO TEST : pages et ressources exportées localement pour Capacitor.');
 console.log('ATTENTION : génération des projets Android/iOS et tests réels encore nécessaires.');
