@@ -22,7 +22,8 @@ function appWithResponse(statusCode){
     elements.set(id,new Node());
   const document={readyState:'complete',getElementById:id=>elements.get(id)||null,
     createElement:tag=>new Node(tag),addEventListener(){}};
-  const sessionStorage={getItem(){return null;},setItem(){},removeItem(){}};
+  const memory=new Map();
+  const sessionStorage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)};
   const window={location:{hash:'',origin:'https://samgo-officiel.github.io',pathname:'/samgo-v3-demo/'}};
   const fetch=(url,options)=>{
     requests.push({url,options});
@@ -37,7 +38,7 @@ function appWithResponse(statusCode){
     await forms[0].events.submit({preventDefault(){}});
     return elements.get('sgResetRequestInfo').textContent;
   };
-  return {reset,requests,elements};
+  return {reset,requests,elements,memory};
 }
 
 test('envoi recovery 403 indique la configuration e-mail et pas un souci de 4G',async()=>{
@@ -63,4 +64,18 @@ test('réponse recovery 200 respecte la confidentialité du compte',async()=>{
   const [request]=app.requests;
   assert.equal(request.options.method,'POST');
   assert.deepEqual(JSON.parse(request.options.body),{email:'client@example.test'});
+});
+test('récupération : après HTTP 200, les doublons sont évités pendant une minute',async()=>{
+  const app=appWithResponse(200);
+  assert.match(await app.reset(),/Patientez au moins une minute/);
+  assert.match(await app.reset(),/Attendez encore/);
+  assert.equal(app.requests.length,1);
+  assert.ok(Number(app.memory.get('samgo_v3_recovery_next_attempt'))>Date.now());
+});
+test('récupération : un échec SMTP 500 ne bloque pas une correction et un nouvel essai',async()=>{
+  const app=appWithResponse(500);
+  await app.reset();
+  await app.reset();
+  assert.equal(app.requests.length,2);
+  assert.equal(app.memory.has('samgo_v3_recovery_next_attempt'),false);
 });
