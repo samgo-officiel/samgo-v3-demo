@@ -520,6 +520,7 @@ input,select,textarea{font-size:16px}
 .sg-available-row strong{display:block;color:#e2ffea}
 #sgAvailableDriversStatus{margin:12px 0;padding:10px;border-left:3px solid #8ee2ad;background:#1b3940;overflow-wrap:anywhere}
 </style>
+<link rel="stylesheet" href="assets/messagerie-plein-ecran-test.css?v=20261102-fullscreen">
 </head>
 <body class="sg-home-active">
 <div id="sgNetworkOffline" role="status" aria-live="polite" hidden></div>
@@ -528,6 +529,38 @@ input,select,textarea{font-size:16px}
  <button type="button" onclick="window.sgChatTest.openNotice()">Lire le message TEST</button>
  <button type="button" class="alt" onclick="window.sgChatTest.dismissNotice()" aria-label="Masquer l’avis de nouveau message">×</button>
 </div>
+<section id="sgFullChatPage" role="dialog" aria-modal="true" aria-labelledby="sgFullChatTitle" aria-describedby="sgFullChatSubtitle" hidden>
+ <header class="sg-fullchat-bar">
+  <button type="button" id="sgFullChatBack" onclick="window.sgChatPage.back()" aria-label="Retour aux discussions ou à SAMGO">‹ Retour</button>
+  <div class="sg-fullchat-bar-content"><h2 id="sgFullChatTitle">Mes messages</h2><p id="sgFullChatSubtitle">SAMGO · TEST</p></div>
+  <button type="button" onclick="window.sgChatPage.close()" aria-label="Fermer les messages">Fermer ×</button>
+ </header>
+ <div class="sg-fullchat-main">
+  <div id="sgFullChatInbox">
+   <div class="sg-fullchat-intro"><strong>💬 Mes conversations</strong><p>Discussions avec un autre compte, liées aux réservations de TEST. Pas de vraie course ni de messages vocaux pour le moment.</p></div>
+   <div id="sgFullChatList" aria-label="Liste des conversations de test"></div>
+   <div id="sgFullChatEmpty" hidden>
+    <h3>Aucun message pour le moment</h3>
+    <p>Les conversations apparaissent quand un client choisit un chauffeur qui a répondu à sa demande de TEST.</p>
+    <button type="button" id="sgFullChatEmptyAction" onclick="window.sgChatPage.goNext()">Créer une demande TEST</button>
+    <button type="button" onclick="window.sgChatPage.goAccount()">Mon compte / Se connecter</button>
+   </div>
+  </div>
+  <div id="sgFullChatThread" hidden>
+   <div class="sg-fullchat-person">
+    <span class="sg-fullchat-thread-avatar" aria-hidden="true">C</span>
+    <div><strong>Conversation privée de TEST</strong><small>Uniquement le client et le chauffeur sélectionné</small></div>
+   </div>
+   <div id="sgFullChatMessages" role="log" aria-live="polite" aria-label="Messages de la conversation"></div>
+   <p id="sgFullChatReadOnly" class="sg-fullchat-readonly" hidden>Conversation en lecture seule.</p>
+   <div id="sgFullChatComposer" class="sg-fullchat-composer">
+    <textarea id="sgFullChatInput" maxlength="500" rows="1" aria-label="Écrire un message" placeholder="Écrire un message…"></textarea>
+    <button type="button" id="sgFullChatSend" onclick="window.sgChatPage.send()">Envoyer</button>
+   </div>
+  </div>
+ </div>
+ <p id="sgFullChatStatus" role="status" aria-live="polite">Messages synchronisés quand SAMGO est ouvert.</p>
+</section>
 <section id="sg-landing" aria-label="Accueil SAMGO">
  <div class="sg-hero-frame">
   <div class="sg-hero-photo" aria-hidden="true"></div><div class="sg-hero-shade" aria-hidden="true"></div>
@@ -578,7 +611,7 @@ input,select,textarea{font-size:16px}
   <p id="sgJourneyStatus" role="status" aria-live="polite">Appuyez sur « Vérifier mon parcours TEST » pour savoir quelle étape effectuer.</p>
   <p class="sg-demo-small">Pour échanger des messages, un autre compte chauffeur approuvé doit répondre, puis le client doit le sélectionner. Vous ne pouvez pas être à la fois le client et le chauffeur de la même annonce.</p>
  </section>
- <section id="sgRideChatDemoPanel" class="sg-ride-chat-local" aria-label="Essai de réservation et messages client chauffeur sur ce téléphone">
+ <section id="sgRideChatDemoPanel" class="sg-ride-chat-local" hidden aria-label="Essai de réservation et messages client chauffeur sur ce téléphone">
   <span class="sg-demo-eyebrow">🧪 BANC D'ESSAI LOCAL · SANS INSCRIPTION</span>
   <h3>Réservation + messages : test client et chauffeur</h3>
   <p><strong>Deux rôles sur ton iPhone.</strong> Simule une réservation, envoie un message comme client, lis-le comme chauffeur, puis réponds. Aucun message n'est transmis à une vraie personne, aucun paiement et aucune réservation réelle.</p>
@@ -667,7 +700,8 @@ input,select,textarea{font-size:16px}
    </div>
    <div id="sgReviewClientList"></div>
   </div>
-  <section class="sg-chat-test" aria-label="Messagerie fictive — client">
+  <section class="sg-fullchat-entry" aria-label="Boîte de réception client"><h3>💬 Mes messages — Espace client</h3><p>Une vraie conversation en plein écran avec le chauffeur choisi. Retrouvez vos échanges sur votre compte SAMGO de TEST.</p><button type="button" onclick="window.sgChatPage.open('client')">Ouvrir mes messages</button></section>
+<section class="sg-chat-test" hidden aria-label="Ancienne messagerie fictive — client">
   <h3>💬 Messagerie client–chauffeur (TEST)</h3>
   <p>Aucune vraie course : discussion réservée aux deux participants d’une simulation après sélection du chauffeur. N'échangez pas de vraie adresse, téléphone, document ou donnée bancaire. Uniquement quand SAMGO est ouvert.</p>
   <button class="alt" type="button" onclick="window.sgChatTest.refresh('client')">↻ Actualiser les conversations TEST</button>
@@ -804,6 +838,7 @@ input,select,textarea{font-size:16px}
    <div><small>STATUT DE MA CANDIDATURE</small><strong id="driverState">En cours de vérification</strong><p id="driverStateHelp">Chargement…</p></div>
    <span id="driverPill">En cours</span>
   </div>
+  <div class="sg-fullchat-entry"><h3>💬 Mes conversations de chauffeur</h3><p>Votre boîte de réception SAMGO s'ouvre en plein écran. Messages écrits entre comptes TEST uniquement.</p><button type="button" onclick="window.sgChatPage.open('driver')">Ouvrir mes messages</button></div>
   <div class="sg-driver-stats"><div><b>0</b><span>Courses réelles</span></div><div><b>0 €</b><span>Gains réels</span></div><div><b id="sgDriverRatingValue">—</b><span>Avis de test</span></div></div>
   <div class="sg-driver-tabs" role="group" aria-label="Mon espace chauffeur">
    <button type="button" data-dtab="overview" aria-pressed="true" onclick="driverTab('overview')">Accueil</button>
@@ -876,7 +911,8 @@ input,select,textarea{font-size:16px}
     <p id="sgDriverSelectionsStatus" role="status" aria-live="polite">Actualisez pour consulter vos réponses.</p>
     <div id="sgDriverSelectionsList"></div>
   </div>
-  <section class="sg-chat-test" aria-label="Messagerie fictive — chauffeur">
+  <section class="sg-fullchat-entry" aria-label="Boîte de réception chauffeur"><h3>💬 Mes messages — Espace chauffeur</h3><p>Vos conversations privées de TEST avec les clients qui vous choisissent. Écrivez et répondez depuis votre compte chauffeur.</p><button type="button" onclick="window.sgChatPage.open('driver')">Ouvrir mes messages chauffeur</button></section>
+<section class="sg-chat-test" hidden aria-label="Ancienne messagerie fictive — chauffeur">
   <h3>💬 Messagerie client–chauffeur (TEST)</h3>
   <p>Aucune vraie course : discussion réservée aux deux participants d’une simulation après sélection du chauffeur. N'échangez pas de vraie adresse, téléphone, document ou donnée bancaire. Uniquement quand SAMGO est ouvert.</p>
   <button class="alt" type="button" onclick="window.sgChatTest.refresh('driver')">↻ Actualiser les conversations TEST</button>
@@ -1670,6 +1706,7 @@ async function refreshUser(){
    ++driverApplyAttempt;driverApplyPendingUser=null;
    if(window.sgReviews)window.sgReviews.clear();
    if(window.sgChatTest)window.sgChatTest.stop();
+ if(window.sgChatPage)window.sgChatPage.reset();
    if(window.sgMyDataTest)window.sgMyDataTest.reset();
    if(window.sgDriverDocsTest)window.sgDriverDocsTest.reset();
    if(window.sgStripeSandbox)window.sgStripeSandbox.reset();
@@ -1860,6 +1897,7 @@ async function signOut(){
  // Supprimer immédiatement les agrégats privés de la carte en cas de déconnexion.
  if(window.sgDriverHotmap)window.sgDriverHotmap.close();
  if(window.sgChatTest)window.sgChatTest.stop();
+ if(window.sgChatPage)window.sgChatPage.reset();
  if(window.sgMyDataTest)window.sgMyDataTest.reset();
    if(window.sgDriverDocsTest)window.sgDriverDocsTest.reset();
  localDemoRequest=null;saveLocalDemo();renderLocalDemo();
@@ -1955,6 +1993,7 @@ function sgGo(view){
 <script src="assets/stripe-checkout-qr-test.js?v=20261101-sandbox-qr10"></script>
 <script src="assets/stripe-sandbox-connexion.js?v=20261029-qr-test"></script>
 <script src="assets/messagerie-test.js?v=20261028-chat-v3"></script>
+<script src="assets/messagerie-plein-ecran-test.js?v=20261102-fullscreen"></script>
 <script src="assets/essai-reservation-chat-local.js?v=20261101-1"></script>
 <script src="assets/messages-rapides-test.js?v=20261028-a"></script>
 <script src="assets/diagnostic-appareil-test.js?v=20261028-native-ver"></script>

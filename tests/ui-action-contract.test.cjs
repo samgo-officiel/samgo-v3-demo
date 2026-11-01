@@ -10,6 +10,7 @@ const modules={
  sgJourneyV2:'assets/parcours-v2-test.js',
  sgReviews:'assets/avis-chauffeurs-test.js',
  sgChatTest:'assets/messagerie-test.js',
+ sgChatPage:'assets/messagerie-plein-ecran-test.js',
  sgRideChatDemo:'assets/essai-reservation-chat-local.js',
  sgStripeDemo:'assets/stripe-connect-demo.js',
  sgStripeQrTest:'assets/stripe-checkout-qr-test.js',

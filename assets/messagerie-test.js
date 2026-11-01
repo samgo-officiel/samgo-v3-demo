@@ -33,6 +33,8 @@
   if(!signed()||sessionUser.id!==state.user||!['client','driver'].includes(role)){
    dismissNotice();return;
   }
+  // Ouvrir la conversation plein écran au lieu de viser l'ancien petit bloc.
+  if(window.sgChatPage?.open?.(role)){dismissNotice();return;}
   if(typeof sgGo==='function')sgGo(role==='client'?'trips':'driver');
   if(role==='driver'&&typeof driverTab==='function')driverTab('missions');
   const target=$(view[role].messages);
@@ -235,6 +237,7 @@
  // Deux téléphones : la réception fonctionne uniquement quand SAMGO est ouvert.
  // Relecture au retour de Safari et au retour du réseau, sans GPS ni push.
  function pollActiveConversation(){
+  if(window.sgChatPage?.isOpen?.())return;
   if(document.visibilityState==='hidden'||typeof navigator!=='undefined'&&navigator.onLine===false||!signed())return;
   const classes=document.body?.classList;
   const role=classes?.contains('sg-route-trips')?'client':
