@@ -7,6 +7,9 @@
   let layer=null;
   let activeUrl=null;
   let focusBefore=null;
+  // Payment Link créé sur le compte Stripe SAMGO, exclusivement en mode TEST.
+  // Montant fixe 10 € de démonstration : jamais lié à une course réelle.
+  const TEST_PAYMENT_LINK='https://buy.stripe.com/test_6oU00l3QT6A26480Eccs800';
 
   function validateCheckoutUrl(raw){
     if(typeof raw!=='string')throw new Error('Lien Stripe TEST manquant.');
@@ -28,10 +31,10 @@
       '<section class="sg-stripe-qr-card" role="dialog" aria-modal="true" aria-labelledby="sgStripeQrTitle" tabindex="-1">',
       '<span class="sg-stripe-label">STRIPE SANDBOX · AUCUN ARGENT RÉEL</span>',
       '<h2 id="sgStripeQrTitle">Scanner pour payer en TEST</h2>',
-      '<p>Scannez ce QR avec un deuxième téléphone pour ouvrir <strong>Stripe Checkout en mode test</strong>. Aucune carte réelle et aucune course réelle.</p>',
+      '<p id="sgStripeQrIntro">Scannez ce QR avec un deuxième téléphone pour ouvrir <strong>Stripe Checkout en mode test</strong>. Aucune carte réelle et aucune course réelle.</p>',
       '<div id="sgStripeQrDrawing" class="sg-stripe-qr-drawing" role="img" aria-label="QR code de la session Stripe TEST"></div>',
-      '<p class="sg-stripe-qr-note">Utilisez uniquement les cartes de test Stripe. Une image de QR ne prouve pas un paiement : attendez la confirmation du serveur Stripe.</p>',
-      '<button type="button" id="sgStripeQrOpen">Ouvrir Stripe TEST sur ce téléphone</button>',
+      '<p id="sgStripeQrNote" class="sg-stripe-qr-note">Utilisez uniquement les cartes de test Stripe. Une image de QR ne prouve pas un paiement : attendez la confirmation du serveur Stripe.</p>',
+      '<button type="button" id="sgStripeQrOpen">Ouvrir Stripe TEST sur cet iPhone</button>',
       '<button type="button" class="alt" id="sgStripeQrClose">Fermer le QR code</button>',
       '</section>'
     ].join('');
@@ -54,8 +57,12 @@
       else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
     });
   }
-  function show(raw){
-    const url=validateCheckoutUrl(raw);
+  function draw(raw,demo=false){
+    // Ne jamais accepter un lien de paiement de production dans un QR TEST.
+    const url=demo
+      ? (raw===TEST_PAYMENT_LINK ? TEST_PAYMENT_LINK :
+         (()=>{throw new Error('Lien Stripe TEST non autorisé.');})())
+      : validateCheckoutUrl(raw);
     if(typeof window.qrcode!=='function')throw new Error('Création du QR indisponible. Actualisez SAMGO.');
     // Création entièrement locale, aucune API ni image QR hébergée ailleurs.
     const qr=window.qrcode(0,'M');
@@ -63,12 +70,22 @@
     qr.make();
     const svg=qr.createSvgTag({cellSize:4,margin:16,scalable:true});
     init();
+    layer.querySelector('#sgStripeQrTitle').textContent=demo?
+      '💳 QR paiement — essai 10 €':'Scanner pour payer en TEST';
+    layer.querySelector('#sgStripeQrIntro').textContent=demo?
+      'Paiement de démonstration de 10 € dans Stripe TEST, sans compte SAMGO. Scannez avec un deuxième téléphone ou ouvrez Stripe sur cet iPhone. Aucun argent réel et aucune course réservée.':
+      'Scannez ce QR avec un deuxième téléphone pour ouvrir Stripe Checkout en mode test. Aucune course réelle.';
+    layer.querySelector('#sgStripeQrNote').textContent=demo?
+      'Attention : ce QR à 10 € est un essai indépendant des réservations SAMGO. Utilisez seulement les cartes de TEST Stripe. Un retour depuis Stripe ne confirme jamais une course ni un paiement SAMGO.':
+      'Utilisez uniquement les cartes de test Stripe. Un QR ou un retour ne prouve pas que Stripe a confirmé le paiement ; seule la confirmation serveur signée est valable.';
     layer.querySelector('#sgStripeQrDrawing').innerHTML=svg;
     focusBefore=document.activeElement;
     activeUrl=url;
     layer.hidden=false;
     layer.querySelector('#sgStripeQrClose').focus();
   }
+  function show(raw){return draw(raw,false);}
+  function showDemo(){return draw(TEST_PAYMENT_LINK,true);}
   function close(){
     activeUrl=null;
     if(!layer)return;
@@ -77,5 +94,5 @@
     if(focusBefore&&typeof focusBefore.focus==='function')focusBefore.focus();
     focusBefore=null;
   }
-  window.sgStripeQrTest={show,close};
+  window.sgStripeQrTest={show,showDemo,close};
 })();
