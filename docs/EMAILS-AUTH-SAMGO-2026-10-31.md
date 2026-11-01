@@ -35,3 +35,13 @@
 **Règle de sortie :** ne cocher « e-mails opérationnels » qu'après une preuve de réception et d'utilisation réelle du lien. Ne pas activer de courses ou paiements LIVE.
 
 Documentation : https://supabase.com/docs/guides/auth/auth-smtp
+
+## Préparation complémentaire — 1er novembre 2026 (PR #26, non déployée)
+- Le renvoi de l'e-mail de confirmation a été ajouté **en préparation** : bouton déclenché manuellement depuis l'écran Compte, validation de l'adresse, délai local d'une minute, messages distincts pour SMTP absent, HTTP 429, panne réseau et requête lente. Aucun renvoi automatique.
+- Le script de préparation iOS/Android force le lien de retour de confirmation vers le site HTTPS SAMGO, pas vers l'URL interne de l'application.
+- La nouvelle version du module JavaScript utilise une URL avec version pour éviter qu'un ancien navigateur conserve son script en cache.
+- Deux modèles HTML réutilisables sont prêts : `supabase/email-templates/confirmation.html` et `supabase/email-templates/recovery.html`. Les liens sont fournis par Supabase avec la variable officielle `{{ .ConfirmationURL }}` ; aucune clé, aucun e-mail ou jeton n'est inclus dans ces fichiers.
+- Ne pas coller les modèles dans Supabase automatiquement sans avoir vérifié le domaine d'expédition et le fournisseur, et sans conserver une copie des modèles existants.
+- L'activation effective nécessite toujours un serveur SMTP transactionnel avec domaine expéditeur validé, sa configuration secrète dans le dashboard, et une confirmation/récupération reçue et utilisée en conditions de test.
+
+**Sécurité :** les deux fichiers et la branche ne contiennent aucun secret SMTP. Ne jamais envoyer de clé privée dans ChatGPT, GitHub ou les tickets.
