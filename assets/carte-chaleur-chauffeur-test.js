@@ -17,6 +17,34 @@ const tileUrl='https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const leafletJs='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
 const leafletCss='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
 let map=null,loading=null,pending=false,generation=0;
+let lastCoarseCenter=null,mode='demo',recordedZones=[];
+function approvedDriver(){
+ return typeof client!=='undefined'&&!!client?.testRequests?.list&&
+  typeof sessionUser!=='undefined'&&!!sessionUser&&
+  typeof driverSimAllowed!=='undefined'&&driverSimAllowed===true;
+}
+function aggregateRequests(rows,now=Date.now()){
+ // Afficher seulement des secteurs de 0,1° avec au moins 3 clients distincts.
+ // Jamais de marqueur sur le lieu individuel d'un client, ni de coordonnée
+ // précise transmise au fond cartographique.
+ if(!Array.isArray(rows))return [];
+ const groups=new Map();
+ for(const row of rows.slice(0,100)){
+  const lat=Number(row?.latitude_approx),lng=Number(row?.longitude_approx);
+  const exp=Date.parse(String(row?.expire_le||''));
+  const uid=row?.client_id;
+  if(row?.statut!=='test_en_attente'||!uid||!Number.isFinite(exp)||exp<=now||
+   row.latitude_approx==null||row.longitude_approx==null||
+   !Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>85||Math.abs(lng)>179)continue;
+  const cellLat=Math.floor(lat*10),cellLng=Math.floor(lng*10),key=cellLat+','+cellLng;
+  if(!groups.has(key))groups.set(key,{lat:(cellLat+0.5)/10,lng:(cellLng+0.5)/10,users:new Set()});
+  groups.get(key).users.add(String(uid));
+ }
+ return [...groups.values()].filter(g=>g.users.size>=3)
+  .map(g=>({lat:g.lat,lng:g.lng,count:g.users.size}))
+  .slice(0,25);
+}
+
 function status(message){const p=$('sgDriverHotmapStatus');if(p)p.textContent=message;}
 function validCoords(position){
  const lat=position?.coords?.latitude,lng=position?.coords?.longitude;
@@ -96,14 +124,16 @@ function draw(L,center){
  L.circleMarker([center.lat,center.lng],{
   radius:8,color:'#d5ffff',weight:2,fillColor:'#60d4d1',fillOpacity:0.95
  }).addTo(map).bindPopup('Centre approximatif de la carte — pas votre position précise.');
- for(const p of nearbyDemoPoints(center)){
+ for(const p of (mode==='recorded'?recordedZones:nearbyDemoPoints(center))){
   const color=p.count>=12?'#db3828':p.count>=6?'#ef902a':'#ffdf53';
   // Trois disques concentriques transparents créent une zone diffuse :
   // intensité correspondant uniquement à des volumes inventés.
   const outer=L.circle([p.lat,p.lng],{radius:2000,stroke:false,fillColor:color,fillOpacity:0.12}).addTo(map);
   L.circle([p.lat,p.lng],{radius:1100,stroke:false,fillColor:color,fillOpacity:0.22}).addTo(map);
   L.circle([p.lat,p.lng],{radius:460,stroke:false,fillColor:color,fillOpacity:0.42}).addTo(map);
-  outer.bindPopup('Zone chaude TEST — '+p.count+' demandes FICTIVES. Aucune vraie demande.');
+  outer.bindPopup(mode==='recorded'
+   ? 'Zone agrégée : '+p.count+' annonces de TEST provenant de comptes distincts. Aucune adresse exacte.'
+   : 'Zone chaude TEST — '+p.count+' demandes FICTIVES. Aucune vraie demande.');
  }
  // Attendre que la zone soit effectivement visible, surtout après navigation
  // vers le panneau chauffeur dans Safari.
@@ -118,6 +148,7 @@ async function open(){
   return;
  }
  const current=++generation;pending=true;button.disabled=true;
+ mode='demo';recordedZones=[];lastCoarseCenter=null;
  status('Chargement de la carte… La localisation ne sera demandée que pour cette action.');
  try{
   // Au clic seulement : en cas de refus GPS, afficher Bordeaux comme exemple
@@ -129,6 +160,7 @@ async function open(){
    center=validCoords(position);
    geoLabel='Centre basé sur votre zone approximative (arrondie à 0,1°).';
   }catch(_){if(current!==generation)return;}
+  lastCoarseCenter=center;
   const L=await loadLeaflet();
   if(current!==generation)return;
   draw(L,center);
@@ -144,11 +176,38 @@ async function open(){
   }
  }finally{if(current===generation){pending=false;button.disabled=false;}}
 }
+async function showRecorded(){
+ if(!approvedDriver()){
+  status('Accès réservé aux chauffeurs de TEST approuvés et connectés. Aucune annonce privée n’est partagée sans autorisation.');
+  return;
+ }
+ if(pending){status('Terminez le chargement de la carte avant de consulter les annonces de test.');return;}
+ if(!map||!lastCoarseCenter){
+  status('Ouvrez d’abord la carte avec « Afficher les zones chaudes ».');return;
+ }
+ const button=$('sgDriverHotmapRecorded'),current=++generation;
+ if(button)button.disabled=true;
+ status('Consultation des annonces de TEST accessibles au chauffeur approuvé…');
+ try{
+  const result=await client.testRequests.list(lastCoarseCenter,50);
+  if(current!==generation||!approvedDriver()||!map)return;
+  if(result.error)throw result.error;
+  const rows=Array.isArray(result.data)?result.data:[];
+  recordedZones=aggregateRequests(rows);
+  mode='recorded';
+  draw(window.L,lastCoarseCenter);
+  status(recordedZones.length
+   ? 'Zones chaudes calculées à partir des annonces de TEST enregistrées. Regroupement par secteur d’environ 11 km et 3 clients distincts minimum. Aucune adresse individuelle visible.'
+   : 'Aucune zone chaude de TEST suffisamment dense (minimum 3 demandes de clients distincts dans le même secteur). Les annonces isolées restent privées. Aucune demande fictive ajoutée.');
+ }catch(_){
+  if(current===generation)status('Impossible de charger les demandes de TEST. Vérifiez votre session chauffeur approuvé et réessayez.');
+ }finally{if(button)button.disabled=false;}
+}
 function close(){
- ++generation;pending=false;resetMap();
+ ++generation;pending=false;lastCoarseCenter=null;recordedZones=[];mode='demo';resetMap();
  const start=$('sgDriverHotmapStart'),stop=$('sgDriverHotmapStop');
  if(start)start.disabled=false;if(stop)stop.disabled=true;
  status('Carte fermée. Aucun suivi GPS actif.');
 }
-window.sgDriverHotmap={open,close,nearbyDemoPoints,validCoords};
+window.sgDriverHotmap={open,close,showRecorded,aggregateRequests,nearbyDemoPoints,validCoords};
 })();
