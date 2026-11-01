@@ -462,6 +462,23 @@ input,select,textarea{font-size:16px}
 .sg-client-map-note{color:#c0d2d4}
 #sgClientMapStatus{border-left:3px solid #e6bb6f;padding:9px 10px;background:#172f39;color:#fff}
 </style>
+<style id="sg-hotmap-styles">
+.sg-hotmap-card{border:1px solid #72838b;background:#142833;border-radius:16px;padding:16px;margin:18px 0}
+.sg-hotmap-card h3{font-size:19px;line-height:1.3;color:#ffdc92;margin:0 0 9px}
+.sg-hotmap-card p{font-size:13px;line-height:1.5;color:#d4e0e3}
+.sg-hotmap-card p strong{color:#ffe2a4}
+.sg-hotmap-legend{display:flex;flex-wrap:wrap;gap:10px;margin:11px 0 16px}
+.sg-hotmap-legend span{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#ebf3f3}
+.sg-hotmap-dot{width:14px;height:14px;display:inline-block;border-radius:100%;border:1px solid #eee6}
+.sg-hotmap-yellow{background:#ffdf53}.sg-hotmap-orange{background:#ef902a}.sg-hotmap-red{background:#db3828}
+.sg-hotmap-actions{display:flex;flex-wrap:wrap;gap:9px}
+.sg-hotmap-actions button{flex:1 1 150px;font-size:13px;min-height:48px}
+.sg-hotmap-view{height:340px;min-height:0;border-radius:12px;overflow:hidden;background:#0e1f2b}
+.sg-hotmap-view:empty{height:0}
+#sgDriverHotmapStatus{border-left:3px solid #edbb56;background:#1a3541;padding:11px;border-radius:4px;overflow-wrap:anywhere}
+.sg-hotmap-note{font-size:11px!important;color:#b8cfd6!important}
+.sg-hotmap-view .leaflet-control-attribution{font-size:9px;line-height:1.2}
+</style>
 </head>
 <body class="sg-home-active">
 <div id="sgNetworkOffline" role="status" aria-live="polite" hidden></div>
@@ -676,6 +693,22 @@ input,select,textarea{font-size:16px}
 </section>
   <section id="spaceChauffeur" class="panel hidden sg-driver">
  <div class="sg-driver-heading"><span>ESPACE CHAUFFEUR · SAMGO</span><h2 id="driverTitle">Devenir chauffeur SAMGO</h2><p id="driverDesc">Créez un compte ou connectez-vous pour suivre votre candidature.</p></div>
+ <section id="sgDriverHotmapPanel" class="sg-hotmap-card" aria-label="Carte de concentration des demandes fictives">
+  <h3>🗺️ Carte des demandes — zones chaudes (TEST)</h3>
+  <p>Une vraie carte avec les rues, inspirée des zones chaudes de Snapchat. Les couleurs indiquent ici des <strong>demandes complètement fictives</strong>, pour tester le principe sans compte ni réservation.</p>
+  <div class="sg-hotmap-legend" aria-label="Intensité des demandes fictives">
+   <span><i class="sg-hotmap-dot sg-hotmap-yellow"></i> Jaune : quelques demandes</span>
+   <span><i class="sg-hotmap-dot sg-hotmap-orange"></i> Orange : plusieurs demandes</span>
+   <span><i class="sg-hotmap-dot sg-hotmap-red"></i> Rouge : forte concentration</span>
+  </div>
+  <div class="sg-hotmap-actions">
+   <button type="button" id="sgDriverHotmapStart" onclick="window.sgDriverHotmap.open()">📍 Afficher les zones chaudes (TEST)</button>
+   <button type="button" class="alt" id="sgDriverHotmapStop" onclick="window.sgDriverHotmap.close()" disabled>Fermer la carte</button>
+  </div>
+  <p id="sgDriverHotmapStatus" role="status" aria-live="polite">La carte sera chargée seulement après votre clic. Si la localisation est refusée, un exemple fictif autour de Bordeaux s’affichera.</p>
+  <div id="sgDriverHotmapView" class="sg-hotmap-view" aria-label="Carte routière interactive des zones fictives"></div>
+  <p class="sg-hotmap-note">Fond de carte © OpenStreetMap. En ouvrant la carte, des tuiles cartographiques sont téléchargées depuis OpenStreetMap et les ressources Leaflet depuis un fournisseur externe. SAMGO transmet au fond cartographique la zone visible, jamais votre position GPS exacte. Ni suivi continu, ni vraies demandes. Pour les demandes enregistrées en TEST, utilisez « Chauffeur → Demandes » après approbation.</p>
+ </section>
  <div id="driverDashboard" class="hidden">
   <div class="sg-driver-state">
    <div><small>STATUT DE MA CANDIDATURE</small><strong id="driverState">En cours de vérification</strong><p id="driverStateHelp">Chargement…</p></div>
@@ -1815,6 +1848,7 @@ function sgGo(view){
 <script src="assets/messages-rapides-test.js?v=20261028-a"></script>
 <script src="assets/diagnostic-appareil-test.js?v=20261028-native-ver"></script>
 <script src="assets/gps-diagnostic-local-test.js?v=20261101-1"></script>
+<script src="assets/carte-chaleur-chauffeur-test.js?v=20261101-hotmap1"></script>
 <script src="assets/carte-chauffeurs-client-test.js?v=20261101-a"></script>
 <script src="assets/dossier-chauffeur-test.js?v=20261028-docs1"></script>
 <script src="assets/export-donnees-test.js?v=20261028-b"></script>
