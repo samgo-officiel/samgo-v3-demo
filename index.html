@@ -479,6 +479,16 @@ input,select,textarea{font-size:16px}
 .sg-hotmap-note{font-size:11px!important;color:#b8cfd6!important}
 .sg-hotmap-view .leaflet-control-attribution{font-size:9px;line-height:1.2}
 </style>
+<style id="sg-available-styles">
+.sg-available-test{margin:17px 0;padding:15px;border:1px solid #739287;border-radius:13px;background:#152c2e}
+.sg-available-test h4{font-size:16px;color:#9ff1bf;margin:0 0 9px}
+.sg-available-test p{font-size:12px;line-height:1.6}
+.sg-available-test button{min-height:46px;font-size:13px;width:100%}
+.sg-available-test button:disabled{opacity:.6}
+.sg-available-row{padding:11px;margin:10px 0;border-radius:11px;background:#223c41;border:1px solid #496f65}
+.sg-available-row strong{display:block;color:#e2ffea}
+#sgAvailableDriversStatus{margin:12px 0;padding:10px;border-left:3px solid #8ee2ad;background:#1b3940;overflow-wrap:anywhere}
+</style>
 </head>
 <body class="sg-home-active">
 <div id="sgNetworkOffline" role="status" aria-live="polite" hidden></div>
@@ -647,6 +657,14 @@ input,select,textarea{font-size:16px}
     <div id="sgClientMapRadar" class="sg-client-map-radar" aria-label="Radar schématique des chauffeurs fictifs"></div>
     <div id="sgClientMapProfiles" class="sg-client-map-profiles"></div>
     <p class="sg-client-map-note">Le schéma n’est pas une carte des rues. Les coordonnées GPS exactes ne sont ni conservées ni envoyées. Aucun chauffeur n’est contacté et aucune course n’est réservable.</p>
+    <section id="sgAvailableDriversBox" class="sg-available-test" aria-label="Disponibilité réelle des chauffeurs approuvés en test">
+      <h4>🟢 Chauffeurs disponibles — vérification TEST</h4>
+      <p>Uniquement les chauffeurs approuvés ayant activé leur disponibilité et une position approximative récente. Pas de simulation dans cette liste, ni de position exacte ni de contact direct.</p>
+      <button type="button" id="sgAvailableDriversRun" onclick="window.sgAvailableDrivers.refresh()">📍 Vérifier les chauffeurs disponibles près de moi</button>
+      <p role="status" aria-live="polite" id="sgAvailableDriversStatus">Aucune recherche effectuée. Votre GPS sera demandé seulement au clic.</p>
+      <div id="sgAvailableDriversResults"></div>
+      <p class="sg-client-map-note">Les distances sont des estimations par tranches et ne servent pas à réserver une course. Aucun chauffeur n’est visible sans autorisation et disponibilité valides.</p>
+    </section>
   </section>
   <form id="demoBookingForm" onsubmit="createLocalDemo(event)">
     <label for="demoDepart">Lieu de départ fictif</label>
@@ -703,6 +721,7 @@ input,select,textarea{font-size:16px}
   </div>
   <div class="sg-hotmap-actions">
    <button type="button" id="sgDriverHotmapStart" onclick="window.sgDriverHotmap.open()">📍 Afficher les zones chaudes (TEST)</button>
+   <button type="button" class="alt" id="sgDriverHotmapRecorded" onclick="window.sgDriverHotmap.showRecorded()">Afficher les demandes enregistrées (chauffeur approuvé)</button>
    <button type="button" class="alt" id="sgDriverHotmapStop" onclick="window.sgDriverHotmap.close()" disabled>Fermer la carte</button>
   </div>
   <p id="sgDriverHotmapStatus" role="status" aria-live="polite">La carte sera chargée seulement après votre clic. Si la localisation est refusée, un exemple fictif autour de Bordeaux s’affichera.</p>
@@ -1363,7 +1382,25 @@ input,select,textarea{font-size:16px}
         }catch(error){return {error};}
       }
     };
-    return {auth,from,testRequests,testReplies,testChoices,testReviews,testTracking,testPayments,testMessages,async ping(){return api('/auth/v1/settings','GET');}};
+    const availableDrivers={
+      async list(){
+        try{
+          // L'API publique est protégée par RLS : seuls les chauffeurs
+          // approuvés et disponibles peuvent être retournés.
+          const [offers,positions]=await Promise.all([
+            api('/rest/v1/offres_chauffeurs?select=chauffeur_id,nom_public,disponible,modifie_le&disponible=eq.true&limit=100'),
+            api('/rest/v1/positions_chauffeurs_test?select=chauffeur_id,latitude_approx,longitude_approx,actualise_le&limit=100')
+          ]);
+          const posById=new Map((Array.isArray(positions)?positions:[])
+            .filter(row=>row?.chauffeur_id).map(row=>[row.chauffeur_id,row]));
+          const data=(Array.isArray(offers)?offers:[]).filter(o=>o?.disponible===true&&posById.has(o.chauffeur_id))
+            .map(o=>({name:o.nom_public,position:posById.get(o.chauffeur_id),
+              updated:o.modifie_le}));
+          return {data,error:null};
+        }catch(error){return {data:[],error};}
+      }
+    };
+    return {auth,from,testRequests,testReplies,testChoices,testReviews,testTracking,testPayments,testMessages,availableDrivers,async ping(){return api('/auth/v1/settings','GET');}};
   }
   window.samgoCreateClient = makeClient;
 })();
@@ -1749,6 +1786,8 @@ async function signOut(){
  if(window.sgReviews)window.sgReviews.clear();
  if(window.sgStripeSandbox)window.sgStripeSandbox.reset();
  if(window.sgDemand)window.sgDemand.stop({clearClient:true});
+ // Supprimer immédiatement les agrégats privés de la carte en cas de déconnexion.
+ if(window.sgDriverHotmap)window.sgDriverHotmap.close();
  if(window.sgChatTest)window.sgChatTest.stop();
  if(window.sgMyDataTest)window.sgMyDataTest.reset();
    if(window.sgDriverDocsTest)window.sgDriverDocsTest.reset();
@@ -1850,6 +1889,7 @@ function sgGo(view){
 <script src="assets/gps-diagnostic-local-test.js?v=20261101-1"></script>
 <script src="assets/carte-chaleur-chauffeur-test.js?v=20261101-hotmap1"></script>
 <script src="assets/carte-chauffeurs-client-test.js?v=20261101-a"></script>
+<script src="assets/chauffeurs-disponibles-test.js?v=20261101-1"></script>
 <script src="assets/dossier-chauffeur-test.js?v=20261028-docs1"></script>
 <script src="assets/export-donnees-test.js?v=20261028-b"></script>
 <script src="assets/effacer-local-test.js?v=20261028-a"></script>
