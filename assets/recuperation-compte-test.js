@@ -110,12 +110,12 @@
     button.disabled=true;
     status('sgResendConfirmationStatus','Demande de renvoi en cours…');
     try{
-      const redirect=window.location.origin+window.location.pathname;
+      const confirmRedirect=window.location.origin+window.location.pathname;
       const controller=new AbortController();
       const timeout=setTimeout(()=>controller.abort(),20000);
       let response;
       try{
-        response=await fetch(BASE+'/auth/v1/resend?redirect_to='+encodeURIComponent(redirect),{
+        response=await fetch(BASE+'/auth/v1/resend?redirect_to='+encodeURIComponent(confirmRedirect),{
           method:'POST',cache:'no-store',signal:controller.signal,
           headers:{apikey:PUBLISHABLE_KEY,'Content-Type':'application/json'},
           body:JSON.stringify({type:'signup',email:address})
