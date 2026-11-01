@@ -232,16 +232,22 @@
   };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
  }
- // En présence d'une conversation ouverte, vérifier uniquement ses messages toutes
- // les 15 s : plus réactif que le rafraîchissement général de 45 s, sans GPS ni push.
- // Aucun appel quand la page est cachée, hors ligne, déconnectée ou sans chat choisi.
- if(typeof setInterval==='function')setInterval(()=>{
+ // Deux téléphones : la réception fonctionne uniquement quand SAMGO est ouvert.
+ // Relecture au retour de Safari et au retour du réseau, sans GPS ni push.
+ function pollActiveConversation(){
   if(document.visibilityState==='hidden'||typeof navigator!=='undefined'&&navigator.onLine===false||!signed())return;
   const classes=document.body?.classList;
   const role=classes?.contains('sg-route-trips')?'client':
    classes?.contains('sg-route-driver')?'driver':null;
   if(!role||!state[role].current||state[role].sending)return;
   return loadMessages(role);
- },15000);
+ }
+ if(typeof setInterval==='function')setInterval(pollActiveConversation,15000);
+ if(typeof document.addEventListener==='function')
+  document.addEventListener('visibilitychange',()=>{
+   if(document.visibilityState!=='hidden')pollActiveConversation();
+  });
+ if(typeof window.addEventListener==='function')
+  window.addEventListener('online',pollActiveConversation);
  window.sgChatTest={refresh,send,stop,openNotice,dismissNotice};
 })();
