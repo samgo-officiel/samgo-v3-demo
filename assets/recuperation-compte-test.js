@@ -71,6 +71,8 @@
       }finally{clearTimeout(timeout);}
       if(!response.ok){
         if(response.status===429)throw new Error('rate-limit');
+        if(response.status===403)throw new Error('email-not-authorized');
+        if(response.status>=500)throw new Error('email-server-error');
         throw new Error('recovery-error');
       }
       // Réponse identique, que le compte existe ou non.
@@ -80,7 +82,11 @@
         'Le serveur ne répond pas. Un e-mail a peut-être été envoyé : vérifiez votre boîte et les spams avant de redemander un lien.':
         error.message==='rate-limit'?
         'Limite d’e-mails SAMGO atteinte. Aucun nouveau lien n’a été envoyé pour cette tentative. Réessayez plus tard.':
-        'Impossible de demander le lien pour le moment. Vérifiez la connexion Internet.');
+        error.message==='email-not-authorized'?
+        'Le service e-mail SAMGO TEST ne peut pas envoyer de lien vers cette adresse. Un SMTP externe peut être nécessaire.':
+        error.message==='email-server-error'?
+        'Le serveur d’envoi d’e-mails SAMGO ne répond pas correctement. Réessayez plus tard après vérification du SMTP.':
+        'Impossible de demander le lien pour le moment. Vérifiez la connexion Internet ou réessayez plus tard.');
     }finally{submit.disabled=false;}
   }
   const CONFIRM_COOLDOWN='samgo_v3_confirm_next_attempt';
