@@ -439,6 +439,29 @@ input,select,textarea{font-size:16px}
 .sg-stripe-qr-drawing svg{display:block;width:100%;height:auto;max-height:300px}
 .sg-stripe-qr-card button{width:100%;display:block;margin-top:9px}
 </style>
+<style id="sg-client-map-style">
+.sg-client-map-demo{margin:19px 0;padding:17px;border:1px solid #6c837d;border-radius:17px;background:#13242d;color:#f6f5f0}
+.sg-client-map-demo h3{font-size:19px;line-height:1.3;color:#ffda91;margin:0 0 9px}
+.sg-client-map-demo p{line-height:1.5;font-size:13px}
+.sg-client-map-notice{color:#f2dcc1}
+.sg-client-map-actions{display:flex;gap:8px;flex-wrap:wrap}
+.sg-client-map-actions button{flex:1 1 175px;min-height:46px;font-size:13px}
+.sg-client-map-actions button:disabled,.sg-client-map-profile button:disabled{opacity:.5;cursor:not-allowed}
+.sg-client-map-filters{display:flex;align-items:center;gap:15px;flex-wrap:wrap;margin:14px 0}
+.sg-client-map-filters label{font-size:12px;font-weight:700;color:#f1e0c0}
+.sg-client-map-filters select{display:block;width:135px;min-height:40px;margin:7px 0 0;border-radius:9px;background:#09181e;border:1px solid #82979c;color:#fff;padding:7px;font:inherit}
+.sg-client-map-filters .sg-client-map-check{display:flex;gap:7px;align-items:center}
+.sg-client-map-check input{width:20px;height:20px;min-height:20px}
+.sg-client-map-radar{max-width:340px;margin:10px auto}
+.sg-client-map-radar svg{display:block;width:100%;height:auto}
+.sg-client-map-profiles{display:grid;gap:9px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.sg-client-map-profile{border:1px solid #4f676f;border-radius:12px;padding:12px;background:#172f3a}
+.sg-client-map-profile strong{display:block;color:#fff}
+.sg-client-map-profile p{font-size:12px;color:#d2e0dc;margin:8px 0}
+.sg-client-map-profile button{font-size:12px;min-height:38px;width:100%;padding:8px}
+.sg-client-map-note{color:#c0d2d4}
+#sgClientMapStatus{border-left:3px solid #e6bb6f;padding:9px 10px;background:#172f39;color:#fff}
+</style>
 </head>
 <body class="sg-home-active">
 <div id="sgNetworkOffline" role="status" aria-live="polite" hidden></div>
@@ -588,6 +611,26 @@ input,select,textarea{font-size:16px}
   <h2>Réserver un chauffeur</h2>
   <p class="subtle">Testez la réservation SAMGO. <strong>Simulation uniquement :</strong> aucune course ni aucun paiement réels.</p>
   <div class="sg-demo-warning">⚠️ Utilisez seulement des noms de lieux fictifs. Ne renseignez pas votre véritable adresse.</div>
+  <section id="sgClientDriverMap" class="sg-client-map-demo" aria-label="Carte de démonstration des chauffeurs fictifs">
+    <h3>🗺️ Chauffeurs près de moi — TEST</h3>
+    <p class="sg-client-map-notice"><strong>Simulation seulement :</strong> tous les profils et leurs distances sont inventés. Cette carte n’affiche aucun vrai chauffeur, aucune adresse et aucune disponibilité réelle.</p>
+    <div class="sg-client-map-actions">
+      <button type="button" id="sgClientMapStart" onclick="window.sgClientDriverMap.start()">📍 Tester la carte autour de moi</button>
+      <button type="button" class="alt" id="sgClientMapStop" onclick="window.sgClientDriverMap.stop()" disabled>Effacer le test</button>
+    </div>
+    <div class="sg-client-map-filters">
+      <label for="sgClientMapRadius">Rayon illustratif
+        <select id="sgClientMapRadius" onchange="window.sgClientDriverMap.filterChanged()">
+          <option value="5">5 km</option><option value="10" selected>10 km</option><option value="30">30 km</option>
+        </select>
+      </label>
+      <label class="sg-client-map-check"><input id="sgClientMapAvailableOnly" type="checkbox" onchange="window.sgClientDriverMap.filterChanged()" /> Disponibles seulement (fictif)</label>
+    </div>
+    <p id="sgClientMapStatus" role="status" aria-live="polite">Appuyez pour tester votre GPS et découvrir des profils de démonstration. La localisation n’est demandée que sur clic.</p>
+    <div id="sgClientMapRadar" class="sg-client-map-radar" aria-label="Radar schématique des chauffeurs fictifs"></div>
+    <div id="sgClientMapProfiles" class="sg-client-map-profiles"></div>
+    <p class="sg-client-map-note">Le schéma n’est pas une carte des rues. Les coordonnées GPS exactes ne sont ni conservées ni envoyées. Aucun chauffeur n’est contacté et aucune course n’est réservable.</p>
+  </section>
   <form id="demoBookingForm" onsubmit="createLocalDemo(event)">
     <label for="demoDepart">Lieu de départ fictif</label>
     <input id="demoDepart" type="text" maxlength="90" minlength="2" autocomplete="off" placeholder="Ex. Centre-ville fictif" required />
@@ -1772,6 +1815,7 @@ function sgGo(view){
 <script src="assets/messages-rapides-test.js?v=20261028-a"></script>
 <script src="assets/diagnostic-appareil-test.js?v=20261028-native-ver"></script>
 <script src="assets/gps-diagnostic-local-test.js?v=20261101-1"></script>
+<script src="assets/carte-chauffeurs-client-test.js?v=20261101-a"></script>
 <script src="assets/dossier-chauffeur-test.js?v=20261028-docs1"></script>
 <script src="assets/export-donnees-test.js?v=20261028-b"></script>
 <script src="assets/effacer-local-test.js?v=20261028-a"></script>
