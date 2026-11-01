@@ -398,3 +398,49 @@ test('reconnexion 4G : ne réactive pas un GPS arrêté ni un onglet masqué',as
  assert.equal(x.calls(),1);
  assert.equal(x.prompts.length,0);
 });
+
+
+test('double clic Publier TEST : une seule permission GPS et une seule écriture serveur',async()=>{
+ const x=boot({demoRequest:{from:'Lieu fictif A',to:'Lieu fictif B',km:7}});
+ x.get('sgPublishConsent').checked=true;
+ const first=x.geo.publish(),second=x.geo.publish();
+ await Promise.all([second,new Promise(resolve=>setImmediate(resolve))]);
+ assert.equal(x.prompts.length,1,'un seul GPS demandé pendant la première publication');
+ x.giveGPS();
+ await first;
+ assert.equal(x.published(),1,'un seul appel de création doit partir');
+ assert.equal(x.get('sgPublishBtn').disabled,false);
+});
+test('déconnexion pendant une permission GPS de publication : aucune annonce ne part',async()=>{
+ const x=boot({demoRequest:{from:'Lieu fictif A',to:'Lieu fictif B',km:7}});
+ x.get('sgPublishConsent').checked=true;
+ const pending=x.geo.publish();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(x.prompts.length,1);
+ x.geo.stop({clearClient:true});
+ x.giveGPS();
+ await pending;
+ assert.equal(x.published(),0);
+ assert.equal(x.get('sgPublishBtn').disabled,false);
+});
+test('une ancienne réponse serveur ne réactive pas le bouton d une nouvelle publication',async()=>{
+ let release,started;
+ const inCreate=new Promise(resolve=>{started=resolve;});
+ const x=boot({demoRequest:{from:'Lieu fictif A',to:'Lieu fictif B',km:7},
+  createRequest:(()=>{let call=0;return ()=>{call++;if(call===1){started();return new Promise(resolve=>{release=resolve;});}return Promise.resolve({error:null});};})()});
+ x.get('sgPublishConsent').checked=true;
+ const old=x.geo.publish();
+ await new Promise(resolve=>setImmediate(resolve));x.giveGPS();
+ await inCreate;
+ x.geo.stop({clearClient:true});
+ x.get('sgPublishConsent').checked=true;
+ const next=x.geo.publish();
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(x.get('sgPublishBtn').disabled,true);
+ release({error:null});
+ await old;
+ assert.equal(x.get('sgPublishBtn').disabled,true,'ancienne requête ne touche pas au nouveau bouton');
+ x.giveGPS();
+ await next;
+ assert.equal(x.get('sgPublishBtn').disabled,false);
+});
