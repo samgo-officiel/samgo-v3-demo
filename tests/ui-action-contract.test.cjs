@@ -17,6 +17,7 @@ const modules={
  sgDeviceCheck:'assets/diagnostic-appareil-test.js',
  sgGpsLocalTest:'assets/gps-diagnostic-local-test.js',
  sgClientDriverMap:'assets/carte-chauffeurs-client-test.js',
+ sgDriverHotmap:'assets/carte-chaleur-chauffeur-test.js',
  sgDriverPrefs:'assets/preferences-chauffeur-test.js',
  sgPasswordPreview:'assets/afficher-mot-de-passe-test.js',
  sgMyDataTest:'assets/export-donnees-test.js',
