@@ -15,6 +15,7 @@ const modules={
  sgInstallTest:'assets/installation-mobile-test.js',
  sgLoyaltyTest:'assets/fidelite-test.js',
  sgDeviceCheck:'assets/diagnostic-appareil-test.js',
+ sgGpsLocalTest:'assets/gps-diagnostic-local-test.js',
  sgDriverPrefs:'assets/preferences-chauffeur-test.js',
  sgPasswordPreview:'assets/afficher-mot-de-passe-test.js',
  sgMyDataTest:'assets/export-donnees-test.js',
