@@ -17,11 +17,17 @@ function remainingTime(expireAt,now=Date.now()){
  return 'expire dans environ '+hours+' h'+(rest?' '+rest+' min':'');
 }
 function normalizePosition(p){
- const lat=Number(p?.coords?.latitude),lng=Number(p?.coords?.longitude);
- if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)
+ // Number(null) vaut 0 : sans cette validation, un GPS incomplet serait
+ // traité à tort comme une vraie position en mer, aux coordonnées 0,0.
+ const latitude=p?.coords?.latitude,longitude=p?.coords?.longitude;
+ if(typeof latitude!=='number'||typeof longitude!=='number'||
+    !Number.isFinite(latitude)||!Number.isFinite(longitude)||
+    Math.abs(latitude)>90||Math.abs(longitude)>180)
   throw new Error('Position GPS invalide. Réessayez depuis votre téléphone ou navigateur.');
- return {lat,lng,accuracy:Math.max(0,Number(p.coords?.accuracy)||0),
-  measuredAt:Number(p.timestamp)||Date.now()};
+ const timestamp=Number(p?.timestamp);
+ return {lat:latitude,lng:longitude,accuracy:Math.max(0,Number(p.coords?.accuracy)||0),
+  measuredAt:Number.isFinite(timestamp)&&timestamp>0&&timestamp<=Date.now()+60000?
+   timestamp:Date.now()};
 }
 function requestLocation(){
  // Dans l'application native, le GPS du système est obtenu avec Capacitor.
