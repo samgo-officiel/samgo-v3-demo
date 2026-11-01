@@ -460,6 +460,7 @@ input,select,textarea{font-size:16px}
    <h1>Rentrer chez vous<br><span class="sg-gold">en toute sécurité.</span></h1>
    <p class="sg-hero-intro">SAMGO prépare un service où un chauffeur viendra vous raccompagner dans votre propre voiture. Pour l'instant, découvrez la version TEST.</p>
    <div class="sg-cta"><button type="button" class="sg-cta-primary" onclick="sgGo('book')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" ><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></svg><span>Tester une réservation</span><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" ><path d="m9 5 7 7-7 7"/></svg></button><button type="button" class="sg-cta-secondary" onclick="sgGo('driver')"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" ><circle cx="12" cy="7" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span>Devenir chauffeur</span><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.85" stroke-linecap="round" stroke-linejoin="round" ><path d="m9 5 7 7-7 7"/></svg></button></div>
+    <button type="button" class="sg-cta-secondary" style="width:100%;margin-top:10px;min-height:48px" onclick="sgGo('account')">📍 Tester mon GPS sans compte (TEST)</button>
   </div>
  </div>
  <div class="sg-version">● VERSION TEST — Aucune réservation réelle pour le moment.</div>
@@ -799,6 +800,12 @@ input,select,textarea{font-size:16px}
 </section>
   <section class="panel" id="authPanel">
     <h2 id="accountTitle">Créer mon compte</h2>
+    <section id="sgGpsQuick" aria-label="Tester le GPS sans compte" style="scroll-margin-top:100px;margin:15px 0;padding:16px;border:1px solid #738a80;border-radius:14px;background:#152a30">
+      <h3 style="margin:0 0 8px;color:#ffe0a0">📍 Tester mon GPS — sans compte</h3>
+      <p style="font-size:13px;line-height:1.5;margin:8px 0 12px">Test local sur iPhone ou Android. Aucune inscription, aucun trajet, aucune position transmise au serveur. L’autorisation GPS sera demandée seulement si vous appuyez sur le bouton.</p>
+      <button type="button" id="sgGpsLocalRun" onclick="window.sgGpsLocalTest.run()" style="width:100%;min-height:48px">Autoriser ma position (test GPS)</button>
+      <p id="sgGpsLocalStatus" role="status" aria-live="polite" style="font-size:13px;line-height:1.5;overflow-wrap:anywhere">GPS non testé. Aucune demande de localisation effectuée.</p>
+    </section>
     <div id="loggedOut">
       <div class="switch"><button type="button" id="signupModeBtn" onclick="setAuthMode('signup')">M'inscrire</button><button type="button" class="alt" id="signinModeBtn" onclick="setAuthMode('signin')">Déjà inscrit</button></div>
       <form id="authForm" onsubmit="handleAuth(event)">
@@ -1764,6 +1771,7 @@ function sgGo(view){
 <script src="assets/messagerie-test.js?v=20261028-chat-v3"></script>
 <script src="assets/messages-rapides-test.js?v=20261028-a"></script>
 <script src="assets/diagnostic-appareil-test.js?v=20261028-native-ver"></script>
+<script src="assets/gps-diagnostic-local-test.js?v=20261101-1"></script>
 <script src="assets/dossier-chauffeur-test.js?v=20261028-docs1"></script>
 <script src="assets/export-donnees-test.js?v=20261028-b"></script>
 <script src="assets/effacer-local-test.js?v=20261028-a"></script>
