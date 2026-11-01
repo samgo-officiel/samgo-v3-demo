@@ -1786,6 +1786,8 @@ async function signOut(){
  if(window.sgReviews)window.sgReviews.clear();
  if(window.sgStripeSandbox)window.sgStripeSandbox.reset();
  if(window.sgDemand)window.sgDemand.stop({clearClient:true});
+ // Supprimer immédiatement les agrégats privés de la carte en cas de déconnexion.
+ if(window.sgDriverHotmap)window.sgDriverHotmap.close();
  if(window.sgChatTest)window.sgChatTest.stop();
  if(window.sgMyDataTest)window.sgMyDataTest.reset();
    if(window.sgDriverDocsTest)window.sgDriverDocsTest.reset();
