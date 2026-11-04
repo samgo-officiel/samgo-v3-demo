@@ -11,8 +11,8 @@ const stripeScript=fs.readFileSync(path.join(__dirname,'../assets/stripe-sandbox
 const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 const url='https://checkout.stripe.com/c/pay/cs_test_1234567890abcdefgh#test123';
 
-function setup(){
- const elements=new Map();
+function setup(native=false,browserAvailable=true){
+ const elements=new Map(),redirects=[];
  const doc={activeElement:{focus(){}},body:{appendChild(n){elements.set('layer',n);}},addEventListener(){}};
  function button(){
   const handlers={};
@@ -28,9 +28,11 @@ function setup(){
   },querySelectorAll(){return [open,close];}
  };
  doc.createElement=()=>layer;
- const win={qrcode:vendor,location:{assign(){}},sgNativeOpenExternal:()=>true};
+ const win={qrcode:vendor,location:{assign:url=>redirects.push(url)},
+  ...(native?{Capacitor:{isNativePlatform:()=>true},
+   ...(browserAvailable?{sgNativeOpenExternal:()=>true}:{})}:{})};
  vm.runInNewContext(qrScript,{window:win,document:doc,URL,Error,Array}, {timeout:1000});
- return {win,layer,open,close,drawing};
+ return {win,layer,open,close,drawing,note,redirects};
 }
 
 test('Le QR encode localement un lien Stripe TEST valide en SVG scannable',()=>{
@@ -70,6 +72,23 @@ test('Afficher le QR exige Stripe TEST, puis fermer efface la session visible',(
  assert.equal(drawing.innerHTML,'');
 });
 
+test('QR TEST : navigateur natif absent, on garde le QR au lieu de quitter SAMGO',()=>{
+ const {win,layer,open,note,redirects}=setup(true,false);
+ win.sgStripeQrTest.show(url);
+ open.fire();
+ assert.equal(layer.hidden,false);
+ assert.equal(win.sgStripeQrTest.isOpen(),true);
+ assert.equal(redirects.length,0);
+ assert.match(note.textContent,/Navigateur externe indisponible/);
+});
+test('QR TEST : le clic en version web passe par le navigateur, jamais automatiquement',()=>{
+ const {win,layer,open,redirects}=setup();
+ win.sgStripeQrTest.show(url);
+ assert.equal(redirects.length,0);
+ open.fire();
+ assert.equal(layer.hidden,true);
+ assert.deepEqual(redirects,[url]);
+});
 test('Le parcours SAMGO ouvre le QR local uniquement apres la verification serveur',()=>{
  assert.match(stripeScript,/await call\('checkout',\{choix_id:id\}\)/);
  assert.match(stripeScript,/data\.sandbox/);
