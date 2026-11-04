@@ -42,3 +42,13 @@ test('preparer le bundle natif sans installation ni publication',()=>{
   fs.rmSync(output,{recursive:true,force:true});
  }
 });
+
+test('le smoke iPhone utilise un artefact recent, jamais un ancien run ID fige',()=>{
+ const yaml=fs.readFileSync(path.join(root,'.github/workflows/ios-smoke-test.yml'),'utf8');
+ assert.match(yaml,/actions\/artifacts\?name=samgo-ios-test-simulateur/);
+ assert.match(yaml,/select\(\.expired == false/);
+ assert.match(yaml,/steps\.ios_artifact\.outputs\.run_id/);
+ assert.doesNotMatch(yaml,/run-id:\s*\d+/);
+ // Ne construit aucune IPA et ne soumet rien sur les stores.
+ assert.doesNotMatch(yaml,/altool|notarytool|app-store-connect|google-play-developer/);
+});
