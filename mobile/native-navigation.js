@@ -33,7 +33,16 @@
   let target;
   try{target=new URL(href,window.location.href);}catch(_){return;}
   if(target.origin===window.location.origin)return;
-  if(openExternal(target.href))event.preventDefault();
+  // Téléphone et messagerie : laisser le système gérer ces liens.
+  if(target.protocol==='tel:'||target.protocol==='mailto:')return;
+  // En application native, aucun lien internet externe ne doit remplacer
+  // la page SAMGO dans la WebView (session, historique, retour utilisateur).
+  event.preventDefault();
+  if(target.protocol==='https:'&&openExternal(target.href))return;
+  const status=document.getElementById('sgNativeLinkStatus');
+  if(status)status.textContent=target.protocol==='https:'
+   ?'Le navigateur externe est indisponible. Le lien n’a pas été ouvert dans SAMGO.'
+   :'Lien externe non sécurisé bloqué. Seuls les liens HTTPS sont autorisés.';
  }
  function install(){
   if(registered||!isNative())return;
@@ -46,6 +55,20 @@
   document.addEventListener('click',onLinkClick,true);
   try{
    const result=app.addListener('backButton',()=>{
+    // Le QR Stripe TEST est une fenêtre prioritaire : Retour ferme le QR,
+    // sans modifier l'écran derrière ni laisser un lien de paiement affiché.
+    const qr=window.sgStripeQrTest;
+    if(qr?.isOpen?.()){
+     qr.close?.();
+     return;
+    }
+    // La messagerie plein écran doit traiter Retour avant les menus et les routes.
+    // Sinon Android change d'écran derrière une conversation toujours ouverte.
+    const chat=window.sgChatPage;
+    if(chat?.isOpen?.()){
+     chat.back?.();
+     return;
+    }
     const menu=document.getElementById('sg-menu-panel');
     if(menu&&!menu.hasAttribute('hidden')){
      menu.setAttribute('hidden','');

@@ -55,6 +55,26 @@ function boot({approved=true,fetchRequests,createReply,online=true,demoRequest=n
    prompt.ok({coords:{latitude:48.8566,longitude:2.3522,accuracy},timestamp:measuredAt});
   }};
 }
+test('les annonces sans coordonnées ne deviennent jamais un faux point 0,0',async()=>{
+ const mk=(id,lat,lon)=>({
+  id,client_id:'client-B',latitude_approx:lat,longitude_approx:lon,
+  depart_test:'Centre fictif',destination_test:'Place fictive',distance_km:5,tarif_indicatif:5
+ });
+ const rows=[
+  mk('absente-lat',null,0),mk('absente-lon',0,null),
+  mk('vide',' ',0),mk('lat-invalide',91,0),
+  mk('lon-invalide',0,200),mk('valide',0.05,0.05)
+ ];
+ const x=boot({
+  nativePosition:{coords:{latitude:0,longitude:0,accuracy:40},timestamp:Date.now()},
+  fetchRequests:async()=>({data:rows,error:null})
+ });
+ await x.geo.open();
+ assert.equal(x.calls(),1);
+ assert.equal(x.get('sgNearbyList').children.length,1,
+  'une seule annonce avec position valide doit être proposée au chauffeur');
+ assert.match(x.get('sgNearbyStatus').textContent,/1 demande de test affichée/);
+});
 test('permission GPS requise uniquement via action et compte chauffeur approuvé',async()=>{
  const x=boot({approved:false});
  await x.geo.open();

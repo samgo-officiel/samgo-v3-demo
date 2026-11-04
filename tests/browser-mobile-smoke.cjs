@@ -48,6 +48,17 @@ async function main(){
     'Débordement horizontal sur '+spec.route+': '+result.width+' pour '+result.viewport+' px');
    // Aucun raccourci d'application ne doit solliciter le GPS spontanément.
    assert.doesNotMatch(result.gpsStatus,/GPS actif|précision annoncée/i);
+   // Vérifier les écrans interactifs sans compte ni transaction Stripe.
+   if(spec.route==='book'){
+    await page.locator('#sgStripeQrNoAccountButton').click();
+    const qr=page.locator('#sgStripeQrLayer');
+    await qr.waitFor({state:'visible'});
+    assert.match(await page.locator('#sgStripeQrTitle').innerText(),/10 €/);
+    await page.locator('#sgStripeQrClose').click();
+    await qr.waitFor({state:'hidden'});
+    assert.equal(await page.evaluate(()=>window.sgStripeQrTest.isOpen()),false);
+    // Aucune ouverture du checkout : ce test ne dessine qu'un QR local.
+   }
    // Vérifier les nouveaux parcours V2 sans connexion ni autorisation GPS.
    if(spec.route==='trips'){
     await page.locator('#sgJourneyCheck').click();
@@ -56,6 +67,12 @@ async function main(){
       'Le diagnostic doit orienter vers la connexion sans annoncer de fausse publication');
     const chat=await page.locator('#sgChatClientStatus').innerText();
     assert.match(chat,/TEST|connexion|convers|simul|démonstration/i);
+    assert.equal(await page.evaluate(()=>window.sgChatPage.open('client')),true);
+    await page.locator('#sgFullChatPage').waitFor({state:'visible'});
+    assert.match(await page.locator('#sgFullChatStatus').innerText(),/Connectez-vous/i);
+    await page.locator('#sgFullChatBack').click();
+    await page.locator('#sgFullChatPage').waitFor({state:'hidden'});
+    assert.equal(await page.evaluate(()=>window.sgChatPage.isOpen()),false);
    }
    if(spec.route==='account'){
     await page.locator('#signinModeBtn').click();
@@ -67,6 +84,37 @@ async function main(){
    await page.screenshot({path:path.join(out,spec.image),fullPage:false});
    console.log('SAMGO mobile OK : '+spec.route+' ['+result.viewport+' px]');
    await page.close();
+  }
+  // Un écran iPhone/Android plus étroit et le mode paysage révèlent des
+  // débordements que le seul viewport 390px ne détecte pas.
+  for(const size of [
+   {width:320,height:680,label:'petit-320'},
+   {width:844,height:390,label:'paysage-844'}
+  ]){
+   const narrow=await browser.newContext({
+    viewport:{width:size.width,height:size.height},
+    deviceScaleFactor:1,isMobile:true,hasTouch:true,locale:'fr-FR'
+   });
+   try{
+    for(const route of ['home','book','account']){
+     const page=await narrow.newPage();
+     await page.goto(root+(route==='home'?'':'?app='+route),
+      {waitUntil:'domcontentloaded',timeout:25000});
+     await page.waitForFunction(expected=>expected==='home'?
+       document.body.classList.contains('sg-home-active'):
+       document.body.classList.contains('sg-route-'+expected),route,{timeout:10000});
+     const result=await page.evaluate(()=>({
+      width:document.documentElement.scrollWidth,
+      viewport:document.documentElement.clientWidth,
+      screen:window.innerWidth
+     }));
+     assert.ok(result.width<=result.viewport+32,
+      'Débordement sur '+size.label+' / '+route+': '+result.width+' px / '+result.viewport+' px');
+     await page.screenshot({path:path.join(out,route+'-'+size.label+'.png'),fullPage:false});
+     console.log('SAMGO responsive OK : '+route+' / '+size.label);
+     await page.close();
+    }
+   }finally{await narrow.close();}
   }
  }finally{await browser.close();}
 }

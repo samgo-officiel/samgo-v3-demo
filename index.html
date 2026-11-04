@@ -1678,6 +1678,8 @@ async function handleAuth(e){e.preventDefault();if(!client)return setStatus('aut
    if(result.error)throw result.error;
    setStatus('authStatus','Connexion réussie.','success');
  }
+ // Ne pas conserver le mot de passe saisi dans un formulaire caché après succès.
+ $('password').value='';
  await refreshUser();
  if(sessionUser&&document.body.classList.contains('sg-route-driver'))sgGo('driver');
 }catch(err){setStatus('authStatus',errText(err),'error')}finally{busy=false;$('authBtn').disabled=false;}
@@ -1883,6 +1885,9 @@ async function applyDriver(){
 }
 async function signOut(){
  window.sgPasswordPreview?.reset();
+ // Effacer immédiatement e-mail, mot de passe et cases cochées.
+ // Un prochain utilisateur sur le même téléphone ne doit pas voir les champs.
+ if(typeof document!=='undefined')document.getElementById('authForm')?.reset();
  if(!client)return;
  ++sgUserRefreshSequence;
  ++driverApplyAttempt;driverApplyPendingUser=null;

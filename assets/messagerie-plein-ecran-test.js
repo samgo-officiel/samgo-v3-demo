@@ -118,8 +118,13 @@ function renderMessages(rows,jump){
 }
 function open(role){
  if(!validRole(role))return false;
- if(state.open&&state.uid===sessionUser?.id&&state.role===role){
-  state.view='inbox';screen();refresh();return true;
+ // Même compte et même rôle : conserver les brouillons en mémoire entre deux
+ // ouvertures de l'écran. La déconnexion et le changement de compte les effacent.
+ if(authorized(role)&&state.uid===sessionUser.id&&state.role===role){
+  draft();
+  state.open=true;state.selected=null;state.view='inbox';
+  document.body?.classList?.add('sg-chat-fullscreen-open');
+  renderInbox();screen();refresh();return true;
  }
  reset();
  state.open=true;state.role=role;state.uid=signed()?sessionUser.id:null;
@@ -137,6 +142,7 @@ function open(role){
  return true;
 }
 function close(){
+ if(state.open)draft();
  state.open=false;
  state.generation++;state.inboxSeq++;state.threadSeq++;
  const dialog=$('sgFullChatPage');if(dialog)dialog.hidden=true;

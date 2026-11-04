@@ -46,14 +46,9 @@ self.addEventListener('fetch',event=>{
   })
  );
 });
-self.addEventListener('push',event=>{
- // Aucun abonnement ni serveur de diffusion n'est active dans la demo.
- event.waitUntil(self.registration.showNotification('SAMGO — Alerte de test',{
-  body:'Une nouvelle demande de test est disponible. Ouvrez SAMGO pour la vérifier.',
-  tag:'samgo-annonce-test',
-  icon:'assets/samgo-app-icon.svg'
- }));
-});
+// Aucun gestionnaire push en version TEST : aucune notification en arrière-plan
+// tant que les abonnements, autorisations et contrôles serveur n'ont pas été audités.
+// Un ancien abonnement push ne doit jamais suffire à afficher une alerte SAMGO.
 self.addEventListener('notificationclick',event=>{
  event.notification.close();
  event.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(async windows=>{

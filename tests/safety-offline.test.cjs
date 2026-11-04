@@ -38,6 +38,11 @@ test('mise en cache seulement des deux pages statiques, aucune API ni compte',as
  assert.ok(app.added.includes(app.safetyUrl));
  assert.ok(!app.added.some(url=>/messages|token|compte|auth\/v1|rest\/v1/.test(url)));
 });
+test('aucun push ne peut afficher une notification dans le prototype non lancé',()=>{
+ const app=setup();
+ assert.equal(app.handlers.push,undefined);
+ assert.doesNotMatch(source,/showNotification\s*\(/);
+});
 test('page sécurité reste lisible hors connexion, sans échange de données',async()=>{
  const app=setup();
  const page=await app.fetch({method:'GET',mode:'navigate',url:app.safetyUrl});
