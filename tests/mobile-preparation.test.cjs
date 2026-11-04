@@ -56,15 +56,15 @@ test('le smoke iPhone utilise un artefact recent, jamais un ancien run ID fige',
 test('compiler iPhone TEST publie le bundle meme si un simulateur lent ne demarre pas',()=>{
  const compile=fs.readFileSync(path.join(root,'.github/workflows/ios-simulator-test.yml'),'utf8');
  const smoke=fs.readFileSync(path.join(root,'.github/workflows/ios-smoke-test.yml'),'utf8');
- assert.match(compile,/xcodebuild[\\s\\S]*?CODE_SIGNING_ALLOWED=NO build/);
- assert.match(compile,/samgo-ios-test-simulateur\\.zip/);
+ assert.match(compile,/xcodebuild[\s\S]*?CODE_SIGNING_ALLOWED=NO build/);
+ assert.match(compile,/samgo-ios-test-simulateur\.zip/);
  assert.match(compile,/name: samgo-ios-test-simulateur/);
  assert.doesNotMatch(compile,/xcrun simctl (?:boot|launch|install)/);
  assert.match(smoke,/workflow_run:/);
- assert.match(smoke,/workflows:[\\s\\S]*?"SAMGO - Compiler iPhone TEST \\(simulateur uniquement\\)"/);
- assert.match(smoke,/github\\.event\\.workflow_run\\.conclusion == 'success'/);
- assert.match(smoke,/github\\.event\\.workflow_run\\.id \\|\\| steps\\.ios_artifact\\.outputs\\.run_id/);
+ assert.match(smoke,/workflows:[\s\S]*?"SAMGO - Compiler iPhone TEST \(simulateur uniquement\)"/);
+ assert.match(smoke,/github\.event\.workflow_run\.conclusion == 'success'/);
+ assert.match(smoke,/github\.event\.workflow_run\.id \|\| steps\.ios_artifact\.outputs\.run_id/);
  assert.match(smoke,/timeout-minutes: 12/);
  assert.match(smoke,/xcrun simctl launch/);
- assert.doesNotMatch(smoke,/continue-on-error:\\s*true/);
+ assert.doesNotMatch(smoke,/continue-on-error:\s*true/);
 });
