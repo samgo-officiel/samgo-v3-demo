@@ -57,7 +57,7 @@ test('compiler iPhone TEST publie le bundle meme si un simulateur lent ne demarr
  const compile=fs.readFileSync(path.join(root,'.github/workflows/ios-simulator-test.yml'),'utf8');
  const smoke=fs.readFileSync(path.join(root,'.github/workflows/ios-smoke-test.yml'),'utf8');
  assert.match(compile,/xcodebuild[\s\S]*?CODE_SIGNING_ALLOWED=NO build/);
- assert.match(compile,/samgo-ios-test-simulateur\.zip/);
+ assert.match(compile,/samgo-ios-simulator-test\.zip/);
  assert.match(compile,/name: samgo-ios-test-simulateur/);
  assert.doesNotMatch(compile,/xcrun simctl (?:boot|launch|install)/);
  assert.match(smoke,/workflow_run:/);
