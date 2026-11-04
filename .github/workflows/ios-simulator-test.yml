@@ -23,9 +23,11 @@ on:
 permissions:
   contents: read
 
+# Une nouvelle modification de brouillon remplace l'ancienne compilation PR.
+# Les builds de main restent dans un groupe distinct.
 concurrency:
-  group: samgo-ios-simulator-test
-  cancel-in-progress: false
+  group: samgo-ios-simulator-test-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build-ios-simulator:
