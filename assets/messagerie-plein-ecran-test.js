@@ -286,8 +286,15 @@ async function send(){
   await loadThread(true);
   return true;
  }catch(e){
-  if(still(uid,role,gen)&&state.selected===id)
-   say('Message non envoyé : '+(e.message||'Réessayez.'));
+  if(still(uid,role,gen)&&state.selected===id){
+   // Une panne 4G ou un délai dépassé ne confirme PAS que le serveur
+   // a refusé l'écriture : le message a peut-être été enregistré.
+   // Conserver le brouillon et éviter les renvois aveugles en double.
+   const rejected=[400,401,403,404,409,422].includes(Number(e?.status));
+   say(rejected
+    ?'Envoi refusé par le serveur. Vérifiez votre session et les droits de cette conversation.'
+    :'Envoi non confirmé : le serveur a peut-être reçu ce message. Consultez les messages récents avant de réessayer pour éviter un doublon.');
+  }
   return false;
  }finally{
   if(still(uid,role,gen)&&state.selected===id){state.sending=false;composer();}
