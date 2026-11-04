@@ -12,6 +12,13 @@ on:
       - 'donnees-test.html'
       - 'hors-ligne.html'
       - '.github/workflows/android-test.yml'
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - 'index.html'
+      - 'assets/**'
+      - 'tests/native-navigation.test.cjs'
+      - '.github/workflows/android-test.yml'
 
 permissions:
   contents: read
