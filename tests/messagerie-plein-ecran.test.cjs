@@ -116,6 +116,48 @@ test('un brouillon reste dans la même session, mais disparaît après changemen
  api.open('driver');await flush();api.select('c-1');await flush();
  assert.equal($('sgFullChatInput').value,'','aucun brouillon ne traverse les comptes');
 });
+test('la saisie affiche le nombre de caractères et conserve le brouillon jusqu’à envoi confirmé',async()=>{
+ const f=fixture(),{api,$,flush,messages}=f;
+ api.open('client');await flush();api.select('c-1');await flush();
+ const input=$('sgFullChatInput'),count=$('sgFullChatDraftCount');
+ assert.equal(count.textContent,'0 / 500 caractères');
+ input.value='Bonjour SAMGO !';
+ input.listeners.input();
+ assert.equal(count.textContent,'15 / 500 caractères');
+ api.close();
+ api.open('client');await flush();api.select('c-1');await flush();
+ assert.equal(input.value,'Bonjour SAMGO !');
+ assert.equal(count.textContent,'15 / 500 caractères');
+ assert.equal(await api.send(),true);
+ await flush();
+ assert.equal(messages.length,1);
+ assert.equal(count.textContent,'0 / 500 caractères');
+ api.reset();
+ assert.equal(count.textContent,'0 / 500 caractères');
+});
+test('une touche Entrée pendant la composition IME ne déclenche pas d’envoi involontaire',async()=>{
+ const f=fixture(),{api,$,flush,messages}=f;
+ api.open('client');await flush();api.select('c-1');await flush();
+ const input=$('sgFullChatInput');
+ input.value='Message en écriture';
+ let prevented=false;
+ input.listeners.keydown({key:'Enter',shiftKey:false,isComposing:true,
+  preventDefault(){prevented=true;}});
+ await flush();
+ assert.equal(prevented,false);
+ assert.equal(messages.length,0);
+ assert.equal(input.value,'Message en écriture');
+});
+test('le hors-ligne annonce que le brouillon est conservé sans faux envoi',async()=>{
+ const f=fixture(),{api,$,ctx,flush}=f;
+ api.open('client');await flush();api.select('c-1');await flush();
+ $('sgFullChatInput').value='Brouillon hors réseau';
+ ctx.navigator.onLine=false;
+ f.ctx.window; // événement déclenché par le navigateur dans les tests
+ assert.equal(await api.send(),false);
+ assert.equal($('sgFullChatInput').value,'Brouillon hors réseau');
+ assert.match($('sgFullChatStatus').textContent,/Hors connexion/);
+});
 test('pas de messages sans compte, pas d’écriture après fin de course TEST',async()=>{
  const f=fixture();const {api,ctx,$,items,flush,messages}=f;
  ctx.sessionUser=null;api.open('client');await flush();
