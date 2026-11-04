@@ -46,6 +46,13 @@
   document.addEventListener('click',onLinkClick,true);
   try{
    const result=app.addListener('backButton',()=>{
+    // Le QR Stripe TEST est une fenêtre prioritaire : Retour ferme le QR,
+    // sans modifier l'écran derrière ni laisser un lien de paiement affiché.
+    const qr=window.sgStripeQrTest;
+    if(qr?.isOpen?.()){
+     qr.close?.();
+     return;
+    }
     // La messagerie plein écran doit traiter Retour avant les menus et les routes.
     // Sinon Android change d'écran derrière une conversation toujours ouverte.
     const chat=window.sgChatPage;
