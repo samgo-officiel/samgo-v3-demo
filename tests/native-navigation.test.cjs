@@ -5,9 +5,9 @@ const vm=require('node:vm');
 const fs=require('node:fs');
 const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../mobile/native-navigation.js'),'utf8');
-function boot(native,menuOpen=false,inHome=false,browserFails=false,chatOpen=false){
- const calls={listeners:0,home:0,minimize:0,opened:[],stripeRefresh:0,clientRefresh:0,chatBack:0};
- let chatVisible=chatOpen;
+function boot(native,menuOpen=false,inHome=false,browserFails=false,chatOpen=false,qrOpen=false){
+ const calls={listeners:0,home:0,minimize:0,opened:[],stripeRefresh:0,clientRefresh:0,chatBack:0,qrClose:0};
+ let chatVisible=chatOpen,qrVisible=qrOpen;
  let back=null,resume=null,browserFinished=null;
  const linkStatus={textContent:''};
  const menu={
@@ -41,6 +41,10 @@ function boot(native,menuOpen=false,inHome=false,browserFails=false,chatOpen=fal
    isOpen:()=>chatVisible,
    back:()=>{calls.chatBack++;chatVisible=false;}
   },
+  sgStripeQrTest:{
+   isOpen:()=>qrVisible,
+   close:()=>{calls.qrClose++;qrVisible=false;}
+  },
   sgStripeSandbox:{refresh:()=>{calls.stripeRefresh++;}},
   sgDemand:{refreshClient:()=>{calls.clientRefresh++;}}};
  const doc={
@@ -62,6 +66,17 @@ test('bouton Retour ferme menu de l app avant de changer d écran',()=>{
  assert.equal(x.menu.hidden,true);
  assert.equal(x.calls.home,0);
  assert.equal(x.calls.minimize,0);
+});
+test('Retour ferme le QR Stripe TEST avant la messagerie et le menu',()=>{
+ const x=boot(true,true,false,false,true,true);
+ x.back();
+ assert.equal(x.calls.qrClose,1);
+ assert.equal(x.calls.chatBack,0);
+ assert.equal(x.calls.home,0);
+ assert.equal(x.menu.hidden,false);
+ x.back();
+ assert.equal(x.calls.chatBack,1);
+ assert.equal(x.calls.home,0);
 });
 test('bouton Retour Android ferme d abord la messagerie plein écran',()=>{
  const x=boot(true,true,false,false,true);
