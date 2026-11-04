@@ -67,7 +67,7 @@ function nearKm(a,b,c,d){
 // localisation réelle (0,0) ou en alerte de proximité erronée.
 function validRequestCoords(row){
  const latRaw=row?.latitude_approx,lonRaw=row?.longitude_approx;
- if(latRaw==null||lonRaw==null||latRaw===''||lonRaw==='')return null;
+ if(latRaw==null||lonRaw==null||String(latRaw).trim()===''||String(lonRaw).trim()==='')return null;
  const lat=Number(latRaw),lon=Number(lonRaw);
  if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return null;
  return {lat,lon};
