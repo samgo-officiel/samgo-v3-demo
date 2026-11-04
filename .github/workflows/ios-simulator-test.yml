@@ -12,6 +12,13 @@ on:
       - 'donnees-test.html'
       - 'hors-ligne.html'
       - '.github/workflows/ios-simulator-test.yml'
+  pull_request:
+    paths:
+      - 'mobile/**'
+      - 'index.html'
+      - 'assets/**'
+      - 'tests/native-navigation.test.cjs'
+      - '.github/workflows/ios-simulator-test.yml'
 
 permissions:
   contents: read
