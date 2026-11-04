@@ -61,7 +61,7 @@ test('le vrai écran de messages est plein écran ; anciens mini-chats masqués'
  assert.match(html,/class="sg-chat-test" hidden aria-label="Ancienne messagerie fictive — chauffeur"/);
  assert.match(html,/onclick="window.sgChatPage.open\('client'\)"/);
  assert.match(html,/onclick="window.sgChatPage.open\('driver'\)"/);
- assert.match(html,/assets\/messagerie-plein-ecran-test.js\?v=20261104-mobile-ux/);
+ assert.match(html,/assets\/messagerie-plein-ecran-test.js\?v=20261104-chat-4g/);
  assert.match(html,/assets\/messagerie-plein-ecran-test.css\?v=20261104-mobile-ux/);
  assert.match(html,/id="sgFullChatDraftCount"/);
 });
