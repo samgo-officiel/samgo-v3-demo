@@ -30,6 +30,8 @@ test('preparer le bundle natif sans installation ni publication',()=>{
   assert.ok(index.includes('emailRedirectTo:'+JSON.stringify(redirect)));
   assert.ok(index.includes('destination.href !== '+JSON.stringify(redirect)));
   assert.ok(reset.includes('const redirect='+JSON.stringify(redirect)));
+  assert.ok(reset.includes('const confirmRedirect='+JSON.stringify(redirect)));
+  assert.doesNotMatch(reset,/const confirmRedirect=window\.location\.origin\+window\.location\.pathname/);
   assert.ok(index.includes('id="sg-native-only"'),'native should hide PWA installer');
   assert.ok(index.includes('id="sgNativeAuthNotice"'),'native email confirmation guidance');
   assert.ok(index.includes('id="sgNativeLinkStatus"'),'native external HTTPS error message');

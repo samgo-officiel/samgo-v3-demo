@@ -35,3 +35,22 @@
 **Règle de sortie :** ne cocher « e-mails opérationnels » qu'après une preuve de réception et d'utilisation réelle du lien. Ne pas activer de courses ou paiements LIVE.
 
 Documentation : https://supabase.com/docs/guides/auth/auth-smtp
+
+## Préparation complémentaire — 1er novembre 2026 (PR #26, non déployée)
+- Le renvoi de l'e-mail de confirmation a été ajouté **en préparation** : bouton déclenché manuellement depuis l'écran Compte, validation de l'adresse, délai local d'une minute, messages distincts pour SMTP absent, HTTP 429, panne réseau et requête lente. Aucun renvoi automatique.
+- Le script de préparation iOS/Android force le lien de retour de confirmation vers le site HTTPS SAMGO, pas vers l'URL interne de l'application.
+- La nouvelle version du module JavaScript utilise une URL avec version pour éviter qu'un ancien navigateur conserve son script en cache.
+- Deux modèles HTML réutilisables sont prêts : `supabase/email-templates/confirmation.html` et `supabase/email-templates/recovery.html`. Les liens sont fournis par Supabase avec la variable officielle `{{ .ConfirmationURL }}` ; aucune clé, aucun e-mail ou jeton n'est inclus dans ces fichiers.
+- Ne pas coller les modèles dans Supabase automatiquement sans avoir vérifié le domaine d'expédition et le fournisseur, et sans conserver une copie des modèles existants.
+- L'activation effective nécessite toujours un serveur SMTP transactionnel avec domaine expéditeur validé, sa configuration secrète dans le dashboard, et une confirmation/récupération reçue et utilisée en conditions de test.
+
+**Sécurité :** les deux fichiers et la branche ne contiennent aucun secret SMTP. Ne jamais envoyer de clé privée dans ChatGPT, GitHub ou les tickets.
+
+## Journal de diagnostic — 1er novembre 2026, soirée (heure de Paris)
+- Brevo et Supabase SMTP personnalisé sont configurés pour un essai, mais l'expéditeur Apple Private Relay doit être remplacé par un domaine maîtrisé et authentifié avant toute ouverture réelle.
+- À 20 h 41 et 20 h 48 : POST /auth/v1/recover a renvoyé HTTP 500. Dans les logs Supabase Auth : SMTP 535 / 5.7.8 Authentication failed (refus d'authentification SMTP). Le problème était côté identifiants de serveur de messagerie, pas du réseau mobile.
+- À 20 h 53 : le serveur Auth Supabase a rechargé sa configuration après l'enregistrement d'un changement SMTP. Cela ne prouve pas que la nouvelle clé est acceptée par Brevo ni que les e-mails sont remis à destination.
+- La clé SMTP précédemment divulguée doit être révoquée dans Brevo. Seule une nouvelle clé privée jamais partagée doit rester configurée dans Supabase.
+- Avant de valider : lancer un nouvel essai depuis « Mot de passe oublié » vers une adresse de test contrôlée ; vérifier HTTP 200 et les logs Auth, réception dans la boîte (et spams), puis changement effectif du mot de passe. Une simple réponse HTTP 200 ne garantit pas la délivrance.
+- Le formulaire de récupération limite maintenant les doubles demandes pendant une minute après une réponse HTTP 200 ; en cas de 403/429/500, aucun délai local n'est appliqué. Deux tests automatisés complètent la suite.
+- Le site public n'est pas modifié tant que la PR #26 reste en brouillon ; pas de paiement ou course LIVE.
