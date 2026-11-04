@@ -5,7 +5,7 @@ const vm=require('node:vm');
 const fs=require('node:fs');
 const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../mobile/native-navigation.js'),'utf8');
-function boot(native,menuOpen=false,inHome=false,browserFails=false,chatOpen=false,qrOpen=false){
+function boot(native,menuOpen=false,inHome=false,browserFails=false,chatOpen=false,qrOpen=false,browserAvailable=true){
  const calls={listeners:0,home:0,minimize:0,opened:[],stripeRefresh:0,clientRefresh:0,chatBack:0,qrClose:0};
  let chatVisible=chatOpen,qrVisible=qrOpen;
  let back=null,resume=null,browserFinished=null;
@@ -34,7 +34,7 @@ function boot(native,menuOpen=false,inHome=false,browserFails=false,chatOpen=fal
    return Promise.resolve({remove(){}});
   }
  };
- const window={Capacitor:{isNativePlatform:()=>native,Plugins:{App:plugin,Browser:browser}},
+ const window={Capacitor:{isNativePlatform:()=>native,Plugins:{App:plugin,...(browserAvailable?{Browser:browser}:{})}},
   location:{href:'http://localhost/index.html',origin:'http://localhost'},
   sgGo:page=>{assert.equal(page,'home');calls.home++;},
   sgChatPage:{
@@ -125,6 +125,41 @@ test('le clic sur un lien externe est intercepté sur application native seuleme
  assert.deepEqual(x.calls.opened,['https://example.com/aide']);
  const web=boot(false);
  assert.equal(web.calls.onClick,undefined);
+});
+test('navigateur externe manquant : le lien HTTPS ne sort jamais de la WebView',()=>{
+ const x=boot(true,false,false,false,false,false,false);
+ let prevented=false;
+ x.calls.onClick({
+  defaultPrevented:false,
+  target:{closest:()=>({getAttribute:()=> 'https://example.com/externe'})},
+  preventDefault(){prevented=true;}
+ });
+ assert.equal(prevented,true);
+ assert.equal(x.calls.opened.length,0);
+ assert.match(x.linkStatus.textContent,/navigateur externe est indisponible/);
+});
+test('un lien HTTP externe est bloqué, sans navigation ni fuite de session',()=>{
+ const x=boot(true);
+ let prevented=false;
+ x.calls.onClick({
+  defaultPrevented:false,
+  target:{closest:()=>({getAttribute:()=> 'http://example.com/risque'})},
+  preventDefault(){prevented=true;}
+ });
+ assert.equal(prevented,true);
+ assert.equal(x.calls.opened.length,0);
+ assert.match(x.linkStatus.textContent,/non sécurisé bloqué/);
+});
+test('le numéro d urgence tel reste géré par le téléphone',()=>{
+ const x=boot(true);
+ let prevented=false;
+ x.calls.onClick({
+  defaultPrevented:false,
+  target:{closest:()=>({getAttribute:()=> 'tel:112'})},
+  preventDefault(){prevented=true;}
+ });
+ assert.equal(prevented,false);
+ assert.equal(x.calls.opened.length,0);
 });
 test('un lien relatif de SAMGO ne quitte pas l’application',()=>{
  const x=boot(true);
