@@ -62,6 +62,16 @@ function nearKm(a,b,c,d){
  const h=Math.sin(lat/2)**2+Math.cos(a*rad)*Math.cos(c*rad)*Math.sin(lon/2)**2;
  return 12742*Math.asin(Math.min(1,Math.sqrt(h)));
 }
+// Supabase renvoie parfois null ou une chaîne vide pour des champs absents.
+// Number(null) === 0 : ne jamais transformer une annonce incomplète en
+// localisation réelle (0,0) ou en alerte de proximité erronée.
+function validRequestCoords(row){
+ const latRaw=row?.latitude_approx,lonRaw=row?.longitude_approx;
+ if(latRaw==null||lonRaw==null||latRaw===''||lonRaw==='')return null;
+ const lat=Number(latRaw),lon=Number(lonRaw);
+ if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180)return null;
+ return {lat,lon};
+}
 function signedIn(){return typeof sessionUser!=='undefined'&&!!sessionUser&&!!client&&!!client.testRequests;}
 function approved(){return signedIn()&&typeof driverSimAllowed!=='undefined'&&driverSimAllowed;}
 function sortRequests(rows,mode){
@@ -105,10 +115,13 @@ function render(){
   status('sgNearbyStatus','Connectez-vous avec un compte chauffeur approuvé (test).');
   return;
  }
- const filtered=state.rows.filter(r=>{
-  const lat=Number(r.latitude_approx),lon=Number(r.longitude_approx);
-  return r.client_id!==sessionUser.id&&Number.isFinite(lat)&&Number.isFinite(lon)&&nearKm(state.pos.lat,state.pos.lng,lat,lon)<=radius;
- }).map(r=>({...r,approach:nearKm(state.pos.lat,state.pos.lng,Number(r.latitude_approx),Number(r.longitude_approx))}));
+ const filtered=state.rows.flatMap(r=>{
+  if(r.client_id===sessionUser.id)return [];
+  const coords=validRequestCoords(r);
+  if(!coords)return [];
+  const approach=nearKm(state.pos.lat,state.pos.lng,coords.lat,coords.lon);
+  return approach<=radius?[{...r,approach}]:[];
+ });
  const query=$('sgDemandTextFilter')?.value||'';
  const sorted=sortRequests(filterRequests(filtered,query),$('sgDemandSort')?.value||'proximite');
  const ownAds=state.rows.filter(r=>r.client_id===sessionUser.id).length;
@@ -171,7 +184,9 @@ function notifyAboutNew(rows){
  rows.forEach(r=>state.seen.add(r.id));
  if(!state.notify||!state.pos||document.visibilityState!=='visible')return;
  const local=newly.filter(r=>{
-  const distance=nearKm(state.pos.lat,state.pos.lng,Number(r.latitude_approx),Number(r.longitude_approx));
+  const coords=validRequestCoords(r);
+  if(!coords)return false;
+  const distance=nearKm(state.pos.lat,state.pos.lng,coords.lat,coords.lon);
   return Number.isFinite(distance)&&distance<=radius;
  });
  if(local.length){
