@@ -33,7 +33,16 @@
   let target;
   try{target=new URL(href,window.location.href);}catch(_){return;}
   if(target.origin===window.location.origin)return;
-  if(openExternal(target.href))event.preventDefault();
+  // Téléphone et messagerie : laisser le système gérer ces liens.
+  if(target.protocol==='tel:'||target.protocol==='mailto:')return;
+  // En application native, aucun lien internet externe ne doit remplacer
+  // la page SAMGO dans la WebView (session, historique, retour utilisateur).
+  event.preventDefault();
+  if(target.protocol==='https:'&&openExternal(target.href))return;
+  const status=document.getElementById('sgNativeLinkStatus');
+  if(status)status.textContent=target.protocol==='https:'
+   ?'Le navigateur externe est indisponible. Le lien n’a pas été ouvert dans SAMGO.'
+   :'Lien externe non sécurisé bloqué. Seuls les liens HTTPS sont autorisés.';
  }
  function install(){
   if(registered||!isNative())return;
