@@ -216,3 +216,25 @@ test('une actualisation près du bas reste près du dernier message',async()=>{
  await app.chat.refresh('client');
  assert.equal(box.scrollTop,1000);
 });
+
+test('4G incertaine : ne pas affirmer qu un message a été refusé, garder le brouillon',async()=>{
+ const app=boot();
+ await app.chat.refresh('client');
+ app.get('sgChatClientInput').value='Message de test sur réseau lent';
+ const sending=app.chat.send('client');
+ app.finish({error:Object.assign(new Error('Failed to fetch'),{name:'TypeError'})});
+ await sending;
+ assert.equal(app.get('sgChatClientInput').value,'Message de test sur réseau lent');
+ assert.match(app.get('sgChatClientStatus').textContent,/Envoi non confirmé/);
+ assert.match(app.get('sgChatClientStatus').textContent,/doublon/);
+});
+test('refus HTTP 403 : ne pas suggérer que le message aurait pu arriver',async()=>{
+ const app=boot();
+ await app.chat.refresh('client');
+ app.get('sgChatClientInput').value='Message interdit';
+ const sending=app.chat.send('client');
+ app.finish({error:Object.assign(new Error('Forbidden'),{status:403})});
+ await sending;
+ assert.match(app.get('sgChatClientStatus').textContent,/Envoi refusé par le serveur/);
+ assert.doesNotMatch(app.get('sgChatClientStatus').textContent,/peut-être reçu/);
+});
