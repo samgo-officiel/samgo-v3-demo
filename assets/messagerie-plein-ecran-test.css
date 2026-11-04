@@ -42,7 +42,9 @@ body.sg-chat-fullscreen-open{overflow:hidden!important}
 .sg-fullchat-theirs{align-self:flex-start;background:#293d52;border-bottom-left-radius:5px}
 .sg-fullchat-empty-thread{align-self:center;color:#aabed1;font-size:14px;text-align:center;padding:22px}
 .sg-fullchat-composer{flex:0 0 auto;display:flex;gap:10px;align-items:flex-end;padding:10px 12px calc(env(safe-area-inset-bottom,0px) + 12px);background:#172a42;border-top:1px solid #34516b}
-.sg-fullchat-composer textarea{flex:1;min-width:0;max-height:105px;min-height:48px;resize:vertical;border-radius:17px;padding:12px;font-size:16px;line-height:1.45;color:#f5f9ff;background:#263c52;border:1px solid #4c6b86}
+.sg-fullchat-input-wrap{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:4px}
+.sg-fullchat-composer textarea{width:100%;min-width:0;max-height:132px;min-height:48px;resize:none;overflow-y:auto;border-radius:17px;padding:12px;font-size:16px;line-height:1.45;color:#f5f9ff;background:#263c52;border:1px solid #4c6b86}
+.sg-fullchat-draft-count{font-size:11px;line-height:1.25;color:#b9cce0;text-align:right;padding-right:4px;font-variant-numeric:tabular-nums}
 .sg-fullchat-composer button{min-height:48px;padding:10px 16px;border:0;border-radius:15px;background:#2f87d1;color:#fff;font-size:14px;font-weight:800}
 .sg-fullchat-composer button:disabled{opacity:.4}
 .sg-fullchat-readonly{margin:0;background:#283746;color:#ecbda8;padding:10px 14px;font-size:12px}
