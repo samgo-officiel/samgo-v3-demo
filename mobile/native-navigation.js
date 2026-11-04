@@ -46,6 +46,13 @@
   document.addEventListener('click',onLinkClick,true);
   try{
    const result=app.addListener('backButton',()=>{
+    // La messagerie plein écran doit traiter Retour avant les menus et les routes.
+    // Sinon Android change d'écran derrière une conversation toujours ouverte.
+    const chat=window.sgChatPage;
+    if(chat?.isOpen?.()){
+     chat.back?.();
+     return;
+    }
     const menu=document.getElementById('sg-menu-panel');
     if(menu&&!menu.hasAttribute('hidden')){
      menu.setAttribute('hidden','');
