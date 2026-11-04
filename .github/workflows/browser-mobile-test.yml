@@ -7,6 +7,12 @@ on:
     paths:
       - 'tests/browser-mobile-smoke.cjs'
       - '.github/workflows/browser-mobile-test.yml'
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'assets/**'
+      - 'tests/browser-mobile-smoke.cjs'
+      - '.github/workflows/browser-mobile-test.yml'
 
 permissions:
   contents: read
