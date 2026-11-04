@@ -2,10 +2,13 @@ name: SAMGO - Demarrer iPhone TEST sur simulateur
 
 on:
   workflow_dispatch:
-  push:
+  # Essai de lancement distinct : ne fait jamais échouer une compilation valide
+  # simplement parce que CoreSimulator ne démarre pas sur le runner.
+  workflow_run:
+    workflows:
+      - "SAMGO - Compiler iPhone TEST (simulateur uniquement)"
+    types: [completed]
     branches: [main]
-    paths:
-      - '.github/workflows/ios-smoke-test.yml'
 
 permissions:
   contents: read
@@ -13,12 +16,14 @@ permissions:
 
 jobs:
   smoke-iphone:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: macos-26-intel
-    timeout-minutes: 30
+    timeout-minutes: 25
     steps:
       - name: Recuperer depot SAMGO
         uses: actions/checkout@v4
       - name: Selectionner le dernier artefact iOS TEST non expire
+        if: github.event_name == 'workflow_dispatch'
         id: ios_artifact
         env:
           GH_TOKEN: ${{ github.token }}
@@ -37,7 +42,9 @@ jobs:
         with:
           name: samgo-ios-test-simulateur
           repository: samgo-officiel/samgo-v3-demo
-          run-id: ${{ steps.ios_artifact.outputs.run_id }}
+          # Les déclenchements automatiques doivent utiliser exactement le build
+          # qui a lancé l'événement, jamais un ancien ZIP du même nom.
+          run-id: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || steps.ios_artifact.outputs.run_id }}
           github-token: ${{ github.token }}
           path: ios-artifact
       - name: Extraire l'application de simulateur
@@ -47,6 +54,7 @@ jobs:
           ditto -x -k ios-artifact/samgo-ios-simulator-test.zip ios-unpacked
           find ios-unpacked -name 'App.app' -type d
       - name: Demarrer simulateur et ouvrir SAMGO TEST
+        timeout-minutes: 12
         run: |
           set -euo pipefail
           DEVICE="$(xcrun simctl list devices available -j | node -e '
@@ -72,9 +80,10 @@ jobs:
           xcrun simctl io "$DEVICE" screenshot screenshots/samgo-iphone-test.png
           test -s screenshots/samgo-iphone-test.png
       - name: Conserver capture de l'accueil iPhone TEST
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: samgo-iphone-simulateur-capture
           path: screenshots/samgo-iphone-test.png
           retention-days: 7
-          if-no-files-found: error
+          if-no-files-found: warn
