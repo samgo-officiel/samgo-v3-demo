@@ -59,11 +59,14 @@ test('Le QR refuse les URLs externes, en HTTP et les paiements live',()=>{
 
 test('Afficher le QR exige Stripe TEST, puis fermer efface la session visible',()=>{
  const {win,layer,drawing}=setup();
+ assert.equal(win.sgStripeQrTest.isOpen(),false);
  win.sgStripeQrTest.show(url);
  assert.equal(layer.hidden,false);
+ assert.equal(win.sgStripeQrTest.isOpen(),true);
  assert.match(drawing.innerHTML,/<svg /);
  win.sgStripeQrTest.close();
  assert.equal(layer.hidden,true);
+ assert.equal(win.sgStripeQrTest.isOpen(),false);
  assert.equal(drawing.innerHTML,'');
 });
 
