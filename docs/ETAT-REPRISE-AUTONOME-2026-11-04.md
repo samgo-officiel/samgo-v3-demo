@@ -47,3 +47,19 @@ PR en brouillon : https://github.com/samgo-officiel/samgo-v3-demo/pull/34
 ## Mesure d'avancement
 
 Aucun **90 %** ne peut être déclaré sur la base du seul code. Pour une mesure fiable, faire une recette par fonctionnalité avec preuve de tests sur vrai réseau, deux comptes distincts, puis prendre en compte le juridique avant un lancement réel.
+
+
+## Intervention supplémentaire du 4 novembre — blocage Stripe sur mobile
+
+**Constat confirmé dans le code :** la fonction serveur `samgo-stripe-sandbox` ne renvoyait `Access-Control-Allow-Origin` que pour GitHub Pages. Les WebViews Capacitor iOS (`capacitor://localhost`) et Android (`http://localhost`) n'étaient pas autorisées et pouvaient être bloquées par CORS, même avec un jeton Supabase valide.
+
+**Correction préparée, non déployée :**
+- Liste blanche des origines HTTPS officielles et locales propres à Capacitor ; refus des autres origines.
+- Préflight OPTIONS autorisé seulement pour les origines approuvées, sans exécuter d'action Stripe.
+- Réponses CORS adaptées à chaque requête avec `Vary: Origin` ; aucun état global partagé entre requêtes.
+- JWT, confirmation utilisateur et clés `sk_test_` restent obligatoires pour les vraies actions sandbox.
+- Test de refus des domaines tiers et test de réponses concurrentes ajouté dans `tests/stripe-native-cors.test.cjs`.
+
+**Preuve :** suite GitHub Actions du commit `716a1890403890cb21ad1c8cca0e96eb53b93ebf` réussie. Ne pas confondre ce résultat avec un test réel de paiement natif : il faudra déployer cette version de la fonction TEST après revue et vérifier le parcours sur appareils physiques.
+
+**État de publication :** la fonction active Supabase n'a pas été modifiée, la branche principale GitHub reste inchangée et la PR est toujours en brouillon.
