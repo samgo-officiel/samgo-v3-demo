@@ -8,7 +8,7 @@ const $=id=>document.getElementById(id);
 const validRole=role=>role==='client'||role==='driver';
 const state={open:false,role:null,uid:null,view:'inbox',items:[],selected:null,
  generation:0,inboxSeq:0,threadSeq:0,threadPending:null,sending:false,
- drafts:new Map(),lastIncoming:new Map()};
+ drafts:new Map(),lastIncoming:new Map(),focusBefore:null};
 function signed(){
  return typeof sessionUser!=='undefined'&&!!sessionUser?.id&&
   typeof client!=='undefined'&&!!client?.testMessages&&!!client?.testChoices;
@@ -38,9 +38,21 @@ function pillStatus(c){
  return c.statut==='choisi_test'?'En cours (TEST)':
   c.statut==='termine_test'?'Terminée (TEST)':'Annulée (TEST)';
 }
+function updateDraftInfo(){
+ const input=$('sgFullChatInput'),counter=$('sgFullChatDraftCount');
+ const length=String(input?.value||'').length;
+ if(counter)counter.textContent=length+' / 500 caractères';
+ // Laisser apparaître les messages courts sans une grande zone vide ;
+ // plafonner le champ pour laisser les conversations visibles sur iPhone.
+ if(input?.style){
+  input.style.height='auto';
+  input.style.height=Math.max(48,Math.min(132,input.scrollHeight||48))+'px';
+ }
+}
 function draft(){
  const input=$('sgFullChatInput');
  if(state.selected&&input)state.drafts.set(state.selected,input.value.slice(0,500));
+ updateDraftInfo();
 }
 function composer(){
  const box=$('sgFullChatComposer'),input=$('sgFullChatInput'),send=$('sgFullChatSend');
@@ -52,6 +64,7 @@ function composer(){
   input.placeholder=writable?'Écrire un message…':'Cette conversation est en lecture seule';
  }
  if(send)send.disabled=!writable||state.sending;
+ updateDraftInfo();
  const label=$('sgFullChatReadOnly');
  if(label){label.hidden=state.view!=='thread'||writable;
   if(!label.hidden)label.textContent='Conversation terminée ou annulée : lecture seule.';}
@@ -122,16 +135,21 @@ function open(role){
  // ouvertures de l'écran. La déconnexion et le changement de compte les effacent.
  if(authorized(role)&&state.uid===sessionUser.id&&state.role===role){
   draft();
+  if(!state.open)state.focusBefore=document.activeElement?.focus?document.activeElement:null;
   state.open=true;state.selected=null;state.view='inbox';
   document.body?.classList?.add('sg-chat-fullscreen-open');
-  renderInbox();screen();refresh();return true;
+  renderInbox();screen();
+  $('sgFullChatBack')?.focus?.({preventScroll:true});
+  refresh();return true;
  }
  reset();
+ state.focusBefore=document.activeElement?.focus?document.activeElement:null;
  state.open=true;state.role=role;state.uid=signed()?sessionUser.id:null;
  state.view='inbox';
  const dialog=$('sgFullChatPage');if(!dialog){reset();return false;}
  document.body?.classList?.add('sg-chat-fullscreen-open');
  screen();
+ $('sgFullChatBack')?.focus?.({preventScroll:true});
  if(!authorized(role)){
   say(role==='driver'?'Connectez-vous avec un compte chauffeur approuvé pour ouvrir vos messages.':
    'Connectez-vous à votre compte client pour ouvrir vos messages.');
@@ -142,11 +160,15 @@ function open(role){
  return true;
 }
 function close(){
- if(state.open)draft();
+ const wasOpen=state.open;
+ if(wasOpen)draft();
  state.open=false;
  state.generation++;state.inboxSeq++;state.threadSeq++;
  const dialog=$('sgFullChatPage');if(dialog)dialog.hidden=true;
  document.body?.classList?.remove('sg-chat-fullscreen-open');
+ const previous=state.focusBefore;
+ state.focusBefore=null;
+ if(wasOpen)previous?.focus?.({preventScroll:true});
 }
 function reset(){
  close();
@@ -154,6 +176,7 @@ function reset(){
  state.items=[];state.selected=null;state.threadPending=null;state.sending=false;
  state.drafts.clear();state.lastIncoming.clear();
  const input=$('sgFullChatInput');if(input)input.value='';
+ updateDraftInfo();
  clearBox($('sgFullChatMessages'));
  clearBox($('sgFullChatList'));
 }
@@ -208,6 +231,7 @@ function select(id){
  draft();
  state.selected=id;state.view='thread';state.threadSeq++;state.threadPending=null;
  const input=$('sgFullChatInput');if(input)input.value=state.drafts.get(id)||'';
+ updateDraftInfo();
  clearBox($('sgFullChatMessages'));
  screen();say('Chargement de la conversation de TEST…');
  loadThread(true);
@@ -255,7 +279,7 @@ async function send(){
   const result=await client.testMessages.create(id,uid,message);
   if(!still(uid,role,gen)||state.selected!==id||state.view!=='thread')return false;
   if(result.error)throw result.error;
-  if(input&&input.value.trim()===message){input.value='';state.drafts.delete(id);}
+  if(input&&input.value.trim()===message){input.value='';state.drafts.delete(id);updateDraftInfo();}
   // Les réponses tardives d'une ancienne lecture ne peuvent pas effacer ce nouvel envoi.
   state.threadSeq++;state.threadPending=null;
   say('✓ Message envoyé sur la conversation TEST.');
@@ -275,11 +299,28 @@ function mount(){
  if(input){
   input.addEventListener('input',draft);
   input.addEventListener('keydown',e=>{
-   if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}
+   // Le clavier mobile / IME peut émettre Enter pendant une composition.
+   if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){
+    e.preventDefault();send();
+   }
   });
+  updateDraftInfo();
  }
  document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'&&state.open){e.preventDefault();back();}
+  if(!state.open)return;
+  if(e.key==='Escape'){e.preventDefault();back();return;}
+  if(e.key!=='Tab')return;
+  const dialog=$('sgFullChatPage');
+  if(!dialog?.querySelectorAll)return;
+  const focusable=Array.from(dialog.querySelectorAll('button:not([disabled]),textarea:not([disabled]),a[href]'))
+   .filter(el=>!el.closest?.('[hidden]')&&!el.disabled);
+  if(!focusable.length)return;
+  const first=focusable[0],last=focusable[focusable.length-1];
+  if(!focusable.includes(document.activeElement)){
+   e.preventDefault();(e.shiftKey?last:first).focus();return;
+  }
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
  });
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});
@@ -295,5 +336,8 @@ function poll(){
 if(typeof setInterval==='function')setInterval(poll,10000);
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='hidden')poll();});
 window.addEventListener('online',poll);
+window.addEventListener('offline',()=>{
+ if(state.open)say('Hors connexion : vos messages ne sont pas envoyés ; les brouillons restent dans cette session.');
+});
 window.sgChatPage={open,close,reset,back,refresh,select,send,goAccount,goNext,isOpen};
 })();

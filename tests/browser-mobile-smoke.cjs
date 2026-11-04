@@ -70,9 +70,17 @@ async function main(){
     assert.equal(await page.evaluate(()=>window.sgChatPage.open('client')),true);
     await page.locator('#sgFullChatPage').waitFor({state:'visible'});
     assert.match(await page.locator('#sgFullChatStatus').innerText(),/Connectez-vous/i);
-    await page.locator('#sgFullChatBack').click();
+    assert.equal(await page.evaluate(()=>document.activeElement?.id),'sgFullChatBack');
+    assert.equal(await page.locator('#sgFullChatDraftCount').innerText(),'0 / 500 caractères');
+    await page.keyboard.press('Shift+Tab');
+    assert.equal(await page.evaluate(()=>
+      document.getElementById('sgFullChatPage').contains(document.activeElement)),true,
+      'le focus reste dans la messagerie plein écran');
+    await page.keyboard.press('Escape');
     await page.locator('#sgFullChatPage').waitFor({state:'hidden'});
     assert.equal(await page.evaluate(()=>window.sgChatPage.isOpen()),false);
+    assert.equal(await page.evaluate(()=>document.activeElement?.id),'sgJourneyCheck',
+      'le focus revient sur le bouton utilisé avant la messagerie');
    }
    if(spec.route==='account'){
     await page.locator('#signinModeBtn').click();

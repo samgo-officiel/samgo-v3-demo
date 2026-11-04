@@ -520,7 +520,7 @@ input,select,textarea{font-size:16px}
 .sg-available-row strong{display:block;color:#e2ffea}
 #sgAvailableDriversStatus{margin:12px 0;padding:10px;border-left:3px solid #8ee2ad;background:#1b3940;overflow-wrap:anywhere}
 </style>
-<link rel="stylesheet" href="assets/messagerie-plein-ecran-test.css?v=20261102-fullscreen">
+<link rel="stylesheet" href="assets/messagerie-plein-ecran-test.css?v=20261104-mobile-ux">
 </head>
 <body class="sg-home-active">
 <div id="sgNetworkOffline" role="status" aria-live="polite" hidden></div>
@@ -554,7 +554,10 @@ input,select,textarea{font-size:16px}
    <div id="sgFullChatMessages" role="log" aria-live="polite" aria-label="Messages de la conversation"></div>
    <p id="sgFullChatReadOnly" class="sg-fullchat-readonly" hidden>Conversation en lecture seule.</p>
    <div id="sgFullChatComposer" class="sg-fullchat-composer">
-    <textarea id="sgFullChatInput" maxlength="500" rows="1" aria-label="Écrire un message" placeholder="Écrire un message…"></textarea>
+    <div class="sg-fullchat-input-wrap">
+     <textarea id="sgFullChatInput" maxlength="500" rows="1" aria-label="Écrire un message" aria-describedby="sgFullChatDraftCount" placeholder="Écrire un message…"></textarea>
+     <span id="sgFullChatDraftCount" class="sg-fullchat-draft-count" aria-live="off">0 / 500 caractères</span>
+    </div>
     <button type="button" id="sgFullChatSend" onclick="window.sgChatPage.send()">Envoyer</button>
    </div>
   </div>
@@ -1998,7 +2001,7 @@ function sgGo(view){
 <script src="assets/stripe-checkout-qr-test.js?v=20261101-sandbox-qr10"></script>
 <script src="assets/stripe-sandbox-connexion.js?v=20261029-qr-test"></script>
 <script src="assets/messagerie-test.js?v=20261028-chat-v3"></script>
-<script src="assets/messagerie-plein-ecran-test.js?v=20261102-fullscreen"></script>
+<script src="assets/messagerie-plein-ecran-test.js?v=20261104-mobile-ux"></script>
 <script src="assets/essai-reservation-chat-local.js?v=20261101-1"></script>
 <script src="assets/messages-rapides-test.js?v=20261028-a"></script>
 <script src="assets/diagnostic-appareil-test.js?v=20261028-native-ver"></script>
