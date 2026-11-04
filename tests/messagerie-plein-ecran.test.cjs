@@ -102,6 +102,20 @@ test('les comptes client et chauffeur disposent de boîtes séparées, avec mess
  assert.match($('sgFullChatMessages').children[1].className,/sg-fullchat-theirs/);
  assert.equal($('sgFullChatMessages').children[1].children[0].textContent,messages[1].contenu);
 });
+test('un brouillon reste dans la même session, mais disparaît après changement de compte',async()=>{
+ const f=fixture(),{api,ctx,$,flush}=f;
+ api.open('client');await flush();api.select('c-1');await flush();
+ $('sgFullChatInput').value='Brouillon à garder';
+ api.close();
+ assert.equal(api.isOpen(),false);
+ api.open('client');await flush();
+ assert.equal(api.select('c-1'),true);await flush();
+ assert.equal($('sgFullChatInput').value,'Brouillon à garder');
+ api.reset();
+ ctx.sessionUser={id:'driver-1'};
+ api.open('driver');await flush();api.select('c-1');await flush();
+ assert.equal($('sgFullChatInput').value,'','aucun brouillon ne traverse les comptes');
+});
 test('pas de messages sans compte, pas d’écriture après fin de course TEST',async()=>{
  const f=fixture();const {api,ctx,$,items,flush,messages}=f;
  ctx.sessionUser=null;api.open('client');await flush();
