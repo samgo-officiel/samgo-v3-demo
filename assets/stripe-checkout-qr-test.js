@@ -43,8 +43,16 @@
     layer.querySelector('#sgStripeQrOpen').addEventListener('click',function(){
       if(!activeUrl)return;
       const url=activeUrl;
+      if(window.Capacitor?.isNativePlatform?.()===true){
+        if(window.sgNativeOpenExternal?.(url)){close();return;}
+        // Conserver le QR lisible pour pouvoir le scanner depuis un deuxième
+        // téléphone plutôt que de perdre SAMGO dans une navigation WebView.
+        layer.querySelector('#sgStripeQrNote').textContent=
+          'Navigateur externe indisponible sur cet appareil. Scannez ce QR de TEST avec un deuxième téléphone ou réessayez après mise à jour de SAMGO.';
+        return;
+      }
       close();
-      if(!window.sgNativeOpenExternal?.(url))window.location.assign(url);
+      window.location.assign(url);
     });
     layer.addEventListener('click',function(event){if(event.target===layer)close();});
     document.addEventListener('keydown',function(event){
