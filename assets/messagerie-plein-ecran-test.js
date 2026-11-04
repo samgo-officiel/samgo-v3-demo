@@ -142,6 +142,7 @@ function open(role){
  return true;
 }
 function close(){
+ if(state.open)draft();
  state.open=false;
  state.generation++;state.inboxSeq++;state.threadSeq++;
  const dialog=$('sgFullChatPage');if(dialog)dialog.hidden=true;
