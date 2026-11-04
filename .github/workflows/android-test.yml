@@ -81,3 +81,37 @@ jobs:
           path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 7
           if-no-files-found: error
+
+  # Test du MÊME APK que celui compilé par le job ci-dessus, sans run-id figé.
+  # Émulateur uniquement, pas de compte, GPS, paiement ou trajet réel.
+  smoke-android:
+    needs: build-android-debug
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Charger scripts de test SAMGO
+        uses: actions/checkout@v4
+      - name: Récupérer l'APK DEBUG de cette exécution
+        uses: actions/download-artifact@v4
+        with:
+          name: samgo-android-test-debug
+          path: mobile/android/app/build/outputs/apk/debug
+      - name: Vérifier le fichier APK de la PR
+        run: test -s mobile/android/app/build/outputs/apk/debug/app-debug.apk
+      - name: Démarrer et photographier l'accueil Android TEST
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: bash scripts/android-emulator-smoke.sh
+      - name: Conserver la capture Android anonyme 7 jours
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: samgo-android-accueil-emulateur
+          path: mobile/test-output/samgo-android-emulateur.png
+          retention-days: 7
+          if-no-files-found: warn
