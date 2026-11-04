@@ -23,9 +23,10 @@ on:
 permissions:
   contents: read
 
+# Une mise a jour de la PR annule son ancien build, jamais celui de main.
 concurrency:
-  group: samgo-android-test
-  cancel-in-progress: false
+  group: samgo-android-test-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build-android-debug:
