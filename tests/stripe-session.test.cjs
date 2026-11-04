@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const vm=require('node:vm');
 const source=fs.readFileSync(path.join(__dirname,'..','assets','stripe-sandbox-connexion.js'),'utf8');
-function boot(native=false){
+function boot(native=false,browserAvailable=true){
  const elements=new Map(),opened=[],sent=[],external=[],qrShown=[],qrClosed=[];
  const get=id=>{
   if(!elements.has(id))elements.set(id,{textContent:'',disabled:false,hidden:true});
@@ -26,7 +26,8 @@ function boot(native=false){
   location:{search:'',assign:url=>opened.push(url)},
   confirm(){return true;},
   sgStripeQrTest:{show(url){qrShown.push(url);},close(){qrClosed.push(true);}},
-  ...(native?{sgNativeOpenExternal:url=>{external.push(url);return true;}}:{})
+  ...(native?{Capacitor:{isNativePlatform:()=>true},
+   ...(browserAvailable?{sgNativeOpenExternal:url=>{external.push(url);return true;}}:{})}:{})
  };
  const document={getElementById:get,readyState:'loading',addEventListener(){}};
  vm.runInNewContext(source,{window,document,sessionUser:user,client,
@@ -86,6 +87,16 @@ test('Stripe TEST sur Android natif utilise navigateur externe sans quitter SAMG
  await pending;
  assert.deepEqual(x.external,['https://connect.stripe.com/test']);
  assert.deepEqual(x.opened,[]);
+});
+test('si le navigateur natif est absent, inscription Stripe TEST ne quitte pas SAMGO',async()=>{
+ const x=boot(true,false);
+ const pending=x.api.onboardDriver();
+ await x.waitFor('onboard_driver');
+ x.reply('onboard_driver',{sandbox:true,url:'https://connect.stripe.com/test'});
+ await pending;
+ assert.deepEqual(x.opened,[]);
+ assert.deepEqual(x.external,[]);
+ assert.match(x.get('sgStripeSandboxDriverStatus').textContent,/Navigateur externe indisponible/);
 });
 test('checkout Stripe TEST montre un QR sur le téléphone, sans ouvrir automatiquement le navigateur',async()=>{
  const x=boot(true);
