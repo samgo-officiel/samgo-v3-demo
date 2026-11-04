@@ -5,6 +5,12 @@
 // SAMGO_STRIPE_SANDBOX_ENABLED = true
 const FRONT = "https://samgo-officiel.github.io";
 const SITE = FRONT + "/samgo-v3-demo/";
+// Capacitor charge ses pages depuis une origine locale propre à l'application.
+// N'autoriser que le site officiel et les deux schémas locaux iOS/Android.
+const ALLOWED_ORIGINS = new Set([FRONT,"capacitor://localhost","http://localhost","https://localhost"]);
+function isAllowedOrigin(origin:string|null):boolean {
+  return !origin || ALLOWED_ORIGINS.has(origin);
+}
 const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
 const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
@@ -20,6 +26,14 @@ const cors = {
 };
 function output(value: unknown, status = 200): Response {
   return new Response(JSON.stringify(value), { status, headers: cors });
+}
+// Une réponse se construit par requête : pas de variable globale d'origine
+// (les requêtes simultanées ne doivent jamais mélanger leurs en-têtes).
+function withRequestCors(response:Response,origin:string|null):Response {
+  const headers=new Headers(response.headers);
+  headers.set("Access-Control-Allow-Origin",origin&&ALLOWED_ORIGINS.has(origin)?origin:FRONT);
+  headers.set("Vary","Origin");
+  return new Response(response.body,{status:response.status,headers});
 }
 const uuidRe = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-8][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 function checkedUuid(value: unknown): string {
@@ -259,18 +273,23 @@ async function handle(action:string,body:any,user:{id:string;email?:string;token
   return output({error:"Action inconnue."},400);
 }
 Deno.serve(async(req:Request)=>{
-  if(req.method==="OPTIONS")return new Response(null,{status:204,headers:cors});
-  if(req.method!=="POST")return output({error:"Utilisez POST."},405);
   const origin=req.headers.get("origin");
-  if(origin && origin!==FRONT)return output({error:"Origine non autorisée."},403);
+  if(!isAllowedOrigin(origin))return output({error:"Origine non autorisée."},403);
+  // Préflight CORS native : pas de JWT requis pour OPTIONS, mais aucune opération.
+  if(req.method==="OPTIONS")
+    return new Response(null,{status:204,headers:{
+      ...cors,"Access-Control-Allow-Origin":origin||FRONT,"Vary":"Origin"
+    }});
+  if(req.method!=="POST")return withRequestCors(output({error:"Utilisez POST."},405),origin);
   try {
     const user=await readUser(req);
     const payload=await req.json().catch(()=>null);
-    if(!payload || typeof payload.action!=="string")return output({error:"Action requise."},400);
-    return await handle(payload.action,payload,user);
+    if(!payload || typeof payload.action!=="string")
+      return withRequestCors(output({error:"Action requise."},400),origin);
+    return withRequestCors(await handle(payload.action,payload,user),origin);
   }catch(e){
     const message=e instanceof Error?e.message:"Erreur de connexion Stripe sandbox.";
     const code=/Connexion|reconnect|expirée|Utilisateur non reconnu/.test(message)?401:400;
-    return output({error:message},code);
+    return withRequestCors(output({error:message},code),origin);
   }
 });
