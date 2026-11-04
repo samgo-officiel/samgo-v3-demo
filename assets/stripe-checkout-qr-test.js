@@ -94,5 +94,6 @@
     if(focusBefore&&typeof focusBefore.focus==='function')focusBefore.focus();
     focusBefore=null;
   }
-  window.sgStripeQrTest={show,showDemo,close};
+  function isOpen(){return !!layer && !layer.hidden;}
+  window.sgStripeQrTest={show,showDemo,close,isOpen};
 })();
