@@ -18,12 +18,26 @@ jobs:
     steps:
       - name: Recuperer depot SAMGO
         uses: actions/checkout@v4
-      - name: Recuperer le programme iOS de test deja compile
+      - name: Selectionner le dernier artefact iOS TEST non expire
+        id: ios_artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          RUN_ID="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=samgo-ios-test-simulateur&per_page=50" \
+            --jq '[.artifacts[] | select(.expired == false and .workflow_run.id != null)][0].workflow_run.id // empty')"
+          if [[ ! "$RUN_ID" =~ ^[0-9]+$ ]]; then
+            echo "Aucun build iOS TEST valide (artefacts conserves 7 jours)." >&2
+            echo "Lancer d'abord le workflow 'Compiler iPhone TEST'." >&2
+            exit 1
+          fi
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+      - name: Recuperer le programme iOS TEST selectionne
         uses: actions/download-artifact@v4
         with:
           name: samgo-ios-test-simulateur
           repository: samgo-officiel/samgo-v3-demo
-          run-id: 40766097543
+          run-id: ${{ steps.ios_artifact.outputs.run_id }}
           github-token: ${{ github.token }}
           path: ios-artifact
       - name: Extraire l'application de simulateur
