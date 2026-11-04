@@ -60,7 +60,9 @@ test('le vrai écran de messages est plein écran ; anciens mini-chats masqués'
  assert.match(html,/class="sg-chat-test" hidden aria-label="Ancienne messagerie fictive — chauffeur"/);
  assert.match(html,/onclick="window.sgChatPage.open\('client'\)"/);
  assert.match(html,/onclick="window.sgChatPage.open\('driver'\)"/);
- assert.match(html,/assets\/messagerie-plein-ecran-test.js\?v=/);
+ assert.match(html,/assets\/messagerie-plein-ecran-test.js\?v=20261104-mobile-ux/);
+ assert.match(html,/assets\/messagerie-plein-ecran-test.css\?v=20261104-mobile-ux/);
+ assert.match(html,/id="sgFullChatDraftCount"/);
 });
 test('les comptes client et chauffeur disposent de boîtes séparées, avec messages en bulle',async()=>{
  const f=fixture();const {api,ctx,$,flush,messages}=f;
