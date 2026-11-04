@@ -118,7 +118,12 @@ async function onboardDriver(){
   if(my!==revision||!sameUser(userId))return;
   if(!data.sandbox||typeof data.url!=='string'||!data.url.startsWith('https://connect.stripe.com/'))
    throw new Error('Lien Stripe sécurisé non reçu.');
-  if(!window.sgNativeOpenExternal?.(data.url))window.location.assign(data.url);
+  // Dans une WebView native, ne jamais naviguer vers Stripe à l'intérieur
+  // de SAMGO si le navigateur externe Capacitor est indisponible.
+  if(window.Capacitor?.isNativePlatform?.()===true){
+   if(!window.sgNativeOpenExternal?.(data.url))
+    throw new Error('Navigateur externe indisponible sur ce téléphone. Restez dans SAMGO et réessayez après mise à jour de l’application.');
+  }else window.location.assign(data.url);
  }catch(e){
   if(my===revision&&(userId===null||sameUser(userId)))
    message('sgStripeSandboxDriverStatus','Impossible de démarrer : '+(e.message||'réessayez.'));
