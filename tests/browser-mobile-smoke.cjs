@@ -48,6 +48,17 @@ async function main(){
     'Débordement horizontal sur '+spec.route+': '+result.width+' pour '+result.viewport+' px');
    // Aucun raccourci d'application ne doit solliciter le GPS spontanément.
    assert.doesNotMatch(result.gpsStatus,/GPS actif|précision annoncée/i);
+   // Vérifier les écrans interactifs sans compte ni transaction Stripe.
+   if(spec.route==='book'){
+    await page.locator('#sgStripeQrNoAccountButton').click();
+    const qr=page.locator('#sgStripeQrLayer');
+    await qr.waitFor({state:'visible'});
+    assert.match(await page.locator('#sgStripeQrTitle').innerText(),/10 €/);
+    await page.locator('#sgStripeQrClose').click();
+    await qr.waitFor({state:'hidden'});
+    assert.equal(await page.evaluate(()=>window.sgStripeQrTest.isOpen()),false);
+    // Aucune ouverture du checkout : ce test ne dessine qu'un QR local.
+   }
    // Vérifier les nouveaux parcours V2 sans connexion ni autorisation GPS.
    if(spec.route==='trips'){
     await page.locator('#sgJourneyCheck').click();
@@ -56,6 +67,12 @@ async function main(){
       'Le diagnostic doit orienter vers la connexion sans annoncer de fausse publication');
     const chat=await page.locator('#sgChatClientStatus').innerText();
     assert.match(chat,/TEST|connexion|convers|simul|démonstration/i);
+    assert.equal(await page.evaluate(()=>window.sgChatPage.open('client')),true);
+    await page.locator('#sgFullChatPage').waitFor({state:'visible'});
+    assert.match(await page.locator('#sgFullChatStatus').innerText(),/Connectez-vous/i);
+    await page.locator('#sgFullChatBack').click();
+    await page.locator('#sgFullChatPage').waitFor({state:'hidden'});
+    assert.equal(await page.evaluate(()=>window.sgChatPage.isOpen()),false);
    }
    if(spec.route==='account'){
     await page.locator('#signinModeBtn').click();
