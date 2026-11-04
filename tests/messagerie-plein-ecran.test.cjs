@@ -6,7 +6,7 @@ const vm=require('node:vm');
 const html=fs.readFileSync('index.html','utf8');
 const css=fs.readFileSync('assets/messagerie-plein-ecran-test.css','utf8');
 const source=fs.readFileSync('assets/messagerie-plein-ecran-test.js','utf8');
-function fixture(){
+function fixture({sendError=null}={}){
  const map=new Map();
  const make=(tag='div',id='')=>({
   tagName:tag,id,hidden:false,disabled:false,value:'',textContent:'',className:'',scrollHeight:100,scrollTop:0,clientHeight:40,
@@ -37,6 +37,7 @@ function fixture(){
   testMessages:{
    list:async(id)=>({data:messages.filter(m=>m.choix_id===id),error:null}),
    create:async(id,uid,message)=>{
+    if(sendError)return {error:sendError};
     messages.push({id:'m-'+(messages.length+1),choix_id:id,auteur_id:uid,contenu:message,cree_le:new Date().toISOString()});
     return {error:null};
    }
@@ -159,6 +160,28 @@ test('le hors-ligne annonce que le brouillon est conservé sans faux envoi',asyn
  assert.equal(await api.send(),false);
  assert.equal($('sgFullChatInput').value,'Brouillon hors réseau');
  assert.match($('sgFullChatStatus').textContent,/Hors connexion/);
+});
+test('4G instable : aucune fausse confirmation de refus et brouillon préservé',async()=>{
+ const f=fixture({sendError:Object.assign(new Error('Failed to fetch'),{name:'TypeError'})});
+ const {api,$,flush,messages}=f;
+ api.open('client');await flush();api.select('c-1');await flush();
+ $('sgFullChatInput').value='Message sur réseau lent';
+ assert.equal(await api.send(),false);
+ assert.equal(messages.length,0);
+ assert.equal($('sgFullChatInput').value,'Message sur réseau lent');
+ assert.match($('sgFullChatStatus').textContent,/Envoi non confirmé/);
+ assert.match($('sgFullChatStatus').textContent,/doublon/);
+});
+test('refus serveur HTTP 403 : distinguer une autorisation refusée d une panne 4G',async()=>{
+ const f=fixture({sendError:Object.assign(new Error('Forbidden'),{status:403})});
+ const {api,$,flush,messages}=f;
+ api.open('client');await flush();api.select('c-1');await flush();
+ $('sgFullChatInput').value='Message refusé';
+ assert.equal(await api.send(),false);
+ assert.equal(messages.length,0);
+ assert.equal($('sgFullChatInput').value,'Message refusé');
+ assert.match($('sgFullChatStatus').textContent,/Envoi refusé par le serveur/);
+ assert.doesNotMatch($('sgFullChatStatus').textContent,/peut-être reçu/);
 });
 test('pas de messages sans compte, pas d’écriture après fin de course TEST',async()=>{
  const f=fixture();const {api,ctx,$,items,flush,messages}=f;
