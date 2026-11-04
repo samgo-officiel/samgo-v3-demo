@@ -13,6 +13,10 @@ function boot(){
  let resolveRevoke,networkResolved=false;
  const remote=new Promise(resolve=>{resolveRevoke=()=>{networkResolved=true;resolve();};});
  const session={id:'user-test'};
+ const inputs={email:'client-test@example.invalid',password:'mot-de-passe-test',ack:true};
+ const document={getElementById:id=>id==='authForm'?{reset(){
+  inputs.email='';inputs.password='';inputs.ack=false;cleared.push('formulaire réinitialisé');
+ }}:null};
  const client={auth:{signOut:()=>{
   cleared.push('session locale');
   return remote;
@@ -25,7 +29,7 @@ function boot(){
   sgChatTest:{stop:()=>cleared.push('messagerie')}
  };
  const ctx={
-  client,window,sessionUser:session,
+  client,window,document,sessionUser:session,
   sgUserRefreshSequence:0,driverApplyAttempt:0,driverApplyPendingUser:'user-test',
   localDemoRequest:{id:'local'},driverSimAllowed:true,driverSimActive:true,
   saveLocalDemo:()=>cleared.push('stockage local'),
@@ -36,15 +40,18 @@ function boot(){
   Promise
  };
  vm.runInNewContext(source+'\nthis.perform=signOut;',ctx);
- return {ctx,cleared,networkResolved:()=>networkResolved,finishRemote:resolveRevoke};
+ return {ctx,cleared,inputs,networkResolved:()=>networkResolved,finishRemote:resolveRevoke};
 }
 test('déconnexion réinitialise les écrans sans attendre un réseau qui répond lentement',async()=>{
  const app=boot();
  await app.ctx.perform();
  assert.equal(app.networkResolved(),false,'la révocation réseau est toujours en attente');
  assert.equal(app.ctx.sessionUser,null);
- for(const name of ['session locale','fidélité','avis','Stripe TEST','GPS','messagerie','Déconnecté.'])
+ for(const name of ['session locale','fidélité','avis','Stripe TEST','GPS','messagerie','formulaire réinitialisé','Déconnecté.'])
   assert.ok(app.cleared.includes(name),'Panneau non purgé: '+name);
  assert.equal(app.ctx.driverSimAllowed,false);
+ assert.equal(app.inputs.email,'');
+ assert.equal(app.inputs.password,'');
+ assert.equal(app.inputs.ack,false);
  app.finishRemote();
 });
