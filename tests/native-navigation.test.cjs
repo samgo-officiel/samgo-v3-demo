@@ -5,8 +5,9 @@ const vm=require('node:vm');
 const fs=require('node:fs');
 const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../mobile/native-navigation.js'),'utf8');
-function boot(native,menuOpen=false,inHome=false,browserFails=false){
- const calls={listeners:0,home:0,minimize:0,opened:[],stripeRefresh:0,clientRefresh:0};
+function boot(native,menuOpen=false,inHome=false,browserFails=false,chatOpen=false){
+ const calls={listeners:0,home:0,minimize:0,opened:[],stripeRefresh:0,clientRefresh:0,chatBack:0};
+ let chatVisible=chatOpen;
  let back=null,resume=null,browserFinished=null;
  const linkStatus={textContent:''};
  const menu={
@@ -36,6 +37,10 @@ function boot(native,menuOpen=false,inHome=false,browserFails=false){
  const window={Capacitor:{isNativePlatform:()=>native,Plugins:{App:plugin,Browser:browser}},
   location:{href:'http://localhost/index.html',origin:'http://localhost'},
   sgGo:page=>{assert.equal(page,'home');calls.home++;},
+  sgChatPage:{
+   isOpen:()=>chatVisible,
+   back:()=>{calls.chatBack++;chatVisible=false;}
+  },
   sgStripeSandbox:{refresh:()=>{calls.stripeRefresh++;}},
   sgDemand:{refreshClient:()=>{calls.clientRefresh++;}}};
  const doc={
@@ -57,6 +62,19 @@ test('bouton Retour ferme menu de l app avant de changer d écran',()=>{
  assert.equal(x.menu.hidden,true);
  assert.equal(x.calls.home,0);
  assert.equal(x.calls.minimize,0);
+});
+test('bouton Retour Android ferme d abord la messagerie plein écran',()=>{
+ const x=boot(true,true,false,false,true);
+ x.back();
+ assert.equal(x.calls.chatBack,1);
+ assert.equal(x.calls.home,0);
+ assert.equal(x.calls.minimize,0);
+ assert.equal(x.menu.hidden,false,'le menu derrière le chat ne doit pas intercepter Retour');
+ x.back();
+ assert.equal(x.menu.hidden,true,'ensuite Retour ferme le menu');
+ assert.equal(x.calls.home,0);
+ x.back();
+ assert.equal(x.calls.home,1,'puis Retour revient à Accueil');
 });
 test('bouton Retour d un autre écran revient à Accueil',()=>{
  const x=boot(true,false,false);x.back();
