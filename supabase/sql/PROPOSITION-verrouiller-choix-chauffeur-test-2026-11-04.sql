@@ -19,6 +19,16 @@ language plpgsql
 set search_path = ''
 as $samgo$
 begin
+  -- Toute colonne autre que statut et termine_le est immuable, y compris
+  -- les futures colonnes ajoutées au schéma. Évite les contournements
+  -- par champs de métadonnées non explicitement énumérés.
+  if (to_jsonb(new) - 'statut' - 'termine_le')
+     is distinct from (to_jsonb(old) - 'statut' - 'termine_le')
+  then
+    raise exception 'Les données de la simulation sont immuables.'
+      using errcode = '23514';
+  end if;
+
   if new.id is distinct from old.id
      or new.annonce_id is distinct from old.annonce_id
      or new.reponse_id is distinct from old.reponse_id
@@ -36,6 +46,11 @@ begin
      or new.statut not in ('termine_test', 'annule_test')
   then
     raise exception 'Transition de simulation non autorisée.'
+      using errcode = '23514';
+  end if;
+
+  if new.statut = 'annule_test' and new.termine_le is distinct from old.termine_le then
+    raise exception 'Annulation : la date de fin ne peut pas être modifiée.'
       using errcode = '23514';
   end if;
 
