@@ -113,6 +113,14 @@ test('refuse les schémas non HTTPS dans le navigateur natif',()=>{
   assert.equal(x.open(link),false);
  assert.equal(x.calls.opened.length,0);
 });
+test('refuse les URL HTTPS contenant des identifiants intégrés',()=>{
+ const x=boot(true);
+ for(const link of ['https://user:secret@example.com/path','https://user@example.com/','https://:secret@example.com/'])
+  assert.equal(x.open(link),false,'identifiants dans une URL interdits');
+ assert.equal(x.calls.opened.length,0);
+ assert.equal(x.open('https://example.com/safe'),true);
+ assert.deepEqual(x.calls.opened,['https://example.com/safe']);
+});
 test('le clic sur un lien externe est intercepté sur application native seulement',()=>{
  const x=boot(true);
  let prevented=false;
