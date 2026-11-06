@@ -14,7 +14,7 @@
   try{
    const parsed=new URL(rawUrl,window.location?.href||'http://localhost/index.html');
    // Ne jamais ouvrir de schéma arbitraire depuis une WebView.
-   if(parsed.protocol!=='https:')return false;
+   if(parsed.protocol!=='https:'||!parsed.hostname||parsed.username||parsed.password)return false;
    Promise.resolve(browser.open({url:parsed.href})).catch(()=>{
     // Le navigateur externe est facultatif : ne pas déplacer la WebView
     // vers un site tiers si une ouverture a échoué.
