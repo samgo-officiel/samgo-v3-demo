@@ -214,3 +214,17 @@ test('fermer navigateur iOS actualise les statuts sans attendre App.resume',()=>
  assert.equal(x.calls.stripeRefresh,1);
  assert.equal(x.calls.clientRefresh,1);
 });
+
+test('un clic HTTPS avec identifiants est bloqué avec un message de sécurité explicite',()=>{
+ const x=boot(true);
+ let prevented=false;
+ x.calls.onClick({
+  defaultPrevented:false,
+  target:{closest:()=>({getAttribute:()=> 'https://client:secret@example.com/aide'})},
+  preventDefault(){prevented=true;}
+ });
+ assert.equal(prevented,true);
+ assert.equal(x.calls.opened.length,0);
+ assert.match(x.linkStatus.textContent,/identifiants intégrés/);
+ assert.doesNotMatch(x.linkStatus.textContent,/indisponible/);
+});
