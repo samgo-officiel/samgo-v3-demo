@@ -38,11 +38,16 @@
   // En application native, aucun lien internet externe ne doit remplacer
   // la page SAMGO dans la WebView (session, historique, retour utilisateur).
   event.preventDefault();
-  if(target.protocol==='https:'&&openExternal(target.href))return;
+  // Une URL HTTPS avec identifiants est dangereuse même si le schéma est valide.
+  // Afficher la vraie raison du refus au lieu d'accuser le navigateur natif.
+  const hasCredentials=Boolean(target.username||target.password);
+  if(target.protocol==='https:'&&!hasCredentials&&openExternal(target.href))return;
   const status=document.getElementById('sgNativeLinkStatus');
-  if(status)status.textContent=target.protocol==='https:'
-   ?'Le navigateur externe est indisponible. Le lien n’a pas été ouvert dans SAMGO.'
-   :'Lien externe non sécurisé bloqué. Seuls les liens HTTPS sont autorisés.';
+  if(status)status.textContent=hasCredentials
+   ?'Lien externe bloqué : identifiants intégrés dans l’adresse interdits.'
+   :target.protocol==='https:'
+    ?'Le navigateur externe est indisponible. Le lien n’a pas été ouvert dans SAMGO.'
+    :'Lien externe non sécurisé bloqué. Seuls les liens HTTPS sont autorisés.';
  }
  function install(){
   if(registered||!isNative())return;
