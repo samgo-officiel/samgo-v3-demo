@@ -26,13 +26,16 @@
  }
  function onLinkClick(event){
   if(event.defaultPrevented)return;
-  const anchor=event.target?.closest?.('a[href]');
+  // Un clic sur un noeud texte doit aussi être intercepté (WebView native).
+  const element=event.target?.nodeType===3?event.target.parentElement:event.target;
+  const anchor=element?.closest?.('a[href]');
   if(!anchor)return;
   const href=anchor.getAttribute('href');
   if(!href||href.startsWith('#'))return;
   let target;
   try{target=new URL(href,window.location.href);}catch(_){return;}
-  if(target.origin===window.location.origin)return;
+  // Une URL avec identifiants intégrés reste interdite même sur notre origine.
+  if(target.origin===window.location.origin&&!target.username&&!target.password)return;
   // Téléphone et messagerie : laisser le système gérer ces liens.
   if(target.protocol==='tel:'||target.protocol==='mailto:')return;
   // En application native, aucun lien internet externe ne doit remplacer
