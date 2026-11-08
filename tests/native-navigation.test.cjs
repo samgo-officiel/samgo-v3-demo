@@ -228,3 +228,30 @@ test('un clic HTTPS avec identifiants est bloqué avec un message de sécurité 
  assert.match(x.linkStatus.textContent,/identifiants intégrés/);
  assert.doesNotMatch(x.linkStatus.textContent,/indisponible/);
 });
+
+test('clic sur un noeud texte dans un lien externe : la WebView ne navigue pas',()=>{
+ const x=boot(true);
+ let prevented=false;
+ const anchor={getAttribute:()=> 'https://example.com/externe'};
+ const element={closest:()=>anchor};
+ x.calls.onClick({
+  defaultPrevented:false,
+  target:{nodeType:3,parentElement:element},
+  preventDefault(){prevented=true;}
+ });
+ assert.equal(prevented,true);
+ assert.deepEqual(x.calls.opened,['https://example.com/externe']);
+});
+
+test('URL de meme origine avec identifiants : interdite meme si l origine est SAMGO',()=>{
+ const x=boot(true);
+ let prevented=false;
+ x.calls.onClick({
+  defaultPrevented:false,
+  target:{closest:()=>({getAttribute:()=> 'http://user:secret@localhost/index.html'})},
+  preventDefault(){prevented=true;}
+ });
+ assert.equal(prevented,true);
+ assert.equal(x.calls.opened.length,0);
+ assert.match(x.linkStatus.textContent,/identifiants intégrés/);
+});
