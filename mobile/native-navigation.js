@@ -33,7 +33,13 @@
   const href=anchor.getAttribute('href');
   if(!href||href.startsWith('#'))return;
   let target;
-  try{target=new URL(href,window.location.href);}catch(_){return;}
+  try{target=new URL(href,window.location.href);}catch(_){
+   // Un href malformé ne doit jamais être confié à la WebView native.
+   event.preventDefault();
+   const status=document.getElementById('sgNativeLinkStatus');
+   if(status)status.textContent='Lien invalide bloqué. Vérifiez l’adresse.';
+   return;
+  }
   // Une URL avec identifiants intégrés reste interdite même sur notre origine.
   if(target.origin===window.location.origin&&!target.username&&!target.password)return;
   // Téléphone et messagerie : laisser le système gérer ces liens.
