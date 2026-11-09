@@ -255,3 +255,31 @@ test('URL de meme origine avec identifiants : interdite meme si l origine est SA
  assert.equal(x.calls.opened.length,0);
  assert.match(x.linkStatus.textContent,/identifiants intégrés/);
 });
+
+
+test('href malforme : navigation native bloquee avec message explicite',()=>{
+ const x=boot(true);
+ let prevented=false;
+ x.calls.onClick({
+  defaultPrevented:false,
+  target:{closest:()=>({getAttribute:()=> 'https://[adresse-invalide'})},
+  preventDefault(){prevented=true;}
+ });
+ assert.equal(prevented,true);
+ assert.equal(x.calls.opened.length,0);
+ assert.match(x.linkStatus.textContent,/Lien invalide bloqué/);
+});
+
+test('lien malforme : aucun clic natif ne declenche de navigation externe',()=>{
+ const x=boot(true);
+ for(const href of ['http://[', 'https://[::invalid]', 'https://%']){
+  let prevented=false;
+  x.calls.onClick({
+   defaultPrevented:false,
+   target:{closest:()=>({getAttribute:()=>href})},
+   preventDefault(){prevented=true;}
+  });
+  assert.equal(prevented,true,href);
+ }
+ assert.equal(x.calls.opened.length,0);
+});
