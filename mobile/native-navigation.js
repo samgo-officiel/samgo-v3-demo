@@ -13,7 +13,7 @@
   if(!browser?.open)return false;
   try{
    // Rejeter les caractères de contrôle que URL() pourrait supprimer silencieusement.
-   if(typeof rawUrl!=='string'||/[\u0000-\u001F\u007F]/.test(rawUrl))return false;
+   if(typeof rawUrl!=='string'||rawUrl!==rawUrl.trim()||/[\u0000-\u001F\u007F]/.test(rawUrl))return false;
    const parsed=new URL(rawUrl,window.location?.href||'http://localhost/index.html');
    // Ne jamais ouvrir de schéma arbitraire depuis une WebView.
    if(parsed.protocol!=='https:'||!parsed.hostname||parsed.username||parsed.password)return false;
@@ -36,7 +36,7 @@
   if(!href||href.startsWith('#'))return;
   // Les sauts de ligne et caractères invisibles ne doivent pas être normalisés
   // en une destination différente par URL() ou par le navigateur natif.
-  if(/[\u0000-\u001F\u007F]/.test(href)){
+  if(href!==href.trim()||/[\u0000-\u001F\u007F]/.test(href)){
    event.preventDefault();
    const status=document.getElementById('sgNativeLinkStatus');
    if(status)status.textContent='Lien invalide bloqué. Vérifiez l’adresse.';
