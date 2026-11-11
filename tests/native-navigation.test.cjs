@@ -304,3 +304,19 @@ test('clic natif avec retour ligne dans href : refuse sans navigateur externe',(
  assert.equal(x.calls.opened.length,0);
  assert.match(x.linkStatus.textContent,/Lien invalide bloqué/);
 });
+
+test('refuse les URL HTTPS avec espaces exterieurs avant normalisation',()=>{
+ const x=boot(true);
+ for(const href of [' https://example.com/path','https://example.com/path ','\t https://example.com']){
+  assert.equal(x.open(href),false,JSON.stringify(href));
+  let prevented=false;
+  x.calls.onClick({
+   defaultPrevented:false,
+   target:{closest:()=>({getAttribute:()=>href})},
+   preventDefault(){prevented=true;}
+  });
+  assert.equal(prevented,true,JSON.stringify(href));
+ }
+ assert.equal(x.calls.opened.length,0);
+ assert.match(x.linkStatus.textContent,/Lien invalide bloqué/);
+});
