@@ -287,7 +287,7 @@ test('lien malforme : aucun clic natif ne declenche de navigation externe',()=>{
 
 test('les caracteres de controle dans les URL externes sont rejetes avant normalisation',()=>{
  const x=boot(true);
- for(const href of ['https://exa\\nmple.com/path','https://example.com/\\tadmin','https://example.com/\\u0000'])
+ for(const href of ['https://exa\nmple.com/path','https://example.com/\tadmin','https://example.com/\u0000'])
   assert.equal(x.open(href),false,'URL de controle refusee');
  assert.equal(x.calls.opened.length,0);
 });
@@ -297,7 +297,7 @@ test('clic natif avec retour ligne dans href : refuse sans navigateur externe',(
  let prevented=false;
  x.calls.onClick({
   defaultPrevented:false,
-  target:{closest:()=>({getAttribute:()=> 'https://exa\\nmple.com/path'})},
+  target:{closest:()=>({getAttribute:()=> 'https://exa\nmple.com/path'})},
   preventDefault(){prevented=true;}
  });
  assert.equal(prevented,true);
