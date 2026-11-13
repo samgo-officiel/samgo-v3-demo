@@ -72,11 +72,11 @@
   if(registered||!isNative())return;
   const capacitor=window.Capacitor;
   const app=capacitor.Plugins?.App;
-  if(!app?.addListener)return;
+  // La protection des liens est obligatoire meme si le plugin App est absent.
+  // Sans cela, une WebView native pourrait naviguer vers un site tiers.
   registered=true;
-  // Toutes les ressources SAMGO restent dans la WebView ; seules les URL
-  // HTTPS externes explicitement ouvertes par l'utilisateur en sortent.
   document.addEventListener('click',onLinkClick,true);
+  if(!app?.addListener)return;
   try{
    const result=app.addListener('backButton',()=>{
     // Le QR Stripe TEST est une fenêtre prioritaire : Retour ferme le QR,
@@ -106,7 +106,7 @@
     }
     if(typeof app.minimizeApp==='function')app.minimizeApp();
    });
-   Promise.resolve(result).catch(()=>{registered=false;});
+   Promise.resolve(result).catch(()=>{/* conserver la protection des liens */});
    // Sur iPhone, fermer SafariViewController ne produit pas toujours
    // un événement App.resume : écouter également Browser.browserFinished.
    // Aucun appel GPS ici, et aucun statut n'est pris pour une preuve de paiement.
@@ -126,7 +126,7 @@
      Promise.resolve(browser.addListener('browserFinished',refreshStatuses)).catch(()=>{});
     }catch(_){/* facultatif sur anciens conteneurs */}
    }
-  }catch(_){registered=false;}
+  }catch(_){/* conserver la protection des liens meme sans Retour natif */}
  }
  window.sgNativeOpenExternal=openExternal;
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
