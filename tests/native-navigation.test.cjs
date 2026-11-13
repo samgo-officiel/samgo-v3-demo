@@ -5,7 +5,7 @@ const vm=require('node:vm');
 const fs=require('node:fs');
 const path=require('node:path');
 const source=fs.readFileSync(path.join(__dirname,'../mobile/native-navigation.js'),'utf8');
-function boot(native,menuOpen=false,inHome=false,browserFails=false,chatOpen=false,qrOpen=false,browserAvailable=true){
+function boot(native,menuOpen=false,inHome=false,browserFails=false,chatOpen=false,qrOpen=false,browserAvailable=true,appAvailable=true){
  const calls={listeners:0,home:0,minimize:0,opened:[],stripeRefresh:0,clientRefresh:0,chatBack:0,qrClose:0};
  let chatVisible=chatOpen,qrVisible=qrOpen;
  let back=null,resume=null,browserFinished=null;
@@ -34,7 +34,7 @@ function boot(native,menuOpen=false,inHome=false,browserFails=false,chatOpen=fal
    return Promise.resolve({remove(){}});
   }
  };
- const window={Capacitor:{isNativePlatform:()=>native,Plugins:{App:plugin,...(browserAvailable?{Browser:browser}:{})}},
+ const window={Capacitor:{isNativePlatform:()=>native,Plugins:{...(appAvailable?{App:plugin}:{}),...(browserAvailable?{Browser:browser}:{})}},
   location:{href:'http://localhost/index.html',origin:'http://localhost'},
   sgGo:page=>{assert.equal(page,'home');calls.home++;},
   sgChatPage:{
@@ -319,4 +319,28 @@ test('refuse les URL HTTPS avec espaces exterieurs avant normalisation',()=>{
  }
  assert.equal(x.calls.opened.length,0);
  assert.match(x.linkStatus.textContent,/Lien invalide bloqué/);
+});
+
+
+test('sans plugin App, les liens externes restent proteges dans la WebView native',()=>{
+ const x=boot(true,false,false,false,false,false,true,false);
+ assert.equal(x.calls.listeners,0);
+ assert.equal(typeof x.calls.onClick,'function');
+ let prevented=false;
+ x.calls.onClick({defaultPrevented:false,
+  target:{closest:()=>({getAttribute:()=> 'https://example.com/assistance'})},
+  preventDefault(){prevented=true;}});
+ assert.equal(prevented,true);
+ assert.deepEqual(x.calls.opened,['https://example.com/assistance']);
+});
+
+test('sans plugins App ni Browser, les liens externes sont bloques sans fuite WebView',()=>{
+ const x=boot(true,false,false,false,false,false,false,false);
+ let prevented=false;
+ x.calls.onClick({defaultPrevented:false,
+  target:{closest:()=>({getAttribute:()=> 'https://example.com/externe'})},
+  preventDefault(){prevented=true;}});
+ assert.equal(prevented,true);
+ assert.equal(x.calls.opened.length,0);
+ assert.match(x.linkStatus.textContent,/navigateur externe est indisponible/);
 });
