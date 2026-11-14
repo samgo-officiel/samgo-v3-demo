@@ -344,3 +344,13 @@ test('sans plugins App ni Browser, les liens externes sont bloques sans fuite We
  assert.equal(x.calls.opened.length,0);
  assert.match(x.linkStatus.textContent,/navigateur externe est indisponible/);
 });
+
+
+test('navigateur externe : refuse les URL relatives et protocol-relative',()=>{
+ const x=boot(true);
+ for(const href of ['//example.com/path','/aide','./aide','https:example.com','?next=https://example.com'])
+  assert.equal(x.open(href),false,JSON.stringify(href));
+ assert.equal(x.calls.opened.length,0);
+ assert.equal(x.open('https://example.com/aide'),true);
+ assert.deepEqual(x.calls.opened,['https://example.com/aide']);
+});
