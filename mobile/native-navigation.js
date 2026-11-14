@@ -14,7 +14,7 @@
   try{
    // Rejeter les caractères de contrôle que URL() pourrait supprimer silencieusement.
    if(typeof rawUrl!=='string'||rawUrl!==rawUrl.trim()||/[\u0000-\u001F\u007F]/.test(rawUrl))return false;
-   const parsed=new URL(rawUrl,window.location?.href||'http://localhost/index.html');
+   // L'API d'ouverture externe n'accepte jamais une URL relative ou protocol-relative.\n   // Sinon URL() pourrait transformer une entrée ambiguë en lien HTTPS valide.\n   if(!/^https:\/\//i.test(rawUrl))return false;\n   const parsed=new URL(rawUrl);
    // Ne jamais ouvrir de schéma arbitraire depuis une WebView.
    if(parsed.protocol!=='https:'||!parsed.hostname||parsed.username||parsed.password)return false;
    Promise.resolve(browser.open({url:parsed.href})).catch(()=>{
