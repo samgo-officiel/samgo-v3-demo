@@ -354,3 +354,17 @@ test('navigateur externe : refuse les URL relatives et protocol-relative',()=>{
  assert.equal(x.open('https://example.com/aide'),true);
  assert.deepEqual(x.calls.opened,['https://example.com/aide']);
 });
+
+test('refuse les antislashs dans les URL natives avant normalisation',()=>{
+ const x=boot(true);
+ for(const href of ['https:\\\\example.com/path','https://example.com\\\\@evil.example/path']){
+  assert.equal(x.open(href),false,JSON.stringify(href));
+  let prevented=false;
+  x.calls.onClick({defaultPrevented:false,
+   target:{closest:()=>({getAttribute:()=>href})},
+   preventDefault(){prevented=true;}});
+  assert.equal(prevented,true,JSON.stringify(href));
+ }
+ assert.equal(x.calls.opened.length,0);
+ assert.match(x.linkStatus.textContent,/Lien invalide bloqué/);
+});
