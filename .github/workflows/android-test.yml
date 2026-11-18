@@ -39,6 +39,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Vérifier les tests de navigation native avant compilation
+        run: node --test tests/native-navigation.test.cjs
       - name: Java 21 pour Capacitor 8
         uses: actions/setup-java@v4
         with:
